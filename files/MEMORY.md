@@ -14,16 +14,16 @@
 
 ## 🎯 Estado actual
 
-**Fase actual:** Fases 1-5 completas en código. App en producción (Vercel + Supabase prod). Pendiente: deploy de Edge Function `generate-meal-options`. Lista para Fase 6.
+**Fase actual:** Fases 1-6 completas en código. App en producción (Vercel + Supabase prod). Pendiente: deploy de ambas Edge Functions (`generate-meal-options` + `generate-workout-session`). Lista para Fase 7.
 - [x] Fase 1 — Setup base ✅
 - [x] Fase 2 — Diseño y componentes base ✅
 - [x] Fase 3 — Auth + Estructura + PWA operativa ✅
 - [x] Fase 3.5 — Offline y PWA polish ✅ (Lighthouse pendiente de auditoría manual)
 - [x] Fase 3.6 — Testing y CI/CD ✅
 - [x] Fase 4 — Onboarding completo + cálculos nutricionales ✅
-- [x] Fase 5 — Motor `meal-generator` híbrido + Edge Function ✅ (deploy pendiente)
-- [ ] Fase 6 — Motor `routine-generator` con generador híbrido 👈 SIGUIENTE
-- [ ] Fase 7 — Home dinámico + registro rápido
+- [x] Fase 5 — Motor `meal-generator` híbrido + Edge Function ✅
+- [x] Fase 6 — Motor `routine-generator` híbrido + Edge Function ✅
+- [ ] Fase 7 — Home dinámico + registro rápido 👈 SIGUIENTE
 - [ ] Fase 8 — Sistema de rescates adaptativos
 - [ ] Fase 9 — Progreso, gráficas, logros
 - [ ] Fase 10 — Revisión semanal + IA Groq
@@ -31,26 +31,31 @@
 - [ ] Fase 12 — Beta cerrada
 
 **Última actualización:** 2026-06-08
-**Última tarea trabajada:** Fase 5 cerrada — motor `meal-generator` (32 tests) + Edge Function `generate-meal-options` con cascada Groq → Gemini → fallback + PlanPage demo. Push commit `bb91751`.
-**Verificación final:** ✅ build limpio (797 KiB), ✅ 84/84 tests, ✅ lint 0 errores, ✅ tsc strict OK.
-**Producción:** repo en `Jeancarlosp94/pulsefit` (GitHub), Supabase prod en `jhktlubijlyzswldmncu`, app en Vercel, Groq + Gemini secrets configurados.
+**Última tarea trabajada:** Fase 6 cerrada — motor `routine-generator` (29 tests) + Edge Function `generate-workout-session` con cascada Groq → Gemini → fallback + RegistrarPage demo. Push commit `1469096`.
+**Verificación final:** ✅ build limpio (804 KiB), ✅ 113/113 tests, ✅ lint 0 errores, ✅ tsc strict OK.
+**Producción:** repo en `Jeancarlosp94/pulsefit` (GitHub), Supabase prod en `jhktlubijlyzswldmncu`, app en Vercel, Groq + Gemini secrets configurados. Ambas Edge Functions pendientes de deploy.
 
 ---
 
 ## 📌 Pendientes inmediatos
 
-### 🚨 Inmediato — deploy de la Edge Function Fase 5
+### 🚨 Inmediato — deploy de las 2 Edge Functions (Fase 5 + Fase 6)
 
 ```powershell
 cd "C:\Users\jeanc\OneDrive\Escritorio\pulsefit app"
+
+# Setup (una sola vez):
 npx supabase login
 npx supabase link --project-ref jhktlubijlyzswldmncu
+
+# Deploy de ambas:
 npx supabase functions deploy generate-meal-options --project-ref jhktlubijlyzswldmncu
+npx supabase functions deploy generate-workout-session --project-ref jhktlubijlyzswldmncu
 ```
 
-- [ ] Correr esos 3 comandos (login es interactivo en browser, una sola vez).
-- [ ] Verificar en https://supabase.com/dashboard/project/jhktlubijlyzswldmncu/functions que aparece `generate-meal-options` con status verde.
-- [ ] Probar desde Vercel: Plan → seleccionar comida → Generar → ver 3 opciones reales.
+- [ ] Verificar en https://supabase.com/dashboard/project/jhktlubijlyzswldmncu/functions ambas funciones con status verde.
+- [ ] Probar /plan: seleccionar comida → Generar → ver 3 opciones reales.
+- [ ] Probar /registrar: Generar mi rutina → ver warmup + bloques + cooldown con tips.
 
 ### Para Fase 3 (auditoría manual pendiente)
 - [ ] Auditoría Lighthouse desde la URL de Vercel → Chrome DevTools Mobile. Anotar scores en PHASE_3_REPORT.md.
@@ -126,6 +131,47 @@ Detalle completo (flujos paso a paso, prompts exactos a Groq, reglas del validad
 ---
 
 ## 📜 Bitácora de cambios
+
+### 2026-06-08 (noche) — Fase 6 completada (routine-generator + Edge Function workout-session)
+
+**Mesa de expertos sobre Gemini 2.5:**
+- Analizadas cuotas de Gemini 2.5 Pro/Flash/Flash-Lite vs Gemini 2.0 Flash.
+- Decisión: mantener Gemini 2.0 Flash como fallback (1500 RPD vs 500 de 2.5 Flash). La tarea es estructurada y no necesita razonamiento profundo. Validador estricto compensa cualquier desliz.
+- Cascada Fase 6 inalterada: Groq → Groq retry → Gemini 2.0 → fallback templates.
+
+**Motor `src/features/routine-generator/` (10 archivos, 29 tests verdes):**
+- [types.ts](../client-pulsefit/src/features/routine-generator/types.ts): SessionFocus (full_body/upper/lower/push/pull/legs/core), ExercisePattern (9 patrones), PrescribedExercise, OrganizedSession + FOCUS_PATTERNS mapping.
+- [session-planner.ts](../client-pulsefit/src/features/routine-generator/session-planner.ts): `planSession` decide focus por nivel × días disponibles (AB→full_body, intermediate 5+ días→PPL). Semana 5 fuerza descarga RPE=5.
+- [exercise-pool.ts](../client-pulsefit/src/features/routine-generator/exercise-pool.ts): filtra por focus + dificultad + equipment + lesiones. Excluye `forbidden_absolute_beginner` para AB.
+- [exercise-selector.ts](../client-pulsefit/src/features/routine-generator/exercise-selector.ts): rotación con seed determinístico, plantilla por tiempo (15→2c+1core, 30→3c+1a+1core, 45→4c+2a+1core, 60→5c+2a+1core, 90→5c+3a+2core).
+- [set-rep-calculator.ts](../client-pulsefit/src/features/routine-generator/set-rep-calculator.ts): aplica reglas de Carlos — proteínas/reps por nivel, descansos por rango de reps (1-5→150s, 6-12→75s, 12+→45s; AB siempre 90s). Descarga: -1 serie, +20% descanso.
+- [compose-prompt.ts](../client-pulsefit/src/features/routine-generator/compose-prompt.ts): SYSTEM_PROMPT con reglas inviolables + buildUserPrompt con JSON exhaustivo.
+- [routine-validator.ts](../client-pulsefit/src/features/routine-generator/routine-validator.ts): 11 reglas. exercise_modified si cambia sets/reps/rest/name; tip_too_short/long; forbidden_words_in_tip (punitivas); medical_advice_in_tip (cura/previene/diagnóstico); warmup_out_of_range; cooldown_out_of_range; total_time_unrealistic (±40%).
+- [fallback-templates.ts](../client-pulsefit/src/features/routine-generator/fallback-templates.ts): orden por categoría (compound→accessory→core) + TIPS_BY_PATTERN (10 patrones genéricos cálidos).
+- [seed-exercises.ts](../client-pulsefit/src/features/routine-generator/seed-exercises.ts): 21 ejercicios — 3 squat, 3 hinge, 3 push_horizontal, 2 push_vertical, 2 pull_horizontal, 2 pull_vertical, 2 lunge, 3 core, 1 carry. Cada uno con id/name/pattern/muscleGroups/equipmentRequired/difficulty/affectedZones/isCompound.
+
+**Edge Function `supabase/functions/generate-workout-session/`:**
+- [_shared/routine-engine.ts](../supabase/functions/_shared/routine-engine.ts): motor portado a Deno (~440 líneas, mirror del frontend).
+- [_shared/seed-exercises.ts](../supabase/functions/_shared/seed-exercises.ts): mirror del seed.
+- [generate-workout-session/index.ts](../supabase/functions/generate-workout-session/index.ts): orquestador. Flujo: auth → profile → rate limit (10/día vía pattern_insights) → planSession → filterExercisePool → selectExercises → prescribePrograma → cascada (runCascade Groq→Groq retry→Gemini→fallback) → log a pattern_insights con tipo `workout_generated` o `ai_fallback_used_workout`.
+
+**Frontend:**
+- [src/interface/itfWorkouts.ts](../client-pulsefit/src/interface/itfWorkouts.ts): ItfWorkoutGenerationResponse + ItfGenerateWorkoutParams.
+- [src/api/fntWorkouts.ts](../client-pulsefit/src/api/fntWorkouts.ts): fntGenerateWorkoutSession invoca la Edge Function.
+- [src/hooks/useGenerateWorkout.ts](../client-pulsefit/src/hooks/useGenerateWorkout.ts): useMutation con toasts compasivos diferenciados (fallback / semana descarga / OK).
+- [src/pages/registrar/RegistrarPage.tsx](../client-pulsefit/src/pages/registrar/RegistrarPage.tsx): UI demo con selector Auto/Focus override, generate button, resumen (foco/duración/RPE), card alerta deload o fallback si aplica, warmup card con movimientos, blocks (N tarjetas con name/sets×reps/tip italic/descanso), cooldown card.
+
+**Verificación final:**
+- ✅ `pnpm test` → 113/113 verdes (29 nuevos del routine-generator + 84 previos).
+- ✅ `pnpm lint` → 0 errores.
+- ✅ `pnpm build` → 804 KiB precache.
+- ✅ `pnpm exec tsc -b --noEmit` → 0 errores strict.
+
+**Deploy:**
+- Commit `1469096` pusheado a `main`. Vercel auto-redeploya frontend.
+- Ambas Edge Functions (Fase 5 + Fase 6) pendientes de deploy (login interactivo).
+
+**Próximo paso real:** deploy de ambas funciones, luego Fase 7 (Home dinámico + registro rápido en 3 taps + cron nocturno).
 
 ### 2026-06-08 (tarde) — Fase 5 completada (meal-generator + Edge Function + cascada Groq/Gemini)
 
