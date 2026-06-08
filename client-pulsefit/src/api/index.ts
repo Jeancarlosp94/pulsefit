@@ -9,3 +9,4 @@ export {
    fntGetProfile,
    fntUpdateProfile
 } from './fntAuth'
+export { fntGenerateMealOptions } from './fntMeals'

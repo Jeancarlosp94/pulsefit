@@ -9,3 +9,8 @@ export type {
    ItfForgotPasswordPayload,
    ItfAuthStatus
 } from './itfAuth'
+export type {
+   ItfMealComponentSummary,
+   ItfMealGenerationResponse,
+   ItfGenerateMealParams
+} from './itfMeals'
