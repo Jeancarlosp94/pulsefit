@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+   <!-- Fondo circular salvia con esquinas redondeadas. Sin rojo punitivo. -->
+   <rect width="512" height="512" rx="96" fill="#6B8E5A"/>
+   <!-- Onda de pulso compasiva: línea continua en lugar de spikes agresivos. -->
+   <path
+      d="M64 256 L150 256 L186 200 L226 312 L266 192 L306 320 L346 256 L448 256"
+      fill="none"
+      stroke="#FAFAF7"
+      stroke-width="28"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+   />
+   <!-- Punto cálido (coral) que sigue al pulso, sugiere vida y movimiento. -->
+   <circle cx="448" cy="256" r="20" fill="#E87B5A"/>
+</svg>

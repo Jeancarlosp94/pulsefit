@@ -1,0 +1,13 @@
+/* Barrel de páginas. */
+export { default as LandingPage } from './LandingPage'
+export { default as NotFoundPage } from './NotFoundPage'
+export { default as LoginPage } from './auth/LoginPage'
+export { default as RegisterPage } from './auth/RegisterPage'
+export { default as ForgotPasswordPage } from './auth/ForgotPasswordPage'
+export { default as OnboardingShell } from './onboarding/OnboardingShell'
+export { default as HomePage } from './home/HomePage'
+export { default as ProfilePage } from './profile/ProfilePage'
+export { default as PlanPage } from './plan/PlanPage'
+export { default as RegistrarPage } from './registrar/RegistrarPage'
+export { default as ProgresoPage } from './progreso/ProgresoPage'
+export { default as RescatePage } from './rescate/RescatePage'

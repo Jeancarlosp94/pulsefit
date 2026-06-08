@@ -1,0 +1,3 @@
+#!/usr/bin/env sh
+# El repo git vive en la raíz, una carpeta arriba de client-pulsefit/
+cd client-pulsefit && pnpm exec lint-staged

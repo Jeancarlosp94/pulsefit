@@ -1,0 +1,12 @@
+dist
+dev-dist
+build
+coverage
+node_modules
+playwright-report
+test-results
+pnpm-lock.yaml
+*.min.js
+*.min.css
+public/**/*.svg
+src/interface/database.ts

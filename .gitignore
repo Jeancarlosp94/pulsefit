@@ -1,0 +1,23 @@
+# macOS / Windows
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.swp
+
+# Variables de entorno
+.env
+.env.local
+.env.*.local
+
+# Supabase local
+supabase/.branches
+supabase/.temp
+supabase/.env
+supabase/seed/*.local.sql
+
+# Logs
+*.log
