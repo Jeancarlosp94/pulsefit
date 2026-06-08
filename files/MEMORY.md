@@ -14,15 +14,15 @@
 
 ## 🎯 Estado actual
 
-**Fase actual:** Fases 1, 2 y 3 (con sub-fases 3.5 y 3.6) **completas**. Lista para empezar Fase 4 — Onboarding completo + cálculos nutricionales.
+**Fase actual:** Fases 1-4 completas. App en producción (Vercel + Supabase prod). Lista para arrancar Fase 5.
 - [x] Fase 1 — Setup base ✅
 - [x] Fase 2 — Diseño y componentes base ✅
 - [x] Fase 3 — Auth + Estructura + PWA operativa ✅
 - [x] Fase 3.5 — Offline y PWA polish ✅ (Lighthouse pendiente de auditoría manual)
 - [x] Fase 3.6 — Testing y CI/CD ✅
-- [ ] Fase 4 — Onboarding completo + cálculos nutricionales 👈 SIGUIENTE
-- [ ] Fase 5 — Motor de plan de comidas
-- [ ] Fase 6 — Motor de plan de entrenamiento
+- [x] Fase 4 — Onboarding completo + cálculos nutricionales ✅
+- [ ] Fase 5 — Motor de plan de comidas con generador híbrido 👈 SIGUIENTE
+- [ ] Fase 6 — Motor de plan de entrenamiento con generador híbrido
 - [ ] Fase 7 — Home dinámico + registro rápido
 - [ ] Fase 8 — Sistema de rescates adaptativos
 - [ ] Fase 9 — Progreso, gráficas, logros
@@ -30,28 +30,29 @@
 - [ ] Fase 11 — Detección de patrones
 - [ ] Fase 12 — Beta cerrada
 
-**Última actualización:** 2026-05-06
-**Última tarea trabajada:** Fase 3.6, tarea 53 (README + DEVELOPMENT.md) + PHASE_3_REPORT.md.
-**Verificación final:** ✅ build limpio, ✅ 22/22 tests, ✅ lint 0 errores, ✅ tsc strict OK.
+**Última actualización:** 2026-06-08
+**Última tarea trabajada:** Fase 4 cerrada — onboarding 7 pasos + motor `nutrition-engine` + migración consent. Push commit `6949747`.
+**Verificación final:** ✅ build limpio (787 KiB), ✅ 52/52 tests, ✅ lint 0 errores, ✅ tsc strict OK.
+**Producción:** repo en `Jeancarlosp94/pulsefit` (GitHub), Supabase prod en `jhktlubijlyzswldmncu`, app en Vercel.
 
 ---
 
 ## 📌 Pendientes inmediatos
 
-### Para que el dueño humano cierre Fase 3 al 100%
-- [ ] Levantar Docker Desktop, correr `npx supabase start` desde la raíz, luego `npx supabase db reset` para aplicar `supabase/migrations/20260101000000_initial_schema.sql` (17 tablas, 16 policies, 2 triggers).
-- [ ] Después, `cd client-pulsefit && pnpm types:db` para regenerar `src/interface/database.ts` con los tipos reales.
-- [ ] Una vez regenerados los tipos, quitar el cast `as never` en [client-pulsefit/src/api/fntAuth.ts](../client-pulsefit/src/api/fntAuth.ts) línea 79 (existe solo por placeholder).
-- [ ] Auditoría Lighthouse: `pnpm build && pnpm preview` → Chrome DevTools → Lighthouse Mobile. Objetivo: PWA 100, Performance 90+, Accessibility 90+, Best Practices 90+. Anotar el score en PHASE_3_REPORT.md.
-- [ ] Crear proyecto Supabase de producción + activar Email + Google OAuth providers + `npx supabase db push`.
-- [ ] Importar repo en Vercel (root: `client-pulsefit`, framework: Vite, vars VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, VITE_APP_ENV=production).
+### 🚨 Inmediato — aplicar migración Fase 4 a Supabase prod
+- [ ] Ejecutar [supabase/migrations/20260608000000_add_consent_timestamps.sql](../supabase/migrations/20260608000000_add_consent_timestamps.sql) en https://supabase.com/dashboard/project/jhktlubijlyzswldmncu/sql/new. Es un ALTER TABLE simple con IF NOT EXISTS, idempotente.
+- [ ] Después de aplicar: verificar en `profiles` que aparecieron las columnas `accepted_terms_at` y `accepted_privacy_at`.
+- [ ] Probar el onboarding completo desde la URL de Vercel (login → 7 pasos → home con tu plan calculado).
 
-### Para arrancar Fase 4
-- [ ] Leer [files/formulas-nutricion.md](formulas-nutricion.md) (fórmulas de Lucía).
-- [ ] Crear `src/features/nutrition-engine/` con `tmb.ts`, `get.ts`, `macros.ts`, `safety.ts` + tests unitarios.
-- [ ] Crear `src/store/onboarding.ts` Zustand persist para el estado del flujo.
-- [ ] Crear las 7 páginas en `src/pages/onboarding/Step1Welcome.tsx` … `Step7Review.tsx` (sustituir el placeholder `OnboardingShell`).
-- [ ] Extender `src/store/auth.ts` para guardar tmb/get/macros vía `updateProfile`.
+### Para Fase 3 (auditoría manual pendiente)
+- [ ] Auditoría Lighthouse desde la URL de Vercel → Chrome DevTools Mobile. Anotar scores en PHASE_3_REPORT.md.
+
+### Para arrancar Fase 5 (motor meal-generator)
+- [ ] Leer [files/generadores-hibridos.md](generadores-hibridos.md) ANTES de tocar código (CRÍTICO).
+- [ ] Crear `src/features/meal-generator/` con las 7 capas: nutritional-target, ingredient-pool, component-selector, ai-plate-composer, plate-validator, fallback-templates, types.
+- [ ] Crear Edge Function `supabase/functions/generate-meal-options/` siguiendo el patrón de `_shared/cors.ts` + `jsonRes`.
+- [ ] Configurar `GROQ_API_KEY` con `npx supabase secrets set`.
+- [ ] Tests unitarios > 90% cobertura en el motor (lista en generadores-hibridos.md sección 11).
 - [ ] Test E2E completo: register → onboarding 7 pasos → home con datos reales.
 
 ---
@@ -117,6 +118,57 @@ Detalle completo (flujos paso a paso, prompts exactos a Groq, reglas del validad
 ---
 
 ## 📜 Bitácora de cambios
+
+### 2026-06-08 — Fase 4 completada (Onboarding 7 pasos + motor nutrition-engine) y en producción
+
+**Decisión arquitectónica al inicio de Fase 4:**
+- Google OAuth funciona como autoregister: usuario nuevo se crea automáticamente vía trigger `handle_new_user`. El consent (términos + privacidad) se captura en Step 1 del onboarding para todos por igual — flujo unificado email/Google.
+
+**Migración SQL nueva:**
+- [supabase/migrations/20260608000000_add_consent_timestamps.sql](../supabase/migrations/20260608000000_add_consent_timestamps.sql): agrega `accepted_terms_at` y `accepted_privacy_at` a `profiles`. Idempotente (IF NOT EXISTS).
+- Falta aplicar en Supabase prod manualmente vía SQL Editor.
+
+**Motor `nutrition-engine` (8 archivos + 30 tests):**
+- [tmb.ts](../client-pulsefit/src/features/nutrition-engine/tmb.ts): Mifflin-St Jeor para male/female/prefer_not_to_say (este último usa promedio).
+- [get.ts](../client-pulsefit/src/features/nutrition-engine/get.ts): factores de actividad estándar 1.2 / 1.375 / 1.55 / 1.725 / 1.9.
+- [target-kcal.ts](../client-pulsefit/src/features/nutrition-engine/target-kcal.ts): déficit 20% lose, superávit 12% gain, GET intacto para maintain y feel_better.
+- [macros.ts](../client-pulsefit/src/features/nutrition-engine/macros.ts): proteína 2.0/1.8/1.6/1.2 g/kg por goal, grasas máx(0.8g/kg, 25% kcal), carbos cierran el balance (nunca negativos).
+- [safety.ts](../client-pulsefit/src/features/nutrition-engine/safety.ts): límites no negociables: min 1200 kcal female / 1500 male / 1350 neutral, pérdida máx 1%/sem, plazo mín 2 sem, goal_inverted. Mensajes compasivos con suggestedAdjustment.
+- [hydration.ts](../client-pulsefit/src/features/nutrition-engine/hydration.ts): 35ml × kg, redondeo a 50ml, mínimo 1500ml.
+- [recalc-triggers.ts](../client-pulsefit/src/features/nutrition-engine/recalc-triggers.ts): detecta cuándo recalcular (Δpeso ≥2kg, 4 semanas, cambio de activity o goal).
+- [summary.ts](../client-pulsefit/src/features/nutrition-engine/summary.ts): orquestador puro `computeNutritionSummary` que devuelve TODO lo que se persiste en `profiles`.
+- [nutrition-engine.test.ts](../client-pulsefit/src/features/nutrition-engine/nutrition-engine.test.ts): 30 tests cubriendo TMB, GET, target kcal, macros, safety, hidratación, recalc-triggers y summary.
+
+**Store + validaciones + componentes shared:**
+- [src/store/onboarding.ts](../client-pulsefit/src/store/onboarding.ts): `useOnboardingStore` Zustand persist con step + data + next/back/update/reset.
+- [src/validations/onboardingSchemas.ts](../client-pulsefit/src/validations/onboardingSchemas.ts): 7 schemas zod (uno por step) con mensajes en español compasivo (nunca "obligatorio", siempre "necesitamos saber").
+- [src/config/onboarding-options.ts](../client-pulsefit/src/config/onboarding-options.ts): catálogos centralizados (GOAL, SEX, ACTIVITY, FITNESS_LEVEL, COOKS, BUDGET, EQUIPMENT, MEDICAL, DIETARY_RESTRICTIONS, WEEK_DAYS).
+- Componentes [src/components/onboarding/](../client-pulsefit/src/components/onboarding/): StepProgress, OnboardingFooter, OnboardingLayout, OptionCard.
+
+**Las 7 páginas del wizard:**
+- Step 1 — Welcome con términos + privacidad (checkboxes obligatorios).
+- Step 2 — Objetivo (cards con emojis) + meta peso/fecha si lose/gain.
+- Step 3 — Cuerpo (edad, sexo, altura, peso, condiciones médicas).
+- Step 4 — Actividad (nivel actividad + fitness level).
+- Step 5 — Dieta (cocina, restricciones, alergias, presupuesto).
+- Step 6 — Horario (botones de días en círculo, slider de minutos, equipamiento con "none/gym_full" exclusivos).
+- Step 7 — Review (cálculo en vivo, validación visible con CTA "Ajustar mi meta" si falla, persist a `profiles` + reset store + redirect a /home).
+
+**Sub-router:**
+- [src/pages/onboarding/OnboardingRouter.tsx](../client-pulsefit/src/pages/onboarding/OnboardingRouter.tsx): rutas /onboarding/1..7 + redirect a /1 por default.
+- `App.tsx` reemplaza `OnboardingShell` por `OnboardingRouter` en la ruta `/onboarding/*`.
+
+**Verificación final:**
+- ✅ `pnpm test` → 52/52 verdes (30 nuevos del motor + 22 previos).
+- ✅ `pnpm lint` → 0 errores, 2 warnings inocuos de react-refresh.
+- ✅ `pnpm build` → 787 KiB precache, sw.js generado.
+- ✅ `pnpm exec tsc -b --noEmit` → 0 errores strict.
+
+**Deploy:**
+- Commit `6949747` pusheado a `main`. Vercel auto-redeploya.
+- Hay que aplicar la migración SQL nueva manualmente en Supabase prod antes de que el onboarding pueda persistir los timestamps de consent (los demás campos ya están en la tabla original).
+
+**Próximo paso:** aplicar SQL + probar onboarding completo en producción, luego arrancar Fase 5 (motor `meal-generator` siguiendo `generadores-hibridos.md`).
 
 ### 2026-05-06 — Estrategia de generadores híbridos definida
 
