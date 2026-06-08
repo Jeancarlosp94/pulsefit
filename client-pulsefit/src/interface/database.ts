@@ -43,6 +43,8 @@ export interface ProfileRow {
    onboarding_completed: boolean
    region: string
    locale: string
+   accepted_terms_at: string | null
+   accepted_privacy_at: string | null
    created_at: string
    updated_at: string
 }

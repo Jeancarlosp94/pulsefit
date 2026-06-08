@@ -7,7 +7,7 @@ import {
    RegisterPage,
    ForgotPasswordPage,
    HomePage,
-   OnboardingShell,
+   OnboardingRouter,
    ProfilePage,
    PlanPage,
    RegistrarPage,
@@ -83,18 +83,10 @@ const App = () => {
                }
             />
             <Route
-               path='/onboarding'
-               element={
-                  <AuthRoute>
-                     <OnboardingShell />
-                  </AuthRoute>
-               }
-            />
-            <Route
                path='/onboarding/*'
                element={
                   <AuthRoute>
-                     <OnboardingShell />
+                     <OnboardingRouter />
                   </AuthRoute>
                }
             />
