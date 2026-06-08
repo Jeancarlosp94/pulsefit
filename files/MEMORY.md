@@ -14,15 +14,15 @@
 
 ## 🎯 Estado actual
 
-**Fase actual:** Fases 1-4 completas. App en producción (Vercel + Supabase prod). Lista para arrancar Fase 5.
+**Fase actual:** Fases 1-5 completas en código. App en producción (Vercel + Supabase prod). Pendiente: deploy de Edge Function `generate-meal-options`. Lista para Fase 6.
 - [x] Fase 1 — Setup base ✅
 - [x] Fase 2 — Diseño y componentes base ✅
 - [x] Fase 3 — Auth + Estructura + PWA operativa ✅
 - [x] Fase 3.5 — Offline y PWA polish ✅ (Lighthouse pendiente de auditoría manual)
 - [x] Fase 3.6 — Testing y CI/CD ✅
 - [x] Fase 4 — Onboarding completo + cálculos nutricionales ✅
-- [ ] Fase 5 — Motor de plan de comidas con generador híbrido 👈 SIGUIENTE
-- [ ] Fase 6 — Motor de plan de entrenamiento con generador híbrido
+- [x] Fase 5 — Motor `meal-generator` híbrido + Edge Function ✅ (deploy pendiente)
+- [ ] Fase 6 — Motor `routine-generator` con generador híbrido 👈 SIGUIENTE
 - [ ] Fase 7 — Home dinámico + registro rápido
 - [ ] Fase 8 — Sistema de rescates adaptativos
 - [ ] Fase 9 — Progreso, gráficas, logros
@@ -31,29 +31,37 @@
 - [ ] Fase 12 — Beta cerrada
 
 **Última actualización:** 2026-06-08
-**Última tarea trabajada:** Fase 4 cerrada — onboarding 7 pasos + motor `nutrition-engine` + migración consent. Push commit `6949747`.
-**Verificación final:** ✅ build limpio (787 KiB), ✅ 52/52 tests, ✅ lint 0 errores, ✅ tsc strict OK.
-**Producción:** repo en `Jeancarlosp94/pulsefit` (GitHub), Supabase prod en `jhktlubijlyzswldmncu`, app en Vercel.
+**Última tarea trabajada:** Fase 5 cerrada — motor `meal-generator` (32 tests) + Edge Function `generate-meal-options` con cascada Groq → Gemini → fallback + PlanPage demo. Push commit `bb91751`.
+**Verificación final:** ✅ build limpio (797 KiB), ✅ 84/84 tests, ✅ lint 0 errores, ✅ tsc strict OK.
+**Producción:** repo en `Jeancarlosp94/pulsefit` (GitHub), Supabase prod en `jhktlubijlyzswldmncu`, app en Vercel, Groq + Gemini secrets configurados.
 
 ---
 
 ## 📌 Pendientes inmediatos
 
-### 🚨 Inmediato — aplicar migración Fase 4 a Supabase prod
-- [ ] Ejecutar [supabase/migrations/20260608000000_add_consent_timestamps.sql](../supabase/migrations/20260608000000_add_consent_timestamps.sql) en https://supabase.com/dashboard/project/jhktlubijlyzswldmncu/sql/new. Es un ALTER TABLE simple con IF NOT EXISTS, idempotente.
-- [ ] Después de aplicar: verificar en `profiles` que aparecieron las columnas `accepted_terms_at` y `accepted_privacy_at`.
-- [ ] Probar el onboarding completo desde la URL de Vercel (login → 7 pasos → home con tu plan calculado).
+### 🚨 Inmediato — deploy de la Edge Function Fase 5
+
+```powershell
+cd "C:\Users\jeanc\OneDrive\Escritorio\pulsefit app"
+npx supabase login
+npx supabase link --project-ref jhktlubijlyzswldmncu
+npx supabase functions deploy generate-meal-options --project-ref jhktlubijlyzswldmncu
+```
+
+- [ ] Correr esos 3 comandos (login es interactivo en browser, una sola vez).
+- [ ] Verificar en https://supabase.com/dashboard/project/jhktlubijlyzswldmncu/functions que aparece `generate-meal-options` con status verde.
+- [ ] Probar desde Vercel: Plan → seleccionar comida → Generar → ver 3 opciones reales.
 
 ### Para Fase 3 (auditoría manual pendiente)
 - [ ] Auditoría Lighthouse desde la URL de Vercel → Chrome DevTools Mobile. Anotar scores en PHASE_3_REPORT.md.
 
-### Para arrancar Fase 5 (motor meal-generator)
-- [ ] Leer [files/generadores-hibridos.md](generadores-hibridos.md) ANTES de tocar código (CRÍTICO).
-- [ ] Crear `src/features/meal-generator/` con las 7 capas: nutritional-target, ingredient-pool, component-selector, ai-plate-composer, plate-validator, fallback-templates, types.
-- [ ] Crear Edge Function `supabase/functions/generate-meal-options/` siguiendo el patrón de `_shared/cors.ts` + `jsonRes`.
-- [ ] Configurar `GROQ_API_KEY` con `npx supabase secrets set`.
-- [ ] Tests unitarios > 90% cobertura en el motor (lista en generadores-hibridos.md sección 11).
-- [ ] Test E2E completo: register → onboarding 7 pasos → home con datos reales.
+### Para arrancar Fase 6 (motor `routine-generator`)
+- [ ] Re-leer [files/reglas-fitness.md](reglas-fitness.md) (reglas de Carlos: RPE, progresión, descansos, ejercicios prohibidos para principiantes).
+- [ ] Re-leer [files/generadores-hibridos.md](generadores-hibridos.md) secciones 5-7 (flujo + prompt + validador de rutinas).
+- [ ] Crear `src/features/routine-generator/` con misma estructura que `meal-generator`: types, session-planner, exercise-pool, exercise-selector, set-rep-calculator, ai-routine-organizer, routine-validator, fallback-templates.
+- [ ] Replicar el patrón de la Edge Function `generate-meal-options` para `generate-workout-session` (orquestador con cascada Groq → Gemini → fallback, rate limit 10/día).
+- [ ] Catálogo seed de ejercicios LATAM con clasificación por patrón y nivel.
+- [ ] Frontend: itfWorkouts + fntWorkouts + useGenerateWorkout + reemplazar placeholder de RegistrarPage o crear PlanWorkoutPage.
 
 ---
 
@@ -118,6 +126,48 @@ Detalle completo (flujos paso a paso, prompts exactos a Groq, reglas del validad
 ---
 
 ## 📜 Bitácora de cambios
+
+### 2026-06-08 (tarde) — Fase 5 completada (meal-generator + Edge Function + cascada Groq/Gemini)
+
+**Mesa de expertos sobre LLM:**
+- Debate Diego/Sara/Miguel/Andrea/Roberto/Lucía. Decisión: Groq + Llama 3.3 70B Versatile como primario, Gemini 2.0 Flash como fallback.
+- Razones: latencia top de Groq (~0.5s), free tier amplio (14.4k req/día), JSON mode nativo, instruction-following 95%. Gemini cubre el caso de Groq caído sin compartir rate limit.
+- Cascada: Groq → Groq retry con prompt más estricto → Gemini → fallback templates.
+
+**Motor `src/features/meal-generator/` (10 archivos, 32 tests verdes):**
+- [types.ts](../client-pulsefit/src/features/meal-generator/types.ts): Itf* del dominio + MEAL_DISTRIBUTION (25/35/30/5/5).
+- [nutritional-target.ts](../client-pulsefit/src/features/meal-generator/nutritional-target.ts): `computeMealTarget` distribuye macros diarias por meal_type.
+- [ingredient-pool.ts](../client-pulsefit/src/features/meal-generator/ingredient-pool.ts): filtra por dietary_restrictions (vegan/vegetarian/pescatarian/gluten_free/lactose_free/kosher/halal), dislikedFoods, allergies, budget_level. Prioriza por región.
+- [component-selector.ts](../client-pulsefit/src/features/meal-generator/component-selector.ts): `selectComponents` con cantidades clamp 30-400g, redondeo a 5g.
+- [compose-prompt.ts](../client-pulsefit/src/features/meal-generator/compose-prompt.ts): SYSTEM_PROMPT + buildUserPrompt + maxPrepTimeForUser (15/25/35 según cooksAtHome).
+- [plate-validator.ts](../client-pulsefit/src/features/meal-generator/plate-validator.ts): 9 reglas (JSON, conteo 3, campos, ingredientes permitidos con heurística, prep_time 5-60, steps 2-10, longitud 10-200, dificultad, palabras prohibidas).
+- [fallback-templates.ts](../client-pulsefit/src/features/meal-generator/fallback-templates.ts): 3 plantillas (bowl, al ajillo, salteado). El propio fallback pasa la validación del motor.
+- [seed-ingredients.ts](../client-pulsefit/src/features/meal-generator/seed-ingredients.ts): 26 ingredientes LATAM con macros reales.
+
+**Edge Function `supabase/functions/generate-meal-options/`:**
+- [_shared/cors.ts](../supabase/functions/_shared/cors.ts): corsHeaders + jsonRes reutilizables.
+- [_shared/meal-engine.ts](../supabase/functions/_shared/meal-engine.ts): motor portado a Deno (~430 líneas, mirror del frontend).
+- [_shared/seed-ingredients.ts](../supabase/functions/_shared/seed-ingredients.ts): mirror del seed.
+- [_shared/llm-providers.ts](../supabase/functions/_shared/llm-providers.ts): createGroqProvider (modelo llama-3.3-70b-versatile, response_format JSON) + createGeminiProvider (gemini-2.0-flash, responseMimeType JSON). Timeout 8s con AbortController.
+- [generate-meal-options/index.ts](../supabase/functions/generate-meal-options/index.ts): orquestador. Flujo completo: auth → profile → rate limit (30/día via pattern_insights) → computeMealTarget → filterIngredientPool → selectComponents → cascada (runCascade) → log a pattern_insights con tipo `meal_generated` o `ai_fallback_used`.
+
+**Frontend:**
+- [src/interface/itfMeals.ts](../client-pulsefit/src/interface/itfMeals.ts): ItfMealGenerationResponse, ItfGenerateMealParams, ItfMealComponentSummary.
+- [src/api/fntMeals.ts](../client-pulsefit/src/api/fntMeals.ts): fntGenerateMealOptions invoca la Edge Function. Maneja errores con contexto.
+- [src/hooks/useGenerateMeal.ts](../client-pulsefit/src/hooks/useGenerateMeal.ts): useMutation con toasts compasivos (mensaje distinto cuando source==='fallback').
+- [src/pages/plan/PlanPage.tsx](../client-pulsefit/src/pages/plan/PlanPage.tsx): UI demo con selector de meal_type, generate button, target macros, tabs de 3 opciones, ingredientes con cantidades y pasos numerados.
+
+**Verificación final:**
+- ✅ `pnpm test` → 84/84 verdes (32 nuevos del meal-generator + 52 previos).
+- ✅ `pnpm lint` → 0 errores.
+- ✅ `pnpm build` → 797 KiB precache.
+- ✅ `pnpm exec tsc -b --noEmit` → 0 errores strict.
+
+**Deploy:**
+- Commit `bb91751` pusheado a `main`. Vercel auto-redeploya el frontend.
+- Edge Function NO se deployó automáticamente: requiere `npx supabase login` interactivo + `functions deploy`. Documentado en Pendientes inmediatos.
+
+**Próximo paso real:** deploy de la Edge Function, luego arrancar Fase 6 (motor `routine-generator`).
 
 ### 2026-06-08 — Fase 4 completada (Onboarding 7 pasos + motor nutrition-engine) y en producción
 
