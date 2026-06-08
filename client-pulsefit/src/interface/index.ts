@@ -14,3 +14,4 @@ export type {
    ItfMealGenerationResponse,
    ItfGenerateMealParams
 } from './itfMeals'
+export type { ItfWorkoutGenerationResponse, ItfGenerateWorkoutParams } from './itfWorkouts'

@@ -10,3 +10,4 @@ export {
    fntUpdateProfile
 } from './fntAuth'
 export { fntGenerateMealOptions } from './fntMeals'
+export { fntGenerateWorkoutSession } from './fntWorkouts'
