@@ -65,15 +65,26 @@ export const fntGetCurrentMealPlan = async (): Promise<ItfMealPlan | null> => {
 
 const normalizeError = async (raw: unknown): Promise<Error> => {
    const e = raw as {
-      context?: { response?: Response; status?: number; msg?: string }
+      context?: Response | { response?: Response; status?: number; msg?: string }
       message?: string
    }
-   if (e.context?.msg) {
-      const wrapped = new Error(e.context.msg)
-      ;(wrapped as { status?: number }).status = e.context.status
+
+   /* FunctionsHttpError del SDK de Supabase expone la Response DIRECTAMENTE en
+    * `context`, no en `context.response`. Soportamos ambos formatos. */
+   const ctx = e.context
+   const directResponse = ctx instanceof Response ? ctx : undefined
+   const nestedResponse =
+      ctx && !(ctx instanceof Response) && (ctx as { response?: Response }).response
+   const nestedMsg = ctx && !(ctx instanceof Response) ? (ctx as { msg?: string }).msg : undefined
+   const nestedStatus =
+      ctx && !(ctx instanceof Response) ? (ctx as { status?: number }).status : undefined
+
+   if (nestedMsg) {
+      const wrapped = new Error(nestedMsg)
+      ;(wrapped as { status?: number }).status = nestedStatus
       return wrapped
    }
-   const response = e.context?.response
+   const response = directResponse ?? nestedResponse
    if (response instanceof Response) {
       const status = response.status
       let body: Record<string, unknown> | null = null
