@@ -217,17 +217,34 @@ serve(async (req) => {
                return
             }
 
+            /* Cada generateRecipe con su propio try/catch para que UNA falla
+             * no tire toda la cascada. En el peor caso esa receta cae a fallback. */
             const recipes = await Promise.all(
-               componentsList.map((components, idx) =>
-                  generateRecipe({
-                     providers,
-                     components,
-                     mealType,
-                     ctx,
-                     maxPrepTime,
-                     styleHint: STYLE_HINTS[idx % STYLE_HINTS.length]
-                  })
-               )
+               componentsList.map(async (components, idx) => {
+                  try {
+                     return await generateRecipeWithTimeout({
+                        providers,
+                        components,
+                        mealType,
+                        ctx,
+                        maxPrepTime,
+                        styleHint: STYLE_HINTS[idx % STYLE_HINTS.length],
+                        timeoutMs: 12_000
+                     })
+                  } catch (err) {
+                     console.error('[generate-meal-plan] recipe failed → fallback', {
+                        mealType,
+                        idx,
+                        err: err instanceof Error ? err.message : String(err)
+                     })
+                     const fb = buildMealFallback(components, mealType)
+                     return {
+                        option: fb[idx % fb.length],
+                        components,
+                        source: 'fallback' as const
+                     }
+                  }
+               })
             )
 
             /* Si faltan recetas (selectMultiple devolvió < 3), completar con fallback. */
@@ -348,7 +365,16 @@ serve(async (req) => {
 
       if (insertError) {
          console.error('[generate-meal-plan] insert error', insertError)
-         return jsonRes({ msg: 'No pudimos guardar el plan, intentemos de nuevo 🌿' }, 500)
+         /* Mostramos código + mensaje del error de Postgres para diagnóstico.
+          * 42P01 = relation does not exist (tabla meal_plans no migrada). */
+         const code = (insertError as { code?: string }).code ?? 'unknown'
+         const detail = (insertError as { message?: string }).message ?? 'sin detalle'
+         return jsonRes(
+            {
+               msg: `Error guardando plan (${code}): ${detail.slice(0, 200)}`
+            },
+            500
+         )
       }
 
       /* Log no bloqueante. */
@@ -462,3 +488,18 @@ const summarize = (c: MealComponents) => ({
          : null,
    actualMacros: c.actualMacros
 })
+
+const generateRecipeWithTimeout = (input: {
+   providers: LLMProvider[]
+   components: MealComponents
+   mealType: MealType
+   ctx: UserContextForMeal
+   maxPrepTime: number
+   styleHint: string
+   timeoutMs: number
+}): Promise<RecipeResult> => {
+   const timeoutPromise = new Promise<RecipeResult>((_, reject) =>
+      setTimeout(() => reject(new Error(`recipe-timeout-${input.timeoutMs}ms`)), input.timeoutMs)
+   )
+   return Promise.race([generateRecipe(input), timeoutPromise])
+}
