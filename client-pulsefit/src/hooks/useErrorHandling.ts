@@ -54,7 +54,7 @@ export const useErrorHandling = () => {
       const message = inferMessage(error)
 
       if (status === 401) {
-         toast.warning('Tu sesión expiró, vuelve a entrar 🌱')
+         toast.warning(message || 'Tu sesión expiró, vuelve a entrar 🌱')
          /* signOut sin await: la navegación gana. */
          void useAuthStore.getState().signOut()
          navigate('/login', { replace: true })
@@ -62,11 +62,24 @@ export const useErrorHandling = () => {
       }
 
       if (status === 404) {
-         toast('No encontramos eso 🍃')
+         toast(message || 'No encontramos eso 🍃')
+         return
+      }
+
+      if (status === 429) {
+         toast.warning(message || 'Esperá un poco antes de volver a intentar 🌿')
          return
       }
 
       if (status === 400 || status === 422 || status === 409) {
+         toast(message)
+         return
+      }
+
+      /* Si el message viene normalizado (con emoji), lo usamos en vez del genérico.
+       * Eso permite que mensajes específicos de Edge Functions lleguen al usuario. */
+      const isCompassionate = /[🌱🌿🍃📡💪🥗]/u.test(message)
+      if (isCompassionate) {
          toast(message)
          return
       }

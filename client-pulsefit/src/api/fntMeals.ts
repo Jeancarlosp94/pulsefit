@@ -7,6 +7,11 @@ import type { ItfGenerateMealParams, ItfMealGenerationResponse } from '@/interfa
  *
  * El cliente NUNCA llama a Groq/Gemini directamente. La API key vive solo en
  * Deno.env del Edge Function. Esta capa solo serializa el request.
+ *
+ * Cuando la Edge Function devuelve un error, el SDK de Supabase tira un
+ * `FunctionsHttpError` con la respuesta original en `context.response`.
+ * Esta función la lee para construir un Error con `.status` y `.message`
+ * que `useErrorHandling` pueda interpretar.
  */
 export const fntGenerateMealOptions = async (
    params: ItfGenerateMealParams
@@ -17,21 +22,63 @@ export const fntGenerateMealOptions = async (
    }>('generate-meal-options', { body: params })
 
    if (error) {
-      /* `error.context` puede traer el response real con nuestro `msg` compasivo. */
-      const ctx = (error as { context?: { msg?: string } }).context
-      if (ctx?.msg) {
-         const wrapped = new Error(ctx.msg)
-         ;(wrapped as { status?: number }).status = (
-            (error as { context?: { status?: number } }).context as {
-               status?: number
-            }
-         )?.status
-         throw wrapped
-      }
-      throw error
+      throw await normalizeFunctionsError(error)
    }
-   if (!data?.data) {
-      throw new Error('Respuesta inesperada del servidor 🌿')
-   }
+   if (!data?.data) throw new Error('Respuesta inesperada del servidor 🌿')
    return data.data
+}
+
+/**
+ * Normaliza un FunctionsHttpError / FunctionsRelayError / FunctionsFetchError
+ * en un Error con `status` y `message` interpretable por `useErrorHandling`.
+ */
+const normalizeFunctionsError = async (raw: unknown): Promise<Error> => {
+   const e = raw as {
+      name?: string
+      message?: string
+      context?: { response?: Response; status?: number; msg?: string }
+   }
+
+   /* Caso 1: ya nos pasó el contexto con msg (legado). */
+   if (e.context?.msg) {
+      const wrapped = new Error(e.context.msg)
+      ;(wrapped as { status?: number }).status = e.context.status
+      return wrapped
+   }
+
+   /* Caso 2: tenemos la Response cruda. La leemos como JSON o texto. */
+   const response = e.context?.response
+   if (response instanceof Response) {
+      const status = response.status
+      let body: { msg?: string } | null = null
+      try {
+         body = await response.clone().json()
+      } catch {
+         try {
+            const text = await response.clone().text()
+            body = { msg: text.slice(0, 200) }
+         } catch {
+            body = null
+         }
+      }
+      const msg =
+         body?.msg ||
+         (status === 404
+            ? 'Esa función todavía no está disponible 🍃'
+            : status === 401
+              ? 'Tu sesión expiró, vuelve a entrar 🌱'
+              : status === 429
+                ? 'Hoy ya generaste muchas opciones, descansemos 🌿'
+                : 'Algo no salió como esperábamos, intentemos de nuevo 🌿')
+      const wrapped = new Error(msg)
+      ;(wrapped as { status?: number }).status = status
+      return wrapped
+   }
+
+   /* Caso 3: error de red sin respuesta (CORS, timeout, función no existe). */
+   const networkMsg = e.message || 'No pudimos conectar con el servidor 📡'
+   const wrapped = new Error(networkMsg)
+   /* Lo etiquetamos como "503-ish" para que useErrorHandling lo trate como genérico. */
+   ;(wrapped as { status?: number }).status = 503
+   return wrapped
 }
