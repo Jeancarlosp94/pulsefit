@@ -234,24 +234,37 @@ const MIN_GRAMS_BY_CATEGORY = {
    fat_volumed: 15,
    vegetable: 80
 }
+/* Mínimos REDUCIDOS para snacks (target típico 100-250 kcal). */
+const MIN_GRAMS_BY_CATEGORY_SNACK = {
+   protein: 25,
+   carb: 20,
+   fat_concentrated: 3,
+   fat_volumed: 10,
+   vegetable: 30
+}
+
+const isSnack = (mt?: MealType): boolean => mt === 'snack_am' || mt === 'snack_pm'
 
 const isConcentratedFat = (ing: Ingredient): boolean =>
    ing.category === 'fat' && ing.kcalPer100g >= 700
 
-const minGramsFor = (ing: Ingredient): number => {
-   if (ing.category === 'protein') return MIN_GRAMS_BY_CATEGORY.protein
-   if (ing.category === 'carb') return MIN_GRAMS_BY_CATEGORY.carb
+const minGramsFor = (ing: Ingredient, mealType?: MealType): number => {
+   const t = isSnack(mealType) ? MIN_GRAMS_BY_CATEGORY_SNACK : MIN_GRAMS_BY_CATEGORY
+   if (ing.category === 'protein') return t.protein
+   if (ing.category === 'carb') return t.carb
    if (ing.category === 'fat') {
-      return isConcentratedFat(ing)
-         ? MIN_GRAMS_BY_CATEGORY.fat_concentrated
-         : MIN_GRAMS_BY_CATEGORY.fat_volumed
+      return isConcentratedFat(ing) ? t.fat_concentrated : t.fat_volumed
    }
-   if (ing.category === 'vegetable') return MIN_GRAMS_BY_CATEGORY.vegetable
+   if (ing.category === 'vegetable') return t.vegetable
    return 5
 }
 
-const clampForIngredient = (grams: number, ing: Ingredient): number => {
-   const min = minGramsFor(ing)
+const clampForIngredient = (
+   grams: number,
+   ing: Ingredient,
+   mealType?: MealType
+): number => {
+   const min = minGramsFor(ing, mealType)
    const rounded = Math.round(grams / 5) * 5
    return Math.max(min, Math.min(MAX_GRAMS, rounded))
 }
@@ -299,7 +312,8 @@ const sumMacros = (servings: IngredientServing[]): MacroTarget =>
 const buildCombination = (
    pool: Ingredient[],
    target: MacroTarget,
-   seed: number
+   seed: number,
+   mealType?: MealType
 ): MealComponents | null => {
    const proteins = pool.filter((p) => p.category === 'protein')
    const carbs = pool.filter((p) => p.category === 'carb')
@@ -314,19 +328,23 @@ const buildCombination = (
    const fat = pickByIndex(fats, seed + 2)
    const vegetable = veg.length ? pickByIndex(veg, seed + 3) : null
 
+   /* En snacks con target.fatsG < 5, grasa opcional. */
+   const fatOptional = isSnack(mealType) && target.fatsG < 5
+
    const proteinG = clampForIngredient(
       gramsForMacro(protein, 'protein', target.proteinG * 0.7),
-      protein
+      protein,
+      mealType
    )
    const carbG = clampForIngredient(
       gramsForMacro(carb, 'carb', target.carbsG * 0.7),
-      carb
+      carb,
+      mealType
    )
-   const fatG = clampForIngredient(
-      gramsForMacro(fat, 'fat', target.fatsG * 0.5),
-      fat
-   )
-   const vegG = vegetable ? clampForIngredient(120, vegetable) : 0
+   const fatG = fatOptional
+      ? 0
+      : clampForIngredient(gramsForMacro(fat, 'fat', target.fatsG * 0.5), fat, mealType)
+   const vegG = vegetable && !isSnack(mealType) ? clampForIngredient(120, vegetable, mealType) : 0
 
    const initialSum = sumMacros([
       { ingredient: protein, grams: proteinG },
@@ -340,8 +358,8 @@ const buildCombination = (
    const ratio = initialSum.kcal / Math.max(1, target.kcal)
    if (ratio > 1.15) {
       const factor = 1.15 / ratio
-      scaledCarbG = clampForIngredient(carbG * factor, carb)
-      scaledFatG = clampForIngredient(fatG * factor, fat)
+      scaledCarbG = clampForIngredient(carbG * factor, carb, mealType)
+      scaledFatG = fatOptional ? 0 : clampForIngredient(fatG * factor, fat, mealType)
    }
 
    const finalServings: IngredientServing[] = [
@@ -373,20 +391,26 @@ export const selectComponents = (input: {
    pool: Ingredient[]
    target: MacroTarget
    seed?: number
+   mealType?: MealType
 }): MealComponents | null => {
    const MAX_ATTEMPTS = 5
-   const MAX_ALLOWED_RATIO = 1.2
    const seed = input.seed ?? 0
+   const mealType = input.mealType
+   /* Tolerancia más amplia para snacks. */
+   const maxRatio = isSnack(mealType) ? 1.35 : 1.2
+   const minRatio = isSnack(mealType) ? 0.4 : 0.5
+   const tolUpper = isSnack(mealType) ? 1.25 : 1.15
+   const tolLower = isSnack(mealType) ? 0.75 : 0.85
 
    let best: MealComponents | null = null
    let bestErr = Infinity
 
    for (let i = 0; i < MAX_ATTEMPTS; i++) {
-      const candidate = buildCombination(input.pool, input.target, seed + i * 7)
+      const candidate = buildCombination(input.pool, input.target, seed + i * 7, mealType)
       if (!candidate) continue
       const ratio = candidate.actualMacros.kcal / Math.max(1, input.target.kcal)
       const err = Math.abs(ratio - 1)
-      if (ratio <= 1.15 && ratio >= 0.85) return candidate
+      if (ratio <= tolUpper && ratio >= tolLower) return candidate
       if (err < bestErr) {
          best = candidate
          bestErr = err
@@ -395,7 +419,7 @@ export const selectComponents = (input: {
 
    if (best) {
       const ratio = best.actualMacros.kcal / Math.max(1, input.target.kcal)
-      if (ratio > MAX_ALLOWED_RATIO || ratio < 0.5) return null
+      if (ratio > maxRatio || ratio < minRatio) return null
    }
    return best
 }
@@ -680,9 +704,11 @@ export const selectMultipleComponents = (input: {
    target: MacroTarget
    count?: number
    seed?: number
+   mealType?: MealType
 }): MealComponents[] => {
    const count = input.count ?? 3
    const seed = input.seed ?? 0
+   const mealType = input.mealType
    const results: MealComponents[] = []
    const usedProtein = new Set<string>()
    const usedCarb = new Set<string>()
@@ -712,7 +738,8 @@ export const selectMultipleComponents = (input: {
       const combo = selectComponents({
          pool: reducedPool,
          target: input.target,
-         seed: seed + i * 13
+         seed: seed + i * 13,
+         mealType
       })
       if (!combo) continue
       usedProtein.add(combo.protein.ingredient.id)

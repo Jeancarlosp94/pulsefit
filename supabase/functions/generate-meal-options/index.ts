@@ -199,7 +199,8 @@ serve(async (req) => {
          pool,
          target: mealTarget,
          count: 3,
-         seed
+         seed,
+         mealType
       })
       if (componentsList.length === 0) {
          return jsonRes(

@@ -2,7 +2,8 @@ import type {
    ItfIngredient,
    ItfIngredientServing,
    ItfMacroTarget,
-   ItfMealComponents
+   ItfMealComponents,
+   ItfMealType
 } from './types'
 
 interface SelectorInput {
@@ -10,13 +11,15 @@ interface SelectorInput {
    target: ItfMacroTarget
    /** seed determinístico para que los tests sean reproducibles. Default: 0. */
    seed?: number
+   /** Cuando es snack_am/snack_pm aplicamos mínimos reducidos y grasa opcional. */
+   mealType?: ItfMealType
 }
 
 /**
- * Mínimos por categoría según Lucía (fix del bug 1200 kcal):
+ * Mínimos por categoría según Lucía:
  *   - Proteína: 50g (porción visible de carne/pescado).
  *   - Carbo: 30g.
- *   - **Grasa concentrada (>700 kcal/100g): SIN MÍNIMO.** Cucharadas.
+ *   - Grasa concentrada (>700 kcal/100g): mín 5g (1 cucharada).
  *   - Grasa con volumen (aguacate, nueces): mín 15g.
  *   - Vegetal: 80g (puñado).
  */
@@ -31,20 +34,37 @@ const MIN_GRAMS_BY_CATEGORY: Record<
    vegetable: 80
 }
 
+/**
+ * Mínimos REDUCIDOS para snacks (target típico 100-250 kcal).
+ * Lucía aprobó: una porción de yogurt (100g), una manzana mediana (150g),
+ * un puñado de almendras (15g). Snacks NO requieren vegetal ni grasa pesada.
+ */
+const MIN_GRAMS_BY_CATEGORY_SNACK: Record<
+   'protein' | 'carb' | 'fat_concentrated' | 'fat_volumed' | 'vegetable',
+   number
+> = {
+   protein: 25,
+   carb: 20,
+   fat_concentrated: 3,
+   fat_volumed: 10,
+   vegetable: 30
+}
+
+const isSnack = (mt?: ItfMealType): boolean => mt === 'snack_am' || mt === 'snack_pm'
+
 const MAX_GRAMS = 400
 
 const isConcentratedFat = (ing: ItfIngredient): boolean =>
    ing.category === 'fat' && ing.kcalPer100g >= 700
 
-const minGramsFor = (ing: ItfIngredient): number => {
-   if (ing.category === 'protein') return MIN_GRAMS_BY_CATEGORY.protein
-   if (ing.category === 'carb') return MIN_GRAMS_BY_CATEGORY.carb
+const minGramsFor = (ing: ItfIngredient, mealType?: ItfMealType): number => {
+   const table = isSnack(mealType) ? MIN_GRAMS_BY_CATEGORY_SNACK : MIN_GRAMS_BY_CATEGORY
+   if (ing.category === 'protein') return table.protein
+   if (ing.category === 'carb') return table.carb
    if (ing.category === 'fat') {
-      return isConcentratedFat(ing)
-         ? MIN_GRAMS_BY_CATEGORY.fat_concentrated
-         : MIN_GRAMS_BY_CATEGORY.fat_volumed
+      return isConcentratedFat(ing) ? table.fat_concentrated : table.fat_volumed
    }
-   if (ing.category === 'vegetable') return MIN_GRAMS_BY_CATEGORY.vegetable
+   if (ing.category === 'vegetable') return table.vegetable
    return 5
 }
 
@@ -75,8 +95,8 @@ const gramsForMacro = (
    return (targetGrams / per100) * 100
 }
 
-const clampForIngredient = (grams: number, ing: ItfIngredient): number => {
-   const min = minGramsFor(ing)
+const clampForIngredient = (grams: number, ing: ItfIngredient, mealType?: ItfMealType): number => {
+   const min = minGramsFor(ing, mealType)
    const rounded = Math.round(grams / 5) * 5
    return Math.max(min, Math.min(MAX_GRAMS, rounded))
 }
@@ -89,7 +109,8 @@ const clampForIngredient = (grams: number, ing: ItfIngredient): number => {
 const buildCombination = (
    pool: ItfIngredient[],
    target: ItfMacroTarget,
-   seed: number
+   seed: number,
+   mealType?: ItfMealType
 ): ItfMealComponents | null => {
    const proteins = pool.filter((p) => p.category === 'protein')
    const carbs = pool.filter((p) => p.category === 'carb')
@@ -106,16 +127,27 @@ const buildCombination = (
    const fat = pickByIndex(fats, seed + 2)
    const vegetable = veg.length > 0 ? pickByIndex(veg, seed + 3) : null
 
+   /* En snacks con target de grasa muy bajo, OMITIMOS la grasa: snack típico
+    * = proteína + carbo + fruta, sin obligar una grasa que rebasaría el target.
+    * Decisión de Lucía: si target.fatsG < 5g, grasa opcional. */
+   const fatOptional = isSnack(mealType) && target.fatsG < 5
+
    /* Cálculo inicial pensado para que CADA macro aporte SOLO la fracción
-    * mayoritaria de su target. Esto deja espacio para que los otros
-    * ingredientes aporten el resto sin saturar. */
+    * mayoritaria de su target. */
    const proteinG = clampForIngredient(
       gramsForMacro(protein, 'protein', target.proteinG * 0.7),
-      protein
+      protein,
+      mealType
    )
-   const carbG = clampForIngredient(gramsForMacro(carb, 'carb', target.carbsG * 0.7), carb)
-   const fatG = clampForIngredient(gramsForMacro(fat, 'fat', target.fatsG * 0.5), fat)
-   const vegG = vegetable ? clampForIngredient(120, vegetable) : 0
+   const carbG = clampForIngredient(
+      gramsForMacro(carb, 'carb', target.carbsG * 0.7),
+      carb,
+      mealType
+   )
+   const fatG = fatOptional
+      ? 0
+      : clampForIngredient(gramsForMacro(fat, 'fat', target.fatsG * 0.5), fat, mealType)
+   const vegG = vegetable && !isSnack(mealType) ? clampForIngredient(120, vegetable, mealType) : 0
 
    const proteinServing: ItfIngredientServing = { ingredient: protein, grams: proteinG }
    const carbServing: ItfIngredientServing = { ingredient: carb, grams: carbG }
@@ -128,15 +160,14 @@ const buildCombination = (
 
    /* Escalado post-hoc: si nos pasamos del target +15%, escalamos
     * proporcionalmente carbo y grasa (no proteína, que ya está cerca del
-    * mínimo) hasta cuadrar. Si quedamos por debajo -15%, no escalamos
-    * para arriba (mejor cuadrar con porciones realistas). */
+    * mínimo) hasta cuadrar. */
    const ratio = initialSum.kcal / target.kcal
    let scaledCarbG = carbG
    let scaledFatG = fatG
    if (ratio > 1.15) {
       const factor = 1.15 / ratio
-      scaledCarbG = clampForIngredient(carbG * factor, carb)
-      scaledFatG = clampForIngredient(fatG * factor, fat)
+      scaledCarbG = clampForIngredient(carbG * factor, carb, mealType)
+      scaledFatG = fatOptional ? 0 : clampForIngredient(fatG * factor, fat, mealType)
    }
 
    const finalProteinServing: ItfIngredientServing = {
@@ -199,23 +230,28 @@ const sumMacros = (servings: ItfIngredientServing[]): ItfMacroTarget =>
 export const selectComponents = ({
    pool,
    target,
-   seed = 0
+   seed = 0,
+   mealType
 }: SelectorInput): ItfMealComponents | null => {
    const MAX_ATTEMPTS = 5
-   const MAX_ALLOWED_RATIO = 1.2
+   /* Tolerancia más amplia para snacks (target chico + porciones realistas
+    * empujan el ratio fácilmente fuera del rango "normal"). */
+   const maxRatio = isSnack(mealType) ? 1.35 : 1.2
+   const minRatio = isSnack(mealType) ? 0.4 : 0.5
+   const tolUpper = isSnack(mealType) ? 1.25 : 1.15
+   const tolLower = isSnack(mealType) ? 0.75 : 0.85
 
    let best: ItfMealComponents | null = null
    let bestErr = Infinity
 
    for (let i = 0; i < MAX_ATTEMPTS; i++) {
-      const candidate = buildCombination(pool, target, seed + i * 7)
+      const candidate = buildCombination(pool, target, seed + i * 7, mealType)
       if (!candidate) continue
 
       const ratio = candidate.actualMacros.kcal / Math.max(1, target.kcal)
       const err = Math.abs(ratio - 1)
 
-      if (ratio <= 1.15 && ratio >= 0.85) {
-         /* Dentro de tolerancia: devolver inmediatamente. */
+      if (ratio <= tolUpper && ratio >= tolLower) {
          return candidate
       }
 
@@ -225,10 +261,9 @@ export const selectComponents = ({
       }
    }
 
-   /* Si la mejor combinación encontrada excede ±20%, no la devolvemos. */
    if (best) {
       const ratio = best.actualMacros.kcal / Math.max(1, target.kcal)
-      if (ratio > MAX_ALLOWED_RATIO || ratio < 0.5) {
+      if (ratio > maxRatio || ratio < minRatio) {
          return null
       }
    }
@@ -265,12 +300,14 @@ export const selectMultipleComponents = ({
    pool,
    target,
    count = 3,
-   seed = 0
+   seed = 0,
+   mealType
 }: {
    pool: ItfIngredient[]
    target: ItfMacroTarget
    count?: number
    seed?: number
+   mealType?: ItfMealType
 }): ItfMealComponents[] => {
    const results: ItfMealComponents[] = []
    const usedProteinIds = new Set<string>()
@@ -304,7 +341,8 @@ export const selectMultipleComponents = ({
       const combo = selectComponents({
          pool: reducedPool,
          target,
-         seed: seed + i * 13
+         seed: seed + i * 13,
+         mealType
       })
       if (!combo) continue
 
