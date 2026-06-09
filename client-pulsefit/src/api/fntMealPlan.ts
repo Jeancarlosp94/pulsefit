@@ -76,31 +76,41 @@ const normalizeError = async (raw: unknown): Promise<Error> => {
    const response = e.context?.response
    if (response instanceof Response) {
       const status = response.status
-      let body: { msg?: string } | null = null
+      let body: Record<string, unknown> | null = null
+      let rawText = ''
       try {
-         body = await response.clone().json()
+         rawText = await response.clone().text()
+         body = JSON.parse(rawText)
       } catch {
-         try {
-            const text = await response.clone().text()
-            body = { msg: text.slice(0, 200) }
-         } catch {
-            body = null
-         }
+         body = null
       }
+      /* Logueamos a la consola del navegador para diagnóstico (no expone al usuario). */
+      console.error('[fntMealPlan] Edge Function error', { status, body, rawText })
+
+      const candidates = ['msg', 'message', 'error', 'error_description', 'details', 'hint']
+      const extracted = body
+         ? (candidates.map((k) => body?.[k]).find((v) => typeof v === 'string' && v.trim()) as
+              | string
+              | undefined)
+         : undefined
+
       const msg =
-         body?.msg ||
+         extracted ||
          (status === 404
-            ? 'Esa función todavía no está disponible 🍃'
+            ? 'La función generate-meal-plan no está deployada todavía 🍃'
             : status === 401
               ? 'Tu sesión expiró, vuelve a entrar 🌱'
               : status === 429
                 ? 'Hoy ya generaste muchas opciones, descansemos 🌿'
-                : 'Algo no salió como esperábamos, intentemos de nuevo 🌿')
+                : status >= 500
+                  ? `Error del servidor (${status}). Revisá que la migración meal_plans esté aplicada 🌿`
+                  : `No pudimos generar tu plan (HTTP ${status}). Intentemos de nuevo 🌿`)
       const wrapped = new Error(msg)
       ;(wrapped as { status?: number }).status = status
       return wrapped
    }
    const networkMsg = e.message || 'No pudimos conectar con el servidor 📡'
+   console.error('[fntMealPlan] Network/unknown error', raw)
    const wrapped = new Error(networkMsg)
    ;(wrapped as { status?: number }).status = 503
    return wrapped
