@@ -20,8 +20,15 @@ export { MEAL_DISTRIBUTION, MEAL_DISTRIBUTIONS, MEAL_MIN_KCAL } from './types'
 
 export { computeMealTarget, getActiveMealTypes } from './nutritional-target'
 export { filterIngredientPool, prioritizeByRegion } from './ingredient-pool'
-export { selectComponents, isWithinTolerance } from './component-selector'
-export { SYSTEM_PROMPT, buildUserPrompt, maxPrepTimeForUser } from './compose-prompt'
-export { validateMealResponse } from './plate-validator'
+export { selectComponents, selectMultipleComponents, isWithinTolerance } from './component-selector'
+export {
+   SYSTEM_PROMPT,
+   buildUserPrompt,
+   buildSinglePlatePrompt,
+   maxPrepTimeForUser,
+   STYLE_HINTS
+} from './compose-prompt'
+export { validateMealResponse, validateSinglePlate } from './plate-validator'
+export type { ItfSinglePlateValidation } from './plate-validator'
 export { buildMealFallback } from './fallback-templates'
 export { SEED_INGREDIENTS } from './seed-ingredients'

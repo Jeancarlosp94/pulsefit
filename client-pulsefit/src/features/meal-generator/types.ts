@@ -29,6 +29,11 @@ export interface ItfIngredient {
    tags: string[]
    /** Etiqueta de origen para auditoría. */
    source: 'openfoodfacts' | 'manual' | 'foods_cache'
+   /**
+    * meal_types apropiados para este ingrediente (validado por Lucía).
+    * Si está vacío o no se especifica, se asume apto para todos.
+    */
+   appropriateMealTypes?: ItfMealType[]
 }
 
 export interface ItfIngredientServing {

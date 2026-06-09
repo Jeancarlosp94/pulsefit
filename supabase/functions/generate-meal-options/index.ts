@@ -1,17 +1,14 @@
 /**
- * Edge Function: generate-meal-options
+ * Edge Function: generate-meal-options (v2)
  *
- * Orquesta el generador híbrido de comidas:
- *   1. Auth → load profile.
- *   2. Rate limit check (30 generaciones/usuario/día).
- *   3. nutritional-target → macros target de la comida.
- *   4. ingredient-pool → filtra el seed por perfil.
- *   5. component-selector → arma combinación con cantidades exactas.
- *   6. Cascada IA: Groq → Groq retry → Gemini → fallback templates.
- *   7. Valida la respuesta IA (rechazo si modifica cantidades/ingredientes).
- *   8. Devuelve `{ msg, data: { options, target, components, source } }`.
+ * Cambios v2:
+ *  - 3 opciones con VARIEDAD REAL (cada una tiene componentes distintos).
+ *  - Filtrado por meal_type (huevos/avena en desayuno, pollo/arroz en almuerzo).
+ *  - excluded_ingredient_ids para el botón "bloquear" del cliente.
+ *  - 3 llamadas IA en PARALELO (Promise.all). Latencia ≈ max(3) ≈ 1-2s.
+ *  - Cada opción puede caer a fallback de forma INDEPENDIENTE.
  *
- * Source of truth: files/generadores-hibridos.md (secciones 2-12).
+ * Source: files/generadores-hibridos.md
  */
 
 import { serve } from 'https://deno.land/std@0.208.0/http/server.ts'
@@ -20,15 +17,17 @@ import { corsHeaders, jsonRes } from '../_shared/cors.ts'
 import {
    computeMealTarget,
    filterIngredientPool,
-   selectComponents,
-   buildUserPrompt,
+   selectMultipleComponents,
+   buildSinglePlatePrompt,
    SYSTEM_PROMPT,
+   STYLE_HINTS,
    maxPrepTimeForUser,
-   validateMealResponse,
+   validateSinglePlate,
    buildMealFallback,
+   type MealComponents,
    type MealType,
-   type UserContextForMeal,
-   type MealComponents
+   type PlateOption,
+   type UserContextForMeal
 } from '../_shared/meal-engine.ts'
 import { SEED_INGREDIENTS } from '../_shared/seed-ingredients.ts'
 import {
@@ -47,6 +46,7 @@ interface RequestBody {
       carbsG: number
       fatsG: number
    }
+   excluded_ingredient_ids?: string[]
 }
 
 interface ProfileRow {
@@ -66,12 +66,16 @@ interface ProfileRow {
    onboarding_completed: boolean
 }
 
+interface OptionResult {
+   option: PlateOption
+   components: MealComponents
+   source: 'ai' | 'ai_retry' | 'fallback'
+}
+
 serve(async (req) => {
-   // CORS preflight
    if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
 
    try {
-      // 1 — Auth
       const authHeader = req.headers.get('Authorization')
       if (!authHeader) return jsonRes({ msg: 'No autorizado' }, 401)
 
@@ -88,13 +92,11 @@ serve(async (req) => {
       } = await supabase.auth.getUser()
       if (!user) return jsonRes({ msg: 'Sesión inválida, vuelve a entrar 🌱' }, 401)
 
-      // 2 — Body
       const body = (await req.json().catch(() => null)) as RequestBody | null
       if (!body?.meal_type) {
          return jsonRes({ msg: 'Falta el tipo de comida' }, 400)
       }
 
-      // 3 — Profile
       const { data: profile, error: profileError } = await supabase
          .from('profiles')
          .select(
@@ -118,7 +120,7 @@ serve(async (req) => {
          return jsonRes({ msg: 'Faltan datos calóricos en tu perfil 🌿' }, 400)
       }
 
-      // 4 — Rate limit (últimas 24h)
+      // Rate limit
       const today = new Date().toISOString().slice(0, 10)
       const { count } = await supabase
          .from('pattern_insights')
@@ -129,21 +131,18 @@ serve(async (req) => {
 
       if ((count ?? 0) >= MAX_GENERATIONS_PER_DAY) {
          return jsonRes(
-            {
-               msg:
-                  'Hoy ya generaste muchas opciones, descansemos un poco 🌿. Mañana seguimos.'
-            },
+            { msg: 'Hoy ya generaste muchas opciones, descansemos 🌿' },
             429
          )
       }
 
-      // 5 — Resolver el patrón alimentario del usuario
+      // Resolver patrón alimentario
       const mealsPerDayRaw = (p.meals_per_day ?? 3) as number
       const mealsPerDay = (
          [2, 3, 4, 5].includes(mealsPerDayRaw) ? mealsPerDayRaw : 3
       ) as 2 | 3 | 4 | 5
 
-      // 6 — Target macroespecífico (devuelve null si meal_type no aplica al patrón)
+      // Target macroespecífico (con validación de Lucía por mealsPerDay)
       const target = body.override_target ?? {
          kcal: p.target_kcal,
          proteinG: p.target_protein_g,
@@ -161,13 +160,13 @@ serve(async (req) => {
       if (!mealTarget) {
          return jsonRes(
             {
-               msg: `Esa comida no está en tu plan de ${mealsPerDay} comidas. Cambiá tu patrón o elige otra comida 🌿`
+               msg: `Esa comida no está en tu plan de ${mealsPerDay} comidas 🌿`
             },
             400
          )
       }
 
-      // 7 — User context
+      // User context
       const ctx: UserContextForMeal = {
          region: p.region ?? 'LATAM',
          goal: (p.goal as UserContextForMeal['goal']) ?? 'maintain',
@@ -179,82 +178,100 @@ serve(async (req) => {
          mealsPerDay
       }
 
-      // 7 — Pool + selector
-      const pool = filterIngredientPool(SEED_INGREDIENTS, ctx)
+      // Pool filtrado por meal_type + excluded
+      const pool = filterIngredientPool(SEED_INGREDIENTS, ctx, {
+         mealType: body.meal_type,
+         excludedIngredientIds: body.excluded_ingredient_ids ?? []
+      })
       if (pool.length < 4) {
          return jsonRes(
-            { msg: 'No tenemos suficientes ingredientes válidos para tu perfil 🌿' },
+            {
+               msg:
+                  'No tenemos suficientes ingredientes para esa comida. Probá quitar algún bloqueo 🌿'
+            },
             422
          )
       }
-      const seed = Math.floor(Math.random() * 100)
-      const components = selectComponents({ pool, target: mealTarget, seed })
-      if (!components) {
+
+      // 3 SETS DISTINTOS de componentes (variedad real)
+      const seed = Math.floor(Math.random() * 1000)
+      const componentsList = selectMultipleComponents({
+         pool,
+         target: mealTarget,
+         count: 3,
+         seed
+      })
+      if (componentsList.length === 0) {
          return jsonRes(
-            { msg: 'No encontramos una combinación válida, intentemos de nuevo 🌱' },
+            { msg: 'No encontramos combinaciones válidas, intentemos de nuevo 🌱' },
             500
          )
       }
 
-      // 8 — Prompt para IA
-      const userPrompt = buildUserPrompt({
-         components,
-         mealType: body.meal_type,
-         ctx,
-         maxPrepTime: maxPrepTimeForUser(ctx)
-      })
-      const allowedIngredients = [
-         components.protein.ingredient.name,
-         components.carb.ingredient.name,
-         components.fat.ingredient.name,
-         components.vegetable.ingredient.name
-      ].filter((n) => n)
-
-      // 9 — Cascada: Groq → Groq retry → Gemini → fallback
+      // Cascada IA en PARALELO: 1 llamada por opción, cada una con su set + estilo
       const groqKey = Deno.env.get('GROQ_API_KEY')
       const geminiKey = Deno.env.get('GEMINI_API_KEY')
       const providers: LLMProvider[] = []
       if (groqKey) providers.push(createGroqProvider(groqKey))
       if (geminiKey) providers.push(createGeminiProvider(geminiKey))
 
-      const cascade = await runCascade({
-         providers,
-         systemPrompt: SYSTEM_PROMPT,
-         userPrompt,
-         allowedIngredients
-      })
+      const maxPrepTime = maxPrepTimeForUser(ctx)
 
-      // 10 — Si todo falló: fallback determinístico
-      const options = cascade.options ?? buildMealFallback(components, body.meal_type)
-      const source: 'ai' | 'ai_retry' | 'fallback' = cascade.source
+      const optionResults = await Promise.all(
+         componentsList.map((components, idx) =>
+            generateOption({
+               providers,
+               components,
+               mealType: body.meal_type,
+               ctx,
+               maxPrepTime,
+               styleHint: STYLE_HINTS[idx % STYLE_HINTS.length]
+            })
+         )
+      )
 
-      // 11 — Log para análisis (no bloqueante)
+      // Garantizar 3 opciones — si selectMultiple devolvió < 3, completar con fallback
+      while (optionResults.length < 3 && componentsList.length > 0) {
+         const fillIdx = optionResults.length
+         const comp = componentsList[fillIdx % componentsList.length]
+         const fb = buildMealFallback(comp, body.meal_type)
+         optionResults.push({
+            option: fb[fillIdx % fb.length],
+            components: comp,
+            source: 'fallback'
+         })
+      }
+
+      const usedAi = optionResults.filter((r) => r.source !== 'fallback').length
+      const globalSource: 'ai' | 'ai_retry' | 'fallback' | 'mixed' =
+         usedAi === 3 ? 'ai' : usedAi === 0 ? 'fallback' : 'mixed'
+
+      // Log no bloqueante
       void supabase.from('pattern_insights').insert({
          user_id: user.id,
          pattern_type:
-            source === 'fallback' ? 'ai_fallback_used' : 'meal_generated',
-         description:
-            source === 'fallback'
-               ? `Fallback usado tras ${cascade.attempts} intentos. Última razón: ${cascade.lastFailureReason ?? 'unknown'}`
-               : `Generado por ${cascade.providerUsed ?? 'unknown'} en intento ${cascade.attempts}`,
+            globalSource === 'fallback' ? 'ai_fallback_used' : 'meal_generated',
+         description: `Generación v2 — fuente global: ${globalSource} (${usedAi}/3 con IA)`,
          data: {
             meal_type: body.meal_type,
-            source,
-            attempts: cascade.attempts,
-            provider_used: cascade.providerUsed,
-            last_failure_reason: cascade.lastFailureReason,
-            target: mealTarget,
-            components_summary: summarize(components)
+            meals_per_day: mealsPerDay,
+            source: globalSource,
+            excluded_count: body.excluded_ingredient_ids?.length ?? 0,
+            ai_count: usedAi,
+            target: mealTarget
          }
       })
 
       return jsonRes({
          msg: 'OK',
          data: {
-            options,
+            options: optionResults.map((r) => ({
+               ...r.option,
+               components: summarize(r.components),
+               source: r.source
+            })),
             target: mealTarget,
-            components: summarize(components),
-            source
+            source: globalSource
          }
       })
    } catch (e) {
@@ -271,68 +288,62 @@ serve(async (req) => {
 })
 
 // ============================================================
-//  CASCADA: Groq → Groq retry → Gemini → null (que activa fallback)
+//  Generar 1 opción: Groq → Groq retry → Gemini → fallback
 // ============================================================
-interface CascadeResult {
-   options: ReturnType<typeof buildMealFallback> | null
-   source: 'ai' | 'ai_retry' | 'fallback'
-   attempts: number
-   providerUsed: 'groq' | 'gemini' | null
-   lastFailureReason: string | null
-}
-
-const runCascade = async (input: {
+const generateOption = async (input: {
    providers: LLMProvider[]
-   systemPrompt: string
-   userPrompt: string
-   allowedIngredients: string[]
-}): Promise<CascadeResult> => {
+   components: MealComponents
+   mealType: MealType
+   ctx: UserContextForMeal
+   maxPrepTime: number
+   styleHint: string
+}): Promise<OptionResult> => {
+   const userPrompt = buildSinglePlatePrompt({
+      components: input.components,
+      mealType: input.mealType,
+      ctx: input.ctx,
+      maxPrepTime: input.maxPrepTime,
+      styleHint: input.styleHint
+   })
+   const allowedIngredients = [
+      input.components.protein.ingredient.name,
+      input.components.carb.ingredient.name,
+      input.components.fat.ingredient.name,
+      input.components.vegetable.ingredient.name
+   ].filter(Boolean)
+
    const groq = input.providers.find((p) => p.name === 'groq')
    const gemini = input.providers.find((p) => p.name === 'gemini')
 
-   let attempts = 0
-   let lastFailureReason: string | null = null
-
-   // Intento 1 — Groq
    if (groq) {
-      attempts++
-      const r1 = await tryOnce(groq, input.systemPrompt, input.userPrompt, input.allowedIngredients)
+      const r1 = await tryOnce(groq, SYSTEM_PROMPT, userPrompt, allowedIngredients)
       if (r1.ok) {
-         return { options: r1.options, source: 'ai', attempts, providerUsed: 'groq', lastFailureReason }
+         return { option: r1.option, components: input.components, source: 'ai' }
       }
-      lastFailureReason = r1.reason
-
-      // Intento 2 — Groq retry con prompt más estricto
-      attempts++
       const r2 = await tryOnce(
          groq,
-         input.systemPrompt + `\n\nATENCIÓN: en el intento anterior fallaste por "${r1.reason}". No repitas ese error.`,
-         input.userPrompt,
-         input.allowedIngredients
+         SYSTEM_PROMPT + `\n\nATENCIÓN: en el intento anterior fallaste por "${r1.reason}". No repitas ese error.`,
+         userPrompt,
+         allowedIngredients
       )
       if (r2.ok) {
-         return { options: r2.options, source: 'ai_retry', attempts, providerUsed: 'groq', lastFailureReason }
+         return { option: r2.option, components: input.components, source: 'ai_retry' }
       }
-      lastFailureReason = r2.reason
    }
-
-   // Intento 3 — Gemini fallback
    if (gemini) {
-      attempts++
-      const r3 = await tryOnce(gemini, input.systemPrompt, input.userPrompt, input.allowedIngredients)
+      const r3 = await tryOnce(gemini, SYSTEM_PROMPT, userPrompt, allowedIngredients)
       if (r3.ok) {
-         return { options: r3.options, source: 'ai_retry', attempts, providerUsed: 'gemini', lastFailureReason }
+         return { option: r3.option, components: input.components, source: 'ai_retry' }
       }
-      lastFailureReason = r3.reason
    }
 
-   // Todo falló: orquestador usa plantillas
+   // Fallback determinístico: usa una de las 3 plantillas
+   const fb = buildMealFallback(input.components, input.mealType)
+   const styleIdx = STYLE_HINTS.indexOf(input.styleHint as (typeof STYLE_HINTS)[number])
    return {
-      options: null,
-      source: 'fallback',
-      attempts,
-      providerUsed: null,
-      lastFailureReason
+      option: fb[Math.max(0, styleIdx) % fb.length],
+      components: input.components,
+      source: 'fallback'
    }
 }
 
@@ -341,36 +352,30 @@ const tryOnce = async (
    systemPrompt: string,
    userPrompt: string,
    allowedIngredients: string[]
-): Promise<
-   | { ok: true; options: ReturnType<typeof buildMealFallback> }
-   | { ok: false; reason: string }
-> => {
+): Promise<{ ok: true; option: PlateOption } | { ok: false; reason: string }> => {
    try {
       const res = await provider.generate({ systemPrompt, userPrompt })
-      const validation = validateMealResponse({
+      const validation = validateSinglePlate({
          raw: res.raw,
          allowedIngredients
       })
       if (!validation.valid) {
          return { ok: false, reason: `validation:${validation.reason}` }
       }
-      return { ok: true, options: validation.options }
+      return { ok: true, option: validation.option }
    } catch (e) {
       const msg = e instanceof Error ? e.message : 'unknown'
       return { ok: false, reason: `network:${msg.slice(0, 80)}` }
    }
 }
 
-// ============================================================
-//  HELPERS
-// ============================================================
 const summarize = (c: MealComponents) => ({
-   protein: { name: c.protein.ingredient.name, grams: c.protein.grams },
-   carb: { name: c.carb.ingredient.name, grams: c.carb.grams },
-   fat: { name: c.fat.ingredient.name, grams: c.fat.grams },
+   protein: { id: c.protein.ingredient.id, name: c.protein.ingredient.name, grams: c.protein.grams },
+   carb: { id: c.carb.ingredient.id, name: c.carb.ingredient.name, grams: c.carb.grams },
+   fat: { id: c.fat.ingredient.id, name: c.fat.ingredient.name, grams: c.fat.grams },
    vegetable:
       c.vegetable.grams > 0
-         ? { name: c.vegetable.ingredient.name, grams: c.vegetable.grams }
+         ? { id: c.vegetable.ingredient.id, name: c.vegetable.ingredient.name, grams: c.vegetable.grams }
          : null,
    actualMacros: c.actualMacros
 })

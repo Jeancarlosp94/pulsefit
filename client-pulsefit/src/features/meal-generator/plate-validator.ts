@@ -1,5 +1,9 @@
 import type { ItfPlateOption, ItfValidationResult, ItfValidationFail } from './types'
 
+export type ItfSinglePlateValidation =
+   | { valid: true; option: ItfPlateOption }
+   | { valid: false; reason: ItfValidationFail['reason']; detail?: string }
+
 /**
  * Palabras prohibidas en la respuesta de IA. Implementan los principios del
  * proyecto: cero punitivismo, cero consejo médico, cero promesas estéticas.
@@ -144,4 +148,73 @@ export const validateMealResponse = ({
    }
 
    return { valid: true, options: opts }
+}
+
+/**
+ * Valida UNA opción individual (cuando el orquestador genera las 3 opciones
+ * por separado con Promise.all). Reglas idénticas a `validateMealResponse`
+ * pero aplicadas a un solo plato.
+ */
+export const validateSinglePlate = ({
+   raw,
+   allowedIngredients
+}: ValidateInput): ItfSinglePlateValidation => {
+   let parsed: Partial<ItfPlateOption>
+   try {
+      parsed = JSON.parse(raw)
+   } catch {
+      return { valid: false, reason: 'invalid_json' }
+   }
+
+   if (
+      !parsed ||
+      typeof parsed.name !== 'string' ||
+      typeof parsed.description !== 'string' ||
+      typeof parsed.prep_time_min !== 'number' ||
+      typeof parsed.difficulty !== 'string' ||
+      !Array.isArray(parsed.steps)
+   ) {
+      return { valid: false, reason: 'missing_fields' }
+   }
+
+   if (parsed.prep_time_min < 5 || parsed.prep_time_min > 60) {
+      return { valid: false, reason: 'prep_time_out_of_range' }
+   }
+   if (parsed.steps.length < 2 || parsed.steps.length > 10) {
+      return { valid: false, reason: 'steps_out_of_range' }
+   }
+   const badStep = parsed.steps.find(
+      (s) => typeof s !== 'string' || s.length < 10 || s.length > 200
+   )
+   if (badStep !== undefined) return { valid: false, reason: 'step_length' }
+
+   if (!['easy', 'medium', 'hard'].includes(parsed.difficulty)) {
+      return { valid: false, reason: 'bad_difficulty' }
+   }
+
+   const fullText = [parsed.name, parsed.description, ...parsed.steps].join(' ').toLowerCase()
+   const forbidden = FORBIDDEN_WORDS.find((w) => fullText.includes(w))
+   if (forbidden) return { valid: false, reason: 'forbidden_words', detail: forbidden }
+
+   const allowed = allowedIngredients.map((s) => s.toLowerCase().trim())
+   const tokens = fullText.split(/[\s,.;:()¡!¿?\n]+/u).filter((t) => t.length >= 4)
+   const unknown = tokens.find(
+      (t) =>
+         FOOD_HEURISTIC.test(t) &&
+         !FREE_USE.has(t) &&
+         allowed.every((a) => !a.includes(t) && !t.includes(a)) &&
+         ['azúcar', 'queso', 'mantequilla', 'crema', 'tocino', 'jamón', 'salchicha'].includes(t)
+   )
+   if (unknown) return { valid: false, reason: 'unknown_ingredient', detail: unknown }
+
+   return {
+      valid: true,
+      option: {
+         name: parsed.name,
+         description: parsed.description,
+         prep_time_min: parsed.prep_time_min,
+         difficulty: parsed.difficulty as ItfPlateOption['difficulty'],
+         steps: parsed.steps as string[]
+      }
+   }
 }

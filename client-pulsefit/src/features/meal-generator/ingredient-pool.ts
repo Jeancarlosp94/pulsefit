@@ -1,4 +1,4 @@
-import type { ItfIngredient, ItfUserContextForMeal } from './types'
+import type { ItfIngredient, ItfMealType, ItfUserContextForMeal } from './types'
 
 /**
  * Mapeo de restricciones dietarias a tags que un ingrediente NO debe llevar.
@@ -42,8 +42,15 @@ const BUDGET_ALLOWED: Record<'low' | 'medium' | 'high', (tag: string | undefined
  */
 export const filterIngredientPool = (
    pool: ItfIngredient[],
-   ctx: ItfUserContextForMeal
+   ctx: ItfUserContextForMeal,
+   options?: {
+      mealType?: ItfMealType
+      excludedIngredientIds?: string[]
+   }
 ): ItfIngredient[] => {
+   const excluded = new Set(options?.excludedIngredientIds ?? [])
+   const mealType = options?.mealType
+
    const forbiddenTags = new Set<string>()
    ctx.dietaryRestrictions.forEach((r) => {
       RESTRICTION_TO_FORBIDDEN_TAGS[r]?.forEach((tag) => forbiddenTags.add(tag))
@@ -60,8 +67,18 @@ export const filterIngredientPool = (
    const budgetCheck = BUDGET_ALLOWED[ctx.budgetLevel]
 
    return pool.filter((ing) => {
-      // 6 — macros conocidos
-      if (ing.kcalPer100g <= 0) return false
+      // 7 — excluido por el usuario en esta sesión (botón X)
+      if (excluded.has(ing.id)) return false
+
+      // 6 — macros conocidos (condimentos pueden tener 0 kcal como la sal)
+      if (ing.kcalPer100g <= 0 && ing.category !== 'condiment') return false
+
+      // 8 — adecuación por meal_type (Lucía). Si el ingrediente no especifica
+      // appropriateMealTypes, lo consideramos apto para todas (default permisivo
+      // para condimentos y casos no taggeados).
+      if (mealType && ing.appropriateMealTypes && ing.appropriateMealTypes.length > 0) {
+         if (!ing.appropriateMealTypes.includes(mealType)) return false
+      }
 
       // 1 — tags prohibidos por restricción
       const tagsLower = ing.tags.map((t) => t.toLowerCase())

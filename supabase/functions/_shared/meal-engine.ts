@@ -44,6 +44,7 @@ export interface Ingredient {
    fatsPer100g: number
    tags: string[]
    source: 'openfoodfacts' | 'manual' | 'foods_cache'
+   appropriateMealTypes?: MealType[]
 }
 
 export interface IngredientServing {
@@ -177,8 +178,15 @@ const BUDGET_ALLOWED: Record<
 
 export const filterIngredientPool = (
    pool: Ingredient[],
-   ctx: UserContextForMeal
+   ctx: UserContextForMeal,
+   options?: {
+      mealType?: MealType
+      excludedIngredientIds?: string[]
+   }
 ): Ingredient[] => {
+   const excluded = new Set(options?.excludedIngredientIds ?? [])
+   const mealType = options?.mealType
+
    const forbiddenTags = new Set<string>()
    ctx.dietaryRestrictions.forEach((r) => {
       RESTRICTION_TO_FORBIDDEN_TAGS[r]?.forEach((tag) => forbiddenTags.add(tag))
@@ -194,7 +202,11 @@ export const filterIngredientPool = (
    const budgetCheck = BUDGET_ALLOWED[ctx.budgetLevel]
 
    return pool.filter((ing) => {
-      if (ing.kcalPer100g <= 0) return false
+      if (excluded.has(ing.id)) return false
+      if (ing.kcalPer100g <= 0 && ing.category !== 'condiment') return false
+      if (mealType && ing.appropriateMealTypes && ing.appropriateMealTypes.length > 0) {
+         if (!ing.appropriateMealTypes.includes(mealType)) return false
+      }
       const tagsLower = ing.tags.map((t) => t.toLowerCase())
       if (tagsLower.some((t) => forbiddenTags.has(t))) return false
       if (disliked.has(ing.name.toLowerCase().trim())) return false
@@ -658,4 +670,218 @@ export const buildMealFallback = (
          ]
       }
    ]
+}
+
+// ============================================================
+//  MULTI-SET SELECTOR (variedad real entre las opciones)
+// ============================================================
+export const selectMultipleComponents = (input: {
+   pool: Ingredient[]
+   target: MacroTarget
+   count?: number
+   seed?: number
+}): MealComponents[] => {
+   const count = input.count ?? 3
+   const seed = input.seed ?? 0
+   const results: MealComponents[] = []
+   const usedProtein = new Set<string>()
+   const usedCarb = new Set<string>()
+   const usedFat = new Set<string>()
+   const usedVeg = new Set<string>()
+
+   const hasAll = (p: Ingredient[]) =>
+      p.some((x) => x.category === 'protein') &&
+      p.some((x) => x.category === 'carb') &&
+      p.some((x) => x.category === 'fat')
+
+   for (let i = 0; i < count; i++) {
+      const reduced = input.pool.filter((p) => {
+         if (p.category === 'protein') return !usedProtein.has(p.id)
+         if (p.category === 'carb') return !usedCarb.has(p.id)
+         if (p.category === 'fat') return !usedFat.has(p.id)
+         if (p.category === 'vegetable') return !usedVeg.has(p.id)
+         return true
+      })
+      const usePool = hasAll(reduced) ? reduced : input.pool
+      const combo = selectComponents({
+         pool: usePool,
+         target: input.target,
+         seed: seed + i * 13
+      })
+      if (!combo) continue
+      usedProtein.add(combo.protein.ingredient.id)
+      usedCarb.add(combo.carb.ingredient.id)
+      usedFat.add(combo.fat.ingredient.id)
+      if (combo.vegetable.grams > 0) usedVeg.add(combo.vegetable.ingredient.id)
+      results.push(combo)
+   }
+   return results
+}
+
+// ============================================================
+//  SINGLE PLATE PROMPT (Promise.all paralelo)
+// ============================================================
+const MEAL_TYPE_LABEL_FB: Record<MealType, string> = {
+   breakfast: 'desayuno',
+   lunch: 'almuerzo',
+   dinner: 'cena',
+   snack_am: 'media mañana',
+   snack_pm: 'media tarde'
+}
+const REGION_CUISINE_FB: Record<string, string> = {
+   LATAM: 'latinoamericana',
+   EU: 'mediterránea',
+   ASIA: 'asiática',
+   NA: 'norteamericana'
+}
+
+export const STYLE_HINTS = [
+   'bowl / plato unificado',
+   'al ajillo / estilo casero',
+   'salteado al wok / rápido'
+] as const
+
+export const buildSinglePlatePrompt = (input: {
+   components: MealComponents
+   mealType: MealType
+   ctx: UserContextForMeal
+   maxPrepTime: number
+   styleHint?: string
+}): string => {
+   const mealLabel = MEAL_TYPE_LABEL_FB[input.mealType]
+   const cuisine = REGION_CUISINE_FB[input.ctx.region] ?? 'mixta'
+   const lines = [
+      `- ${input.components.protein.ingredient.name}: ${input.components.protein.grams}g`,
+      `- ${input.components.carb.ingredient.name}: ${input.components.carb.grams}g`,
+      `- ${input.components.fat.ingredient.name}: ${input.components.fat.grams}g`,
+      input.components.vegetable.grams > 0
+         ? `- ${input.components.vegetable.ingredient.name}: ${input.components.vegetable.grams}g`
+         : null,
+      '- ajo, sal, pimienta, limón, hierbas frescas (libre uso)'
+   ]
+      .filter(Boolean)
+      .join('\n')
+   const stylePhrase = input.styleHint
+      ? `\n- Estilo de cocción sugerido: ${input.styleHint}.`
+      : ''
+   return `Genera UN plato para ${mealLabel} usando SOLO estos ingredientes:
+
+${lines}
+
+Restricciones:
+- Tiempo de preparación: máximo ${input.maxPrepTime} minutos
+- Cocina cultural: ${cuisine}
+- Dificultad: easy${stylePhrase}
+
+Devuelve JSON con esta estructura EXACTA (un solo plato, NO un array):
+
+{
+  "name": "nombre del plato (cálido, en español, sin emojis)",
+  "description": "descripción breve, 1 oración, máximo 120 caracteres",
+  "prep_time_min": número entero entre 5 y 60,
+  "difficulty": "easy" | "medium" | "hard",
+  "steps": ["paso 1", "paso 2", ...]
+}
+
+Restricciones del JSON:
+- "steps" debe tener entre 2 y 10 elementos.
+- Cada step entre 10 y 200 caracteres, en imperativo amable.`
+}
+
+// ============================================================
+//  SINGLE PLATE VALIDATOR
+// ============================================================
+export type SinglePlateValidation =
+   | { valid: true; option: PlateOption }
+   | { valid: false; reason: ValidationReason; detail?: string }
+
+const FORBIDDEN_WORDS_SP = [
+   'fallaste',
+   'incorrecto',
+   'malo',
+   'diagnóstico',
+   'enfermedad',
+   'cura',
+   'medicamento',
+   'tonificar',
+   'quemar grasa',
+   'transformación',
+   'antes y después',
+   'régimen estricto'
+]
+const FREE_USE_SP = new Set([
+   'sal',
+   'pimienta',
+   'ajo',
+   'limón',
+   'limon',
+   'agua',
+   'hierbas',
+   'orégano',
+   'tomillo',
+   'cilantro',
+   'perejil',
+   'comino',
+   'aceite',
+   'vinagre'
+])
+
+export const validateSinglePlate = (input: {
+   raw: string
+   allowedIngredients: string[]
+}): SinglePlateValidation => {
+   let parsed: Partial<PlateOption>
+   try {
+      parsed = JSON.parse(input.raw)
+   } catch {
+      return { valid: false, reason: 'invalid_json' }
+   }
+   if (
+      !parsed ||
+      typeof parsed.name !== 'string' ||
+      typeof parsed.description !== 'string' ||
+      typeof parsed.prep_time_min !== 'number' ||
+      typeof parsed.difficulty !== 'string' ||
+      !Array.isArray(parsed.steps)
+   ) {
+      return { valid: false, reason: 'missing_fields' }
+   }
+   if (parsed.prep_time_min < 5 || parsed.prep_time_min > 60) {
+      return { valid: false, reason: 'prep_time_out_of_range' }
+   }
+   if (parsed.steps.length < 2 || parsed.steps.length > 10) {
+      return { valid: false, reason: 'steps_out_of_range' }
+   }
+   const badStep = parsed.steps.find(
+      (s) => typeof s !== 'string' || s.length < 10 || s.length > 200
+   )
+   if (badStep !== undefined) return { valid: false, reason: 'step_length' }
+   if (!['easy', 'medium', 'hard'].includes(parsed.difficulty)) {
+      return { valid: false, reason: 'bad_difficulty' }
+   }
+   const fullText = [parsed.name, parsed.description, ...parsed.steps].join(' ').toLowerCase()
+   const forbidden = FORBIDDEN_WORDS_SP.find((w) => fullText.includes(w))
+   if (forbidden) return { valid: false, reason: 'forbidden_words', detail: forbidden }
+
+   const allowed = input.allowedIngredients.map((s) => s.toLowerCase().trim())
+   const tokens = fullText.split(/[\s,.;:()¡!¿?\n]+/u).filter((t) => t.length >= 4)
+   const unknown = tokens.find(
+      (t) =>
+         /^[a-záéíóúñ]+$/u.test(t) &&
+         !FREE_USE_SP.has(t) &&
+         allowed.every((a) => !a.includes(t) && !t.includes(a)) &&
+         ['azúcar', 'queso', 'mantequilla', 'crema', 'tocino', 'jamón', 'salchicha'].includes(t)
+   )
+   if (unknown) return { valid: false, reason: 'unknown_ingredient', detail: unknown }
+
+   return {
+      valid: true,
+      option: {
+         name: parsed.name,
+         description: parsed.description,
+         prep_time_min: parsed.prep_time_min,
+         difficulty: parsed.difficulty as PlateOption['difficulty'],
+         steps: parsed.steps as string[]
+      }
+   }
 }

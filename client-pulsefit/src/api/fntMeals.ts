@@ -13,13 +13,32 @@ import type { ItfGenerateMealParams, ItfMealGenerationResponse } from '@/interfa
  * Esta función la lee para construir un Error con `.status` y `.message`
  * que `useErrorHandling` pueda interpretar.
  */
+const FUNCTION_TIMEOUT_MS = 15_000
+
 export const fntGenerateMealOptions = async (
    params: ItfGenerateMealParams
 ): Promise<ItfMealGenerationResponse> => {
-   const { data, error } = await supabase.functions.invoke<{
+   /* Timeout duro a 15s: si Edge Function no responde, mostramos un mensaje
+    * compasivo y el usuario puede reintentar (en vez de quedar colgado). */
+   const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(
+         () =>
+            reject(
+               Object.assign(
+                  new Error('Tardamos más de lo esperado. Probemos de nuevo en un momento 🌿'),
+                  { status: 504 }
+               )
+            ),
+         FUNCTION_TIMEOUT_MS
+      )
+   )
+   const invokePromise = supabase.functions.invoke<{
       msg: string
       data: ItfMealGenerationResponse
    }>('generate-meal-options', { body: params })
+
+   const result = await Promise.race([invokePromise, timeoutPromise])
+   const { data, error } = result
 
    if (error) {
       throw await normalizeFunctionsError(error)

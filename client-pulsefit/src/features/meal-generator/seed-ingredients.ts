@@ -1,12 +1,16 @@
 import type { ItfIngredient } from './types'
 
 /**
- * Pool inicial de ingredientes LATAM. Hasta que la Edge Function consulte
- * Open Food Facts en tiempo real (Fase 5.5), este seed garantiza que la
- * generación funcione end-to-end. Los valores macro provienen de USDA
- * FoodData Central + Tabla Peruana de Composición de Alimentos.
+ * Pool inicial de ingredientes LATAM con `appropriateMealTypes` validado por Lucía.
  *
- * Importable también desde la Edge Function (deno) vía type-only import.
+ * Reglas de asignación:
+ *   - Huevos / avena / yogurt / frutos secos / mantequilla de maní → breakfast + snack.
+ *   - Pollo / res / pescados / tofu / lentejas (cocción media-larga) → lunch + dinner.
+ *   - Atún en lata → todas (se come rápido).
+ *   - Cereales pesados (quinua cocida) → lunch + dinner principalmente.
+ *   - Plátano / fruta / camote dulce → breakfast + snack.
+ *   - Verduras → todas (acompañamiento universal).
+ *   - Condimentos sin appropriateMealTypes = válidos en todas (default).
  */
 export const SEED_INGREDIENTS: ItfIngredient[] = [
    // === PROTEÍNAS ===
@@ -19,7 +23,8 @@ export const SEED_INGREDIENTS: ItfIngredient[] = [
       carbsPer100g: 0,
       fatsPer100g: 3.6,
       tags: ['LATAM', 'meat', 'cheap', 'lean'],
-      source: 'manual'
+      source: 'manual',
+      appropriateMealTypes: ['lunch', 'dinner']
    },
    {
       id: 'tuna-can',
@@ -30,7 +35,8 @@ export const SEED_INGREDIENTS: ItfIngredient[] = [
       carbsPer100g: 0,
       fatsPer100g: 1,
       tags: ['LATAM', 'fish', 'cheap', 'pescatarian'],
-      source: 'manual'
+      source: 'manual',
+      appropriateMealTypes: ['lunch', 'dinner', 'snack_am', 'snack_pm']
    },
    {
       id: 'eggs',
@@ -41,7 +47,8 @@ export const SEED_INGREDIENTS: ItfIngredient[] = [
       carbsPer100g: 1.1,
       fatsPer100g: 11,
       tags: ['LATAM', 'egg', 'cheap', 'vegetarian'],
-      source: 'manual'
+      source: 'manual',
+      appropriateMealTypes: ['breakfast', 'lunch', 'dinner', 'snack_am', 'snack_pm']
    },
    {
       id: 'beef-lean',
@@ -52,7 +59,8 @@ export const SEED_INGREDIENTS: ItfIngredient[] = [
       carbsPer100g: 0,
       fatsPer100g: 12,
       tags: ['LATAM', 'meat', 'mid'],
-      source: 'manual'
+      source: 'manual',
+      appropriateMealTypes: ['lunch', 'dinner']
    },
    {
       id: 'lentils-cooked',
@@ -63,7 +71,8 @@ export const SEED_INGREDIENTS: ItfIngredient[] = [
       carbsPer100g: 20,
       fatsPer100g: 0.4,
       tags: ['LATAM', 'cheap', 'vegan', 'vegetarian', 'pescatarian'],
-      source: 'manual'
+      source: 'manual',
+      appropriateMealTypes: ['lunch', 'dinner']
    },
    {
       id: 'tofu',
@@ -74,7 +83,8 @@ export const SEED_INGREDIENTS: ItfIngredient[] = [
       carbsPer100g: 3,
       fatsPer100g: 9,
       tags: ['mid', 'vegan', 'vegetarian', 'pescatarian'],
-      source: 'manual'
+      source: 'manual',
+      appropriateMealTypes: ['lunch', 'dinner']
    },
    {
       id: 'fish-tilapia',
@@ -85,7 +95,20 @@ export const SEED_INGREDIENTS: ItfIngredient[] = [
       carbsPer100g: 0,
       fatsPer100g: 2,
       tags: ['LATAM', 'fish', 'cheap', 'pescatarian'],
-      source: 'manual'
+      source: 'manual',
+      appropriateMealTypes: ['lunch', 'dinner']
+   },
+   {
+      id: 'greek-yogurt',
+      name: 'yogurt griego natural',
+      category: 'protein',
+      kcalPer100g: 97,
+      proteinPer100g: 10,
+      carbsPer100g: 4,
+      fatsPer100g: 5,
+      tags: ['LATAM', 'dairy', 'vegetarian', 'mid'],
+      source: 'manual',
+      appropriateMealTypes: ['breakfast', 'snack_am', 'snack_pm']
    },
 
    // === CARBOHIDRATOS ===
@@ -98,7 +121,8 @@ export const SEED_INGREDIENTS: ItfIngredient[] = [
       carbsPer100g: 28,
       fatsPer100g: 0.3,
       tags: ['LATAM', 'cheap', 'vegan', 'gluten_free'],
-      source: 'manual'
+      source: 'manual',
+      appropriateMealTypes: ['lunch', 'dinner']
    },
    {
       id: 'sweet-potato',
@@ -109,7 +133,8 @@ export const SEED_INGREDIENTS: ItfIngredient[] = [
       carbsPer100g: 20,
       fatsPer100g: 0.1,
       tags: ['LATAM', 'cheap', 'vegan', 'gluten_free'],
-      source: 'manual'
+      source: 'manual',
+      appropriateMealTypes: ['breakfast', 'lunch', 'dinner']
    },
    {
       id: 'plantain',
@@ -120,7 +145,8 @@ export const SEED_INGREDIENTS: ItfIngredient[] = [
       carbsPer100g: 32,
       fatsPer100g: 0.4,
       tags: ['LATAM', 'cheap', 'vegan', 'gluten_free'],
-      source: 'manual'
+      source: 'manual',
+      appropriateMealTypes: ['breakfast', 'lunch', 'dinner', 'snack_am', 'snack_pm']
    },
    {
       id: 'oats',
@@ -131,7 +157,8 @@ export const SEED_INGREDIENTS: ItfIngredient[] = [
       carbsPer100g: 66,
       fatsPer100g: 6.9,
       tags: ['cheap', 'vegan'],
-      source: 'manual'
+      source: 'manual',
+      appropriateMealTypes: ['breakfast', 'snack_am', 'snack_pm']
    },
    {
       id: 'quinoa',
@@ -142,7 +169,8 @@ export const SEED_INGREDIENTS: ItfIngredient[] = [
       carbsPer100g: 21,
       fatsPer100g: 1.9,
       tags: ['LATAM', 'mid', 'vegan', 'gluten_free'],
-      source: 'manual'
+      source: 'manual',
+      appropriateMealTypes: ['breakfast', 'lunch', 'dinner']
    },
    {
       id: 'pasta-cooked',
@@ -153,7 +181,8 @@ export const SEED_INGREDIENTS: ItfIngredient[] = [
       carbsPer100g: 25,
       fatsPer100g: 1.1,
       tags: ['cheap', 'vegan', 'gluten'],
-      source: 'manual'
+      source: 'manual',
+      appropriateMealTypes: ['lunch', 'dinner']
    },
    {
       id: 'potato',
@@ -164,7 +193,20 @@ export const SEED_INGREDIENTS: ItfIngredient[] = [
       carbsPer100g: 17,
       fatsPer100g: 0.1,
       tags: ['LATAM', 'cheap', 'vegan', 'gluten_free'],
-      source: 'manual'
+      source: 'manual',
+      appropriateMealTypes: ['lunch', 'dinner']
+   },
+   {
+      id: 'bread-whole',
+      name: 'pan integral',
+      category: 'carb',
+      kcalPer100g: 247,
+      proteinPer100g: 13,
+      carbsPer100g: 41,
+      fatsPer100g: 4.2,
+      tags: ['cheap', 'vegan', 'gluten'],
+      source: 'manual',
+      appropriateMealTypes: ['breakfast', 'snack_am', 'snack_pm']
    },
 
    // === GRASAS ===
@@ -178,6 +220,7 @@ export const SEED_INGREDIENTS: ItfIngredient[] = [
       fatsPer100g: 100,
       tags: ['mid', 'vegan'],
       source: 'manual'
+      /* Sin appropriateMealTypes = válido en todas. */
    },
    {
       id: 'avocado',
@@ -188,7 +231,8 @@ export const SEED_INGREDIENTS: ItfIngredient[] = [
       carbsPer100g: 8.5,
       fatsPer100g: 14.7,
       tags: ['LATAM', 'mid', 'vegan'],
-      source: 'manual'
+      source: 'manual',
+      appropriateMealTypes: ['breakfast', 'lunch', 'dinner', 'snack_am', 'snack_pm']
    },
    {
       id: 'peanut-butter',
@@ -199,7 +243,8 @@ export const SEED_INGREDIENTS: ItfIngredient[] = [
       carbsPer100g: 20,
       fatsPer100g: 50,
       tags: ['cheap', 'vegan'],
-      source: 'manual'
+      source: 'manual',
+      appropriateMealTypes: ['breakfast', 'snack_am', 'snack_pm']
    },
    {
       id: 'walnuts',
@@ -210,10 +255,11 @@ export const SEED_INGREDIENTS: ItfIngredient[] = [
       carbsPer100g: 14,
       fatsPer100g: 65,
       tags: ['mid', 'vegan'],
-      source: 'manual'
+      source: 'manual',
+      appropriateMealTypes: ['breakfast', 'snack_am', 'snack_pm']
    },
 
-   // === VEGETALES ===
+   // === VEGETALES (default: válidos en todas) ===
    {
       id: 'broccoli',
       name: 'brócoli',
@@ -223,7 +269,8 @@ export const SEED_INGREDIENTS: ItfIngredient[] = [
       carbsPer100g: 7,
       fatsPer100g: 0.4,
       tags: ['cheap', 'vegan', 'gluten_free'],
-      source: 'manual'
+      source: 'manual',
+      appropriateMealTypes: ['lunch', 'dinner']
    },
    {
       id: 'spinach',
@@ -234,7 +281,8 @@ export const SEED_INGREDIENTS: ItfIngredient[] = [
       carbsPer100g: 3.6,
       fatsPer100g: 0.4,
       tags: ['cheap', 'vegan', 'gluten_free'],
-      source: 'manual'
+      source: 'manual',
+      appropriateMealTypes: ['breakfast', 'lunch', 'dinner']
    },
    {
       id: 'tomato',
@@ -245,7 +293,8 @@ export const SEED_INGREDIENTS: ItfIngredient[] = [
       carbsPer100g: 3.9,
       fatsPer100g: 0.2,
       tags: ['LATAM', 'cheap', 'vegan', 'gluten_free'],
-      source: 'manual'
+      source: 'manual',
+      appropriateMealTypes: ['breakfast', 'lunch', 'dinner']
    },
    {
       id: 'lettuce',
@@ -256,7 +305,8 @@ export const SEED_INGREDIENTS: ItfIngredient[] = [
       carbsPer100g: 2.9,
       fatsPer100g: 0.2,
       tags: ['LATAM', 'cheap', 'vegan', 'gluten_free'],
-      source: 'manual'
+      source: 'manual',
+      appropriateMealTypes: ['lunch', 'dinner']
    },
    {
       id: 'zucchini',
@@ -267,10 +317,49 @@ export const SEED_INGREDIENTS: ItfIngredient[] = [
       carbsPer100g: 3.1,
       fatsPer100g: 0.3,
       tags: ['LATAM', 'cheap', 'vegan', 'gluten_free'],
-      source: 'manual'
+      source: 'manual',
+      appropriateMealTypes: ['lunch', 'dinner']
    },
 
-   // === CONDIMENTOS (libre uso, no cuentan en macros) ===
+   // === FRUTAS ===
+   {
+      id: 'banana',
+      name: 'banana',
+      category: 'fruit',
+      kcalPer100g: 89,
+      proteinPer100g: 1.1,
+      carbsPer100g: 23,
+      fatsPer100g: 0.3,
+      tags: ['LATAM', 'cheap', 'vegan', 'gluten_free'],
+      source: 'manual',
+      appropriateMealTypes: ['breakfast', 'snack_am', 'snack_pm']
+   },
+   {
+      id: 'apple',
+      name: 'manzana',
+      category: 'fruit',
+      kcalPer100g: 52,
+      proteinPer100g: 0.3,
+      carbsPer100g: 14,
+      fatsPer100g: 0.2,
+      tags: ['LATAM', 'cheap', 'vegan', 'gluten_free'],
+      source: 'manual',
+      appropriateMealTypes: ['breakfast', 'snack_am', 'snack_pm']
+   },
+   {
+      id: 'berries-mix',
+      name: 'frutos rojos (mix)',
+      category: 'fruit',
+      kcalPer100g: 53,
+      proteinPer100g: 0.7,
+      carbsPer100g: 12,
+      fatsPer100g: 0.3,
+      tags: ['mid', 'vegan', 'gluten_free'],
+      source: 'manual',
+      appropriateMealTypes: ['breakfast', 'snack_am', 'snack_pm']
+   },
+
+   // === CONDIMENTOS (libre uso, sin appropriateMealTypes = todas) ===
    {
       id: 'garlic',
       name: 'ajo',

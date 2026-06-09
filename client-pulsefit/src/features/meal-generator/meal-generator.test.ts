@@ -186,9 +186,13 @@ describe('filterIngredientPool', () => {
       expect(pool.find((p) => p.name.includes('nueces'))).toBeUndefined()
    })
 
-   it('siempre devuelve solo ingredientes con macros > 0', () => {
+   it('los no-condimentos siempre tienen macros > 0 (la sal puede ser 0)', () => {
       const pool = filterIngredientPool(SEED_INGREDIENTS, baseCtx)
-      pool.forEach((p) => expect(p.kcalPer100g).toBeGreaterThan(0))
+      pool.forEach((p) => {
+         if (p.category !== 'condiment') {
+            expect(p.kcalPer100g).toBeGreaterThan(0)
+         }
+      })
    })
 })
 

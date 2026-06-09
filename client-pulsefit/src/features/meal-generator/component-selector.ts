@@ -248,3 +248,65 @@ export const isWithinTolerance = (
    const within = (t: number, a: number) => Math.abs(a - t) / Math.max(t, 1) <= tolerancePct
    return within(target.kcal, actual.kcal) && within(target.proteinG, actual.proteinG)
 }
+
+/**
+ * Devuelve `count` sets de componentes con ingredientes DISTINTOS entre sí.
+ * Estrategia: en cada iteración, excluye los ingredientes ya usados para
+ * forzar variedad real. Si el pool es chico y no hay suficientes opciones,
+ * permite repetición progresiva.
+ *
+ * Resuelve el problema "las 3 opciones tienen los mismos ingredientes".
+ */
+export const selectMultipleComponents = ({
+   pool,
+   target,
+   count = 3,
+   seed = 0
+}: {
+   pool: ItfIngredient[]
+   target: ItfMacroTarget
+   count?: number
+   seed?: number
+}): ItfMealComponents[] => {
+   const results: ItfMealComponents[] = []
+   const usedProteinIds = new Set<string>()
+   const usedCarbIds = new Set<string>()
+   const usedFatIds = new Set<string>()
+   const usedVegIds = new Set<string>()
+
+   for (let i = 0; i < count; i++) {
+      /* Reducir el pool excluyendo ingredientes ya usados, solo si la
+       * exclusión no deja vacía alguna categoría. */
+      const reducedPool = pool.filter((p) => {
+         if (p.category === 'protein') return !usedProteinIds.has(p.id)
+         if (p.category === 'carb') return !usedCarbIds.has(p.id)
+         if (p.category === 'fat') return !usedFatIds.has(p.id)
+         if (p.category === 'vegetable') return !usedVegIds.has(p.id)
+         return true
+      })
+
+      const hasAllCategories = (p: ItfIngredient[]) =>
+         p.some((x) => x.category === 'protein') &&
+         p.some((x) => x.category === 'carb') &&
+         p.some((x) => x.category === 'fat')
+
+      const usePool = hasAllCategories(reducedPool) ? reducedPool : pool
+
+      const combo = selectComponents({
+         pool: usePool,
+         target,
+         seed: seed + i * 13
+      })
+      if (!combo) continue
+
+      usedProteinIds.add(combo.protein.ingredient.id)
+      usedCarbIds.add(combo.carb.ingredient.id)
+      usedFatIds.add(combo.fat.ingredient.id)
+      if (combo.vegetable.grams > 0) {
+         usedVegIds.add(combo.vegetable.ingredient.id)
+      }
+      results.push(combo)
+   }
+
+   return results
+}

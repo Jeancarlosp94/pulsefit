@@ -26,7 +26,7 @@ REGLAS INVIOLABLES:
 - NUNCA usas tono punitivo ("debes", "tienes que", "fallaste").
 - Devuelves SOLO JSON válido, sin texto adicional, sin markdown.
 
-Tu única tarea es COMBINAR creativamente los ingredientes dados en 3 platos diferentes con nombre cálido (en español, sin emojis) y pasos claros.`
+Tu única tarea es COMBINAR creativamente los ingredientes dados en UN plato con nombre cálido (en español, sin emojis) y pasos claros.`
 
 interface BuildUserPromptInput {
    components: ItfMealComponents
@@ -101,3 +101,63 @@ export const maxPrepTimeForUser = (ctx: ItfUserContextForMeal): number => {
    if (ctx.cooksAtHome === 'sometimes') return 25
    return 35
 }
+
+/**
+ * Prompt para UNA opción de plato (no 3). Se usa con `Promise.all` desde el
+ * orquestador para generar las 3 opciones en paralelo, cada una con su set
+ * de ingredientes distinto.
+ */
+export const buildSinglePlatePrompt = ({
+   components,
+   mealType,
+   ctx,
+   maxPrepTime,
+   styleHint
+}: BuildUserPromptInput & { styleHint?: string }): string => {
+   const mealLabel = MEAL_TYPE_LABEL[mealType]
+   const cuisine = REGION_CUISINE[ctx.region] ?? 'mixta'
+
+   const ingredientLines = [
+      formatIngredient(components.protein.ingredient.name, components.protein.grams),
+      formatIngredient(components.carb.ingredient.name, components.carb.grams),
+      formatIngredient(components.fat.ingredient.name, components.fat.grams),
+      components.vegetable.grams > 0
+         ? formatIngredient(components.vegetable.ingredient.name, components.vegetable.grams)
+         : null,
+      '- ajo, sal, pimienta, limón, hierbas frescas (libre uso)'
+   ]
+      .filter(Boolean)
+      .join('\n')
+
+   const stylePhrase = styleHint ? `\n- Estilo de cocción sugerido: ${styleHint}.` : ''
+
+   return `Genera UN plato para ${mealLabel} usando SOLO estos ingredientes:
+
+${ingredientLines}
+
+Restricciones:
+- Tiempo de preparación: máximo ${maxPrepTime} minutos
+- Cocina cultural: ${cuisine}
+- Dificultad: easy${stylePhrase}
+
+Devuelve JSON con esta estructura EXACTA (un solo plato, NO un array):
+
+{
+  "name": "nombre del plato (cálido, en español, sin emojis)",
+  "description": "descripción breve, 1 oración, máximo 120 caracteres",
+  "prep_time_min": número entero entre 5 y 60,
+  "difficulty": "easy" | "medium" | "hard",
+  "steps": ["paso 1", "paso 2", ...]
+}
+
+Restricciones del JSON:
+- "steps" debe tener entre 2 y 10 elementos.
+- Cada step entre 10 y 200 caracteres, en imperativo amable.`
+}
+
+/** Estilos de cocción distintos para forzar variedad entre las 3 opciones. */
+export const STYLE_HINTS = [
+   'bowl / plato unificado',
+   'al ajillo / estilo casero',
+   'salteado al wok / rápido'
+] as const
