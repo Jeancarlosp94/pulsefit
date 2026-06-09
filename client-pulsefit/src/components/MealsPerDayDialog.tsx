@@ -43,8 +43,21 @@ export const MealsPerDayDialog = ({ trigger, open, onOpenChange }: MealsPerDayDi
 
    const handleSave = async () => {
       setSubmitting(true)
+      /* Timeout de 10s para evitar quedar en spinner si Supabase no responde
+       * (típico cuando falta una migración y el UPDATE queda esperando). */
+      const timeoutPromise = new Promise<never>((_, reject) =>
+         setTimeout(
+            () =>
+               reject(
+                  new Error(
+                     'Tardamos más de lo esperado. ¿Tu base ya tiene la columna meals_per_day? 🌿'
+                  )
+               ),
+            10_000
+         )
+      )
       try {
-         await updateProfile({ meals_per_day: selected })
+         await Promise.race([updateProfile({ meals_per_day: selected }), timeoutPromise])
          toast.success('Listo, te distribuimos así desde ahora 🌱')
          onOpenChange?.(false)
       } catch (e) {
