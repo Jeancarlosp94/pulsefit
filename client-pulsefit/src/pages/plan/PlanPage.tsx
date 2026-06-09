@@ -296,14 +296,15 @@ const PlanPage = () => {
                         >
                            <p className='text-[10px] uppercase tracking-wider'>Opción {idx + 1}</p>
                            <p className='line-clamp-2 text-xs font-medium'>
-                              {opt.components.protein.name} · {opt.components.carb.name}
+                              {opt.components?.protein?.name ?? 'Opción'}
+                              {opt.components?.carb?.name ? ` · ${opt.components.carb.name}` : ''}
                            </p>
                         </button>
                      ))}
                   </div>
 
-                  {/* Macros target + actual de la opción seleccionada */}
-                  {selectedOption ? (
+                  {/* Macros target + actual de la opción seleccionada (defensivo). */}
+                  {selectedOption && selectedComponents?.actualMacros ? (
                      <Card>
                         <CardHeader className='pb-3'>
                            <CardTitle className='flex items-center justify-between text-base'>
@@ -324,7 +325,7 @@ const PlanPage = () => {
                               <div>
                                  <p className='text-xs text-muted-foreground'>Kcal</p>
                                  <p className='font-medium text-foreground'>
-                                    {selectedOption.components.actualMacros.kcal}
+                                    {selectedComponents.actualMacros.kcal}
                                  </p>
                                  <p className='text-[10px] text-muted-foreground'>
                                     / {data.target.kcal}
@@ -333,7 +334,7 @@ const PlanPage = () => {
                               <div>
                                  <p className='text-xs text-muted-foreground'>Prot</p>
                                  <p className='font-medium text-foreground'>
-                                    {selectedOption.components.actualMacros.proteinG}g
+                                    {selectedComponents.actualMacros.proteinG}g
                                  </p>
                                  <p className='text-[10px] text-muted-foreground'>
                                     / {data.target.proteinG}g
@@ -342,7 +343,7 @@ const PlanPage = () => {
                               <div>
                                  <p className='text-xs text-muted-foreground'>Carbs</p>
                                  <p className='font-medium text-foreground'>
-                                    {selectedOption.components.actualMacros.carbsG}g
+                                    {selectedComponents.actualMacros.carbsG}g
                                  </p>
                                  <p className='text-[10px] text-muted-foreground'>
                                     / {data.target.carbsG}g
@@ -351,7 +352,7 @@ const PlanPage = () => {
                               <div>
                                  <p className='text-xs text-muted-foreground'>Gras</p>
                                  <p className='font-medium text-foreground'>
-                                    {selectedOption.components.actualMacros.fatsG}g
+                                    {selectedComponents.actualMacros.fatsG}g
                                  </p>
                                  <p className='text-[10px] text-muted-foreground'>
                                     / {data.target.fatsG}g
