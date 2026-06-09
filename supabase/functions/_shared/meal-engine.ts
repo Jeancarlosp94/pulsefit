@@ -924,3 +924,82 @@ export const validateSinglePlate = (input: {
       }
    }
 }
+
+// ============================================================
+//  WEEKLY DISTRIBUTOR (Fase 6) — sync con weekly-distributor.ts
+// ============================================================
+const JITTER_PCT = 0.1
+
+const deterministicNoise = (seed: number, dayIndex: number, mealIdx: number): number => {
+   const x = Math.sin(seed * 12.9898 + dayIndex * 78.233 + mealIdx * 37.719) * 43758.5453
+   return (x - Math.floor(x)) * 2 - 1
+}
+
+export interface DailyDistribution {
+   kcalByMeal: Partial<Record<MealType, number>>
+   percentByMeal: Partial<Record<MealType, number>>
+}
+
+export const computeDailyDistribution = (input: {
+   mealsPerDay: MealsPerDay
+   dayIndex: number
+   targetKcal: number
+   seed: number
+}): DailyDistribution => {
+   const base = MEAL_DISTRIBUTIONS[input.mealsPerDay]
+   const mealTypes = Object.keys(base) as MealType[]
+
+   const jittered: Record<string, number> = {}
+   mealTypes.forEach((mt, idx) => {
+      const noise = deterministicNoise(input.seed, input.dayIndex, idx)
+      const factor = 1 + noise * JITTER_PCT
+      jittered[mt] = (base[mt] ?? 0) * factor
+   })
+
+   const pcts: Record<string, number> = {}
+   let total = mealTypes.reduce((s, mt) => s + jittered[mt], 0)
+   mealTypes.forEach((mt) => { pcts[mt] = jittered[mt] / total })
+
+   for (let iter = 0; iter < 8; iter++) {
+      const violators: MealType[] = []
+      const valid: MealType[] = []
+      mealTypes.forEach((mt) => {
+         const k = pcts[mt] * input.targetKcal
+         const min = MEAL_MIN_KCAL[mt] ?? 0
+         if (k < min) violators.push(mt)
+         else valid.push(mt)
+      })
+      if (violators.length === 0) break
+      if (valid.length === 0) {
+         mealTypes.forEach((mt) => { pcts[mt] = (base[mt] ?? 0) })
+         total = mealTypes.reduce((s, mt) => s + pcts[mt], 0)
+         mealTypes.forEach((mt) => { pcts[mt] = pcts[mt] / total })
+         break
+      }
+      const reservedKcal = violators.reduce((s, mt) => s + (MEAL_MIN_KCAL[mt] ?? 0), 0)
+      const remainingKcal = Math.max(0, input.targetKcal - reservedKcal)
+      const validSum = valid.reduce((s, mt) => s + pcts[mt], 0)
+      violators.forEach((mt) => { pcts[mt] = (MEAL_MIN_KCAL[mt] ?? 0) / input.targetKcal })
+      valid.forEach((mt) => {
+         pcts[mt] = validSum > 0 ? (pcts[mt] / validSum) * (remainingKcal / input.targetKcal) : 0
+      })
+   }
+
+   const kcal: Partial<Record<MealType, number>> = {}
+   mealTypes.forEach((mt) => { kcal[mt] = Math.round(pcts[mt] * input.targetKcal) })
+
+   const roundedSum = mealTypes.reduce((s, mt) => s + (kcal[mt] ?? 0), 0)
+   const drift = input.targetKcal - roundedSum
+   if (drift !== 0) {
+      const lastMeal = mealTypes[mealTypes.length - 1]
+      kcal[lastMeal] = (kcal[lastMeal] ?? 0) + drift
+   }
+
+   const finalPct: Partial<Record<MealType, number>> = {}
+   mealTypes.forEach((mt) => { finalPct[mt] = (kcal[mt] ?? 0) / input.targetKcal })
+
+   return { kcalByMeal: kcal, percentByMeal: finalPct }
+}
+
+export const recipeIndexForDay = (dayIndex: number, recipeCount: number): number =>
+   ((dayIndex % recipeCount) + recipeCount) % recipeCount

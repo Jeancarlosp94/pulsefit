@@ -40,3 +40,70 @@ export interface ItfGenerateMealParams {
    /** IDs de ingredientes a excluir en esta generación (botón X en el cliente). */
    excluded_ingredient_ids?: string[]
 }
+
+/* ============================================================
+ *  Fase 6 — Plan Semanal Dinámico
+ * ============================================================ */
+
+/** Receta abstracta (mismo formato para todas las 3 opciones de un meal_type). */
+export interface ItfRecipe {
+   name: string
+   description: string
+   prep_time_min: number
+   difficulty: 'easy' | 'medium' | 'hard'
+   steps: string[]
+   components: ItfOptionComponents
+   /** Kcal de referencia con que se generaron las gramas base de los componentes. */
+   baseKcal: number
+   source: 'ai' | 'ai_retry' | 'fallback'
+}
+
+/** Asignación de un slot (meal_type) en un día específico. */
+export interface ItfMealAssignment {
+   /** Índice 0..2 de cuál receta rota a este día. */
+   recipeIdx: number
+   /** Kcal real escalada para que la suma diaria == target_kcal. */
+   scaledKcal: number
+   /** Gramos por componente escalados al scaledKcal. */
+   scaledGrams: {
+      protein: number
+      carb: number
+      fat: number
+      vegetable: number
+   }
+}
+
+/** Schedule de un día completo. */
+export interface ItfDailySchedule {
+   day: number /* 1..N */
+   meals: Partial<Record<ItfMealType, ItfMealAssignment>>
+   /** Suma de kcal del día (debe == target_kcal del plan, EXACTO). */
+   totalKcal: number
+}
+
+/** Plan completo persistido en `meal_plans`. */
+export interface ItfMealPlan {
+   id: string
+   user_id: string
+   created_at: string
+   days: number
+   meals_per_day: 2 | 3 | 4 | 5
+   target_kcal: number
+   target_protein_g: number
+   target_carbs_g: number
+   target_fats_g: number
+   excluded_ingredient_ids: string[]
+   /** 3 recetas por meal_type activo. */
+   recipes_by_meal_type: Partial<Record<ItfMealType, ItfRecipe[]>>
+   daily_schedule: ItfDailySchedule[]
+   source: 'ai' | 'fallback' | 'mixed'
+}
+
+export interface ItfGenerateMealPlanParams {
+   days: number /* 1..7 */
+   excluded_ingredient_ids?: string[]
+}
+
+export interface ItfMealPlanResponse {
+   plan: ItfMealPlan
+}
