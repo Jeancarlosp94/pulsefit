@@ -180,11 +180,14 @@ export const validateSinglePlate = ({
    if (parsed.prep_time_min < 5 || parsed.prep_time_min > 60) {
       return { valid: false, reason: 'prep_time_out_of_range' }
    }
+   /* Aceptamos un rango más amplio que el del prompt para que el validador no
+    * sea más estricto que la IA. El prompt pide 3-7 / 30-180; aceptamos 2-10
+    * / 20-220 para tolerar pequeñas desviaciones sin invalidar. */
    if (parsed.steps.length < 2 || parsed.steps.length > 10) {
       return { valid: false, reason: 'steps_out_of_range' }
    }
    const badStep = parsed.steps.find(
-      (s) => typeof s !== 'string' || s.length < 10 || s.length > 200
+      (s) => typeof s !== 'string' || s.length < 10 || s.length > 220
    )
    if (badStep !== undefined) return { valid: false, reason: 'step_length' }
 

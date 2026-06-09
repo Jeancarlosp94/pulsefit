@@ -136,23 +136,26 @@ export const buildSinglePlatePrompt = ({
 ${ingredientLines}
 
 Restricciones:
-- Tiempo de preparación: máximo ${maxPrepTime} minutos
+- Tiempo de preparación: ENTRE 5 y ${Math.min(maxPrepTime, 55)} minutos (estricto)
 - Cocina cultural: ${cuisine}
 - Dificultad: easy${stylePhrase}
 
-Devuelve JSON con esta estructura EXACTA (un solo plato, NO un array):
+Devuelve JSON EXACTO (un solo plato, NO un array, NO markdown, NO texto extra):
 
 {
-  "name": "nombre del plato (cálido, en español, sin emojis)",
-  "description": "descripción breve, 1 oración, máximo 120 caracteres",
-  "prep_time_min": número entero entre 5 y 60,
-  "difficulty": "easy" | "medium" | "hard",
-  "steps": ["paso 1", "paso 2", ...]
+  "name": "nombre del plato (cálido, en español, sin emojis, máximo 60 caracteres)",
+  "description": "descripción breve, 1 oración, máximo 110 caracteres",
+  "prep_time_min": número entero entre 5 y ${Math.min(maxPrepTime, 55)},
+  "difficulty": "easy",
+  "steps": ["paso 1", "paso 2", "paso 3", "paso 4"]
 }
 
-Restricciones del JSON:
-- "steps" debe tener entre 2 y 10 elementos.
-- Cada step entre 10 y 200 caracteres, en imperativo amable.`
+REGLAS CRÍTICAS DE STEPS (sigue al pie de la letra):
+- ENTRE 3 y 7 elementos en el array (ni más, ni menos).
+- Cada step entre 30 y 180 caracteres (NO más de 180, NO menos de 30).
+- Imperativo amable en español ("Cocina…", "Mezcla…", "Sirve…").
+- NO uses listas dentro del step. NO uses bullets ni guiones.
+- NO repitas la palabra "ingrediente" ni "paso" dentro del texto.`
 }
 
 /** Estilos de cocción distintos para forzar variedad entre las 3 opciones. */

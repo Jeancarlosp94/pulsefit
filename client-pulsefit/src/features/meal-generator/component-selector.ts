@@ -251,11 +251,15 @@ export const isWithinTolerance = (
 
 /**
  * Devuelve `count` sets de componentes con ingredientes DISTINTOS entre sí.
- * Estrategia: en cada iteración, excluye los ingredientes ya usados para
- * forzar variedad real. Si el pool es chico y no hay suficientes opciones,
- * permite repetición progresiva.
  *
- * Resuelve el problema "las 3 opciones tienen los mismos ingredientes".
+ * Estrategia v2: aplica el filtro por CATEGORÍA INDEPENDIENTEMENTE. Si nos
+ * quedamos sin proteínas pero todavía hay carbos/grasas/vegetales no usados,
+ * solo "des-bloqueamos" la categoría agotada (no todo el pool). Eso garantiza
+ * variedad real en al menos UNA categoría aunque la proteína repita.
+ *
+ * Resuelve los problemas:
+ *   - "3 opciones con los mismos ingredientes" (variedad real entre sets)
+ *   - "3er menú repetido" en desayunos con pocas proteínas
  */
 export const selectMultipleComponents = ({
    pool,
@@ -274,26 +278,31 @@ export const selectMultipleComponents = ({
    const usedFatIds = new Set<string>()
    const usedVegIds = new Set<string>()
 
+   const allProteins = pool.filter((p) => p.category === 'protein')
+   const allCarbs = pool.filter((p) => p.category === 'carb')
+   const allFats = pool.filter((p) => p.category === 'fat')
+   const allVeg = pool.filter((p) => p.category === 'vegetable')
+
    for (let i = 0; i < count; i++) {
-      /* Reducir el pool excluyendo ingredientes ya usados, solo si la
-       * exclusión no deja vacía alguna categoría. */
-      const reducedPool = pool.filter((p) => {
-         if (p.category === 'protein') return !usedProteinIds.has(p.id)
-         if (p.category === 'carb') return !usedCarbIds.has(p.id)
-         if (p.category === 'fat') return !usedFatIds.has(p.id)
-         if (p.category === 'vegetable') return !usedVegIds.has(p.id)
-         return true
-      })
+      /* Para cada categoría, si quedan opciones sin usar, las usamos;
+       * si NO, permitimos repetir solo esa categoría (no reseteamos todo el pool). */
+      const availProtein = allProteins.filter((p) => !usedProteinIds.has(p.id))
+      const availCarb = allCarbs.filter((p) => !usedCarbIds.has(p.id))
+      const availFat = allFats.filter((p) => !usedFatIds.has(p.id))
+      const availVeg = allVeg.filter((p) => !usedVegIds.has(p.id))
 
-      const hasAllCategories = (p: ItfIngredient[]) =>
-         p.some((x) => x.category === 'protein') &&
-         p.some((x) => x.category === 'carb') &&
-         p.some((x) => x.category === 'fat')
-
-      const usePool = hasAllCategories(reducedPool) ? reducedPool : pool
+      /* Construir un pool "ideal" priorizando ingredientes nuevos. */
+      const reducedPool: ItfIngredient[] = [
+         ...(availProtein.length > 0 ? availProtein : allProteins),
+         ...(availCarb.length > 0 ? availCarb : allCarbs),
+         ...(availFat.length > 0 ? availFat : allFats),
+         ...(availVeg.length > 0 ? availVeg : allVeg),
+         ...pool.filter((p) => p.category === 'condiment'),
+         ...pool.filter((p) => p.category === 'fruit')
+      ]
 
       const combo = selectComponents({
-         pool: usePool,
+         pool: reducedPool,
          target,
          seed: seed + i * 13
       })

@@ -689,22 +689,28 @@ export const selectMultipleComponents = (input: {
    const usedFat = new Set<string>()
    const usedVeg = new Set<string>()
 
-   const hasAll = (p: Ingredient[]) =>
-      p.some((x) => x.category === 'protein') &&
-      p.some((x) => x.category === 'carb') &&
-      p.some((x) => x.category === 'fat')
+   const allProteins = input.pool.filter((p) => p.category === 'protein')
+   const allCarbs = input.pool.filter((p) => p.category === 'carb')
+   const allFats = input.pool.filter((p) => p.category === 'fat')
+   const allVeg = input.pool.filter((p) => p.category === 'vegetable')
 
    for (let i = 0; i < count; i++) {
-      const reduced = input.pool.filter((p) => {
-         if (p.category === 'protein') return !usedProtein.has(p.id)
-         if (p.category === 'carb') return !usedCarb.has(p.id)
-         if (p.category === 'fat') return !usedFat.has(p.id)
-         if (p.category === 'vegetable') return !usedVeg.has(p.id)
-         return true
-      })
-      const usePool = hasAll(reduced) ? reduced : input.pool
+      const availProtein = allProteins.filter((p) => !usedProtein.has(p.id))
+      const availCarb = allCarbs.filter((p) => !usedCarb.has(p.id))
+      const availFat = allFats.filter((p) => !usedFat.has(p.id))
+      const availVeg = allVeg.filter((p) => !usedVeg.has(p.id))
+
+      const reducedPool: Ingredient[] = [
+         ...(availProtein.length > 0 ? availProtein : allProteins),
+         ...(availCarb.length > 0 ? availCarb : allCarbs),
+         ...(availFat.length > 0 ? availFat : allFats),
+         ...(availVeg.length > 0 ? availVeg : allVeg),
+         ...input.pool.filter((p) => p.category === 'condiment'),
+         ...input.pool.filter((p) => p.category === 'fruit')
+      ]
+
       const combo = selectComponents({
-         pool: usePool,
+         pool: reducedPool,
          target: input.target,
          seed: seed + i * 13
       })
@@ -764,28 +770,32 @@ export const buildSinglePlatePrompt = (input: {
    const stylePhrase = input.styleHint
       ? `\n- Estilo de cocción sugerido: ${input.styleHint}.`
       : ''
+   const maxPrep = Math.min(input.maxPrepTime, 55)
    return `Genera UN plato para ${mealLabel} usando SOLO estos ingredientes:
 
 ${lines}
 
 Restricciones:
-- Tiempo de preparación: máximo ${input.maxPrepTime} minutos
+- Tiempo de preparación: ENTRE 5 y ${maxPrep} minutos (estricto)
 - Cocina cultural: ${cuisine}
 - Dificultad: easy${stylePhrase}
 
-Devuelve JSON con esta estructura EXACTA (un solo plato, NO un array):
+Devuelve JSON EXACTO (un solo plato, NO un array, NO markdown, NO texto extra):
 
 {
-  "name": "nombre del plato (cálido, en español, sin emojis)",
-  "description": "descripción breve, 1 oración, máximo 120 caracteres",
-  "prep_time_min": número entero entre 5 y 60,
-  "difficulty": "easy" | "medium" | "hard",
-  "steps": ["paso 1", "paso 2", ...]
+  "name": "nombre del plato (cálido, en español, sin emojis, máximo 60 caracteres)",
+  "description": "descripción breve, 1 oración, máximo 110 caracteres",
+  "prep_time_min": número entero entre 5 y ${maxPrep},
+  "difficulty": "easy",
+  "steps": ["paso 1", "paso 2", "paso 3", "paso 4"]
 }
 
-Restricciones del JSON:
-- "steps" debe tener entre 2 y 10 elementos.
-- Cada step entre 10 y 200 caracteres, en imperativo amable.`
+REGLAS CRÍTICAS DE STEPS (sigue al pie de la letra):
+- ENTRE 3 y 7 elementos en el array (ni más, ni menos).
+- Cada step entre 30 y 180 caracteres (NO más de 180, NO menos de 30).
+- Imperativo amable en español ("Cocina…", "Mezcla…", "Sirve…").
+- NO uses listas dentro del step. NO uses bullets ni guiones.
+- NO repitas la palabra "ingrediente" ni "paso" dentro del texto.`
 }
 
 // ============================================================
@@ -849,11 +859,13 @@ export const validateSinglePlate = (input: {
    if (parsed.prep_time_min < 5 || parsed.prep_time_min > 60) {
       return { valid: false, reason: 'prep_time_out_of_range' }
    }
+   /* Aceptamos rango más amplio que el del prompt para no ser más estrictos
+    * que la IA. Prompt: 3-7 steps / 30-180. Validator: 2-10 / 20-220. */
    if (parsed.steps.length < 2 || parsed.steps.length > 10) {
       return { valid: false, reason: 'steps_out_of_range' }
    }
    const badStep = parsed.steps.find(
-      (s) => typeof s !== 'string' || s.length < 10 || s.length > 200
+      (s) => typeof s !== 'string' || s.length < 10 || s.length > 220
    )
    if (badStep !== undefined) return { valid: false, reason: 'step_length' }
    if (!['easy', 'medium', 'hard'].includes(parsed.difficulty)) {

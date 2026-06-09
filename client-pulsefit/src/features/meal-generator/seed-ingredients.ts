@@ -110,6 +110,90 @@ export const SEED_INGREDIENTS: ItfIngredient[] = [
       source: 'manual',
       appropriateMealTypes: ['breakfast', 'snack_am', 'snack_pm']
    },
+   {
+      id: 'cottage-cheese',
+      name: 'queso cottage / requesón',
+      category: 'protein',
+      kcalPer100g: 98,
+      proteinPer100g: 11,
+      carbsPer100g: 3.4,
+      fatsPer100g: 4.3,
+      tags: ['dairy', 'vegetarian', 'mid'],
+      source: 'manual',
+      appropriateMealTypes: ['breakfast', 'snack_am', 'snack_pm']
+   },
+   {
+      id: 'whey-protein',
+      name: 'proteína en polvo (whey)',
+      category: 'protein',
+      kcalPer100g: 380,
+      proteinPer100g: 80,
+      carbsPer100g: 7,
+      fatsPer100g: 5,
+      tags: ['dairy', 'mid', 'vegetarian'],
+      source: 'manual',
+      appropriateMealTypes: ['breakfast', 'snack_am', 'snack_pm']
+   },
+   {
+      id: 'ham-turkey',
+      name: 'jamón de pavo magro',
+      category: 'protein',
+      kcalPer100g: 104,
+      proteinPer100g: 18,
+      carbsPer100g: 1.6,
+      fatsPer100g: 3,
+      tags: ['LATAM', 'meat', 'mid'],
+      source: 'manual',
+      appropriateMealTypes: ['breakfast', 'lunch', 'snack_am', 'snack_pm']
+   },
+   {
+      id: 'salmon-fresh',
+      name: 'filete de salmón',
+      category: 'protein',
+      kcalPer100g: 208,
+      proteinPer100g: 20,
+      carbsPer100g: 0,
+      fatsPer100g: 13,
+      tags: ['fish', 'mid', 'pescatarian'],
+      source: 'manual',
+      appropriateMealTypes: ['lunch', 'dinner']
+   },
+   {
+      id: 'chickpeas',
+      name: 'garbanzos cocidos',
+      category: 'protein',
+      kcalPer100g: 164,
+      proteinPer100g: 9,
+      carbsPer100g: 27,
+      fatsPer100g: 2.6,
+      tags: ['LATAM', 'cheap', 'vegan', 'vegetarian', 'pescatarian'],
+      source: 'manual',
+      appropriateMealTypes: ['lunch', 'dinner', 'snack_pm']
+   },
+   {
+      id: 'black-beans',
+      name: 'frijoles negros cocidos',
+      category: 'protein',
+      kcalPer100g: 132,
+      proteinPer100g: 9,
+      carbsPer100g: 24,
+      fatsPer100g: 0.5,
+      tags: ['LATAM', 'cheap', 'vegan', 'vegetarian', 'pescatarian'],
+      source: 'manual',
+      appropriateMealTypes: ['breakfast', 'lunch', 'dinner']
+   },
+   {
+      id: 'shrimp',
+      name: 'camarones',
+      category: 'protein',
+      kcalPer100g: 99,
+      proteinPer100g: 24,
+      carbsPer100g: 0.2,
+      fatsPer100g: 0.3,
+      tags: ['LATAM', 'fish', 'mid', 'pescatarian'],
+      source: 'manual',
+      appropriateMealTypes: ['lunch', 'dinner']
+   },
 
    // === CARBOHIDRATOS ===
    {
@@ -208,6 +292,54 @@ export const SEED_INGREDIENTS: ItfIngredient[] = [
       source: 'manual',
       appropriateMealTypes: ['breakfast', 'snack_am', 'snack_pm']
    },
+   {
+      id: 'tortilla-maiz',
+      name: 'tortilla de maíz',
+      category: 'carb',
+      kcalPer100g: 218,
+      proteinPer100g: 5.7,
+      carbsPer100g: 45,
+      fatsPer100g: 2.5,
+      tags: ['LATAM', 'cheap', 'vegan', 'gluten_free'],
+      source: 'manual',
+      appropriateMealTypes: ['breakfast', 'lunch', 'dinner']
+   },
+   {
+      id: 'arepa-blanca',
+      name: 'arepa de maíz',
+      category: 'carb',
+      kcalPer100g: 200,
+      proteinPer100g: 4,
+      carbsPer100g: 43,
+      fatsPer100g: 1.5,
+      tags: ['LATAM', 'cheap', 'vegan', 'gluten_free'],
+      source: 'manual',
+      appropriateMealTypes: ['breakfast', 'lunch', 'dinner', 'snack_am', 'snack_pm']
+   },
+   {
+      id: 'granola',
+      name: 'granola sin azúcar',
+      category: 'carb',
+      kcalPer100g: 450,
+      proteinPer100g: 10,
+      carbsPer100g: 65,
+      fatsPer100g: 17,
+      tags: ['mid', 'vegan'],
+      source: 'manual',
+      appropriateMealTypes: ['breakfast', 'snack_am', 'snack_pm']
+   },
+   {
+      id: 'oats-bran',
+      name: 'salvado de avena',
+      category: 'carb',
+      kcalPer100g: 246,
+      proteinPer100g: 17,
+      carbsPer100g: 66,
+      fatsPer100g: 7,
+      tags: ['cheap', 'vegan'],
+      source: 'manual',
+      appropriateMealTypes: ['breakfast', 'snack_am', 'snack_pm']
+   },
 
    // === GRASAS ===
    {
@@ -255,6 +387,30 @@ export const SEED_INGREDIENTS: ItfIngredient[] = [
       carbsPer100g: 14,
       fatsPer100g: 65,
       tags: ['mid', 'vegan'],
+      source: 'manual',
+      appropriateMealTypes: ['breakfast', 'snack_am', 'snack_pm']
+   },
+   {
+      id: 'almonds',
+      name: 'almendras',
+      category: 'fat',
+      kcalPer100g: 579,
+      proteinPer100g: 21,
+      carbsPer100g: 22,
+      fatsPer100g: 50,
+      tags: ['mid', 'vegan'],
+      source: 'manual',
+      appropriateMealTypes: ['breakfast', 'snack_am', 'snack_pm']
+   },
+   {
+      id: 'chia-seeds',
+      name: 'semillas de chía',
+      category: 'fat',
+      kcalPer100g: 486,
+      proteinPer100g: 17,
+      carbsPer100g: 42,
+      fatsPer100g: 31,
+      tags: ['LATAM', 'mid', 'vegan'],
       source: 'manual',
       appropriateMealTypes: ['breakfast', 'snack_am', 'snack_pm']
    },
@@ -355,6 +511,42 @@ export const SEED_INGREDIENTS: ItfIngredient[] = [
       carbsPer100g: 12,
       fatsPer100g: 0.3,
       tags: ['mid', 'vegan', 'gluten_free'],
+      source: 'manual',
+      appropriateMealTypes: ['breakfast', 'snack_am', 'snack_pm']
+   },
+   {
+      id: 'mango',
+      name: 'mango',
+      category: 'fruit',
+      kcalPer100g: 60,
+      proteinPer100g: 0.8,
+      carbsPer100g: 15,
+      fatsPer100g: 0.4,
+      tags: ['LATAM', 'cheap', 'vegan', 'gluten_free'],
+      source: 'manual',
+      appropriateMealTypes: ['breakfast', 'snack_am', 'snack_pm']
+   },
+   {
+      id: 'papaya',
+      name: 'papaya',
+      category: 'fruit',
+      kcalPer100g: 43,
+      proteinPer100g: 0.5,
+      carbsPer100g: 11,
+      fatsPer100g: 0.3,
+      tags: ['LATAM', 'cheap', 'vegan', 'gluten_free'],
+      source: 'manual',
+      appropriateMealTypes: ['breakfast', 'snack_am', 'snack_pm']
+   },
+   {
+      id: 'pineapple',
+      name: 'piña',
+      category: 'fruit',
+      kcalPer100g: 50,
+      proteinPer100g: 0.5,
+      carbsPer100g: 13,
+      fatsPer100g: 0.1,
+      tags: ['LATAM', 'cheap', 'vegan', 'gluten_free'],
       source: 'manual',
       appropriateMealTypes: ['breakfast', 'snack_am', 'snack_pm']
    },
