@@ -62,6 +62,7 @@ interface ProfileRow {
    disliked_foods: string[] | null
    budget_level: 'low' | 'medium' | 'high' | null
    cooks_at_home: 'yes' | 'sometimes' | 'rarely' | null
+   meals_per_day: number | null
    onboarding_completed: boolean
 }
 
@@ -97,7 +98,7 @@ serve(async (req) => {
       const { data: profile, error: profileError } = await supabase
          .from('profiles')
          .select(
-            'id, region, goal, target_kcal, target_protein_g, target_carbs_g, target_fats_g, dietary_restrictions, allergies, disliked_foods, budget_level, cooks_at_home, onboarding_completed'
+            'id, region, goal, target_kcal, target_protein_g, target_carbs_g, target_fats_g, dietary_restrictions, allergies, disliked_foods, budget_level, cooks_at_home, meals_per_day, onboarding_completed'
          )
          .eq('id', user.id)
          .single()
@@ -136,7 +137,13 @@ serve(async (req) => {
          )
       }
 
-      // 5 — Target macroespecífico
+      // 5 — Resolver el patrón alimentario del usuario
+      const mealsPerDayRaw = (p.meals_per_day ?? 3) as number
+      const mealsPerDay = (
+         [2, 3, 4, 5].includes(mealsPerDayRaw) ? mealsPerDayRaw : 3
+      ) as 2 | 3 | 4 | 5
+
+      // 6 — Target macroespecífico (devuelve null si meal_type no aplica al patrón)
       const target = body.override_target ?? {
          kcal: p.target_kcal,
          proteinG: p.target_protein_g,
@@ -148,10 +155,19 @@ serve(async (req) => {
          dailyProteinG: target.proteinG,
          dailyCarbsG: target.carbsG,
          dailyFatsG: target.fatsG,
-         mealType: body.meal_type
+         mealType: body.meal_type,
+         mealsPerDay
       })
+      if (!mealTarget) {
+         return jsonRes(
+            {
+               msg: `Esa comida no está en tu plan de ${mealsPerDay} comidas. Cambiá tu patrón o elige otra comida 🌿`
+            },
+            400
+         )
+      }
 
-      // 6 — User context
+      // 7 — User context
       const ctx: UserContextForMeal = {
          region: p.region ?? 'LATAM',
          goal: (p.goal as UserContextForMeal['goal']) ?? 'maintain',
@@ -159,7 +175,8 @@ serve(async (req) => {
          allergies: p.allergies ?? '',
          dislikedFoods: p.disliked_foods ?? [],
          budgetLevel: p.budget_level ?? 'medium',
-         cooksAtHome: p.cooks_at_home ?? 'sometimes'
+         cooksAtHome: p.cooks_at_home ?? 'sometimes',
+         mealsPerDay
       }
 
       // 7 — Pool + selector

@@ -37,6 +37,8 @@ export interface OnboardingData {
    allergies: string
    dislikedFoods: string[]
    budgetLevel: 'low' | 'medium' | 'high' | null
+   /** Patrón alimentario (2-5 comidas/día). Decisión de Lucía. */
+   mealsPerDay: 2 | 3 | 4 | 5
 
    // Step 6 — horario
    availableDays: number[]
@@ -66,6 +68,7 @@ const initialData: OnboardingData = {
    allergies: '',
    dislikedFoods: [],
    budgetLevel: null,
+   mealsPerDay: 3,
 
    availableDays: [],
    availableMinutes: null,

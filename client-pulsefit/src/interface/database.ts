@@ -45,6 +45,7 @@ export interface ProfileRow {
    locale: string
    accepted_terms_at: string | null
    accepted_privacy_at: string | null
+   meals_per_day: number
    created_at: string
    updated_at: string
 }

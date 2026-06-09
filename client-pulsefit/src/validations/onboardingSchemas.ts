@@ -94,7 +94,14 @@ export const step5Schema = z.object({
    dislikedFoods: z.array(z.string()).default([]),
    budgetLevel: z.enum(['low', 'medium', 'high'], {
       required_error: '¿Cómo está el presupuesto?'
-   })
+   }),
+   /* Validación de Lucía: 2-5 comidas, default 3 (más sano y universal). */
+   mealsPerDay: z
+      .number({ required_error: '¿Cuántas comidas haces al día?' })
+      .int()
+      .min(2, { message: 'Mínimo 2 comidas al día' })
+      .max(5, { message: 'Máximo 5 comidas al día' })
+      .default(3)
 })
 
 // Step 6 — Horario

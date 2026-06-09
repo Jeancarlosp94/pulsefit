@@ -76,7 +76,37 @@ export interface UserContextForMeal {
    dislikedFoods: string[]
    budgetLevel: 'low' | 'medium' | 'high'
    cooksAtHome: 'yes' | 'sometimes' | 'rarely'
+   mealsPerDay: 2 | 3 | 4 | 5
 }
+
+export type MealsPerDay = 2 | 3 | 4 | 5
+
+export const MEAL_DISTRIBUTIONS: Record<
+   MealsPerDay,
+   Partial<Record<MealType, number>>
+> = {
+   2: { lunch: 0.4, dinner: 0.6 },
+   3: { breakfast: 0.3, lunch: 0.4, dinner: 0.3 },
+   4: { breakfast: 0.25, lunch: 0.35, snack_pm: 0.15, dinner: 0.25 },
+   5: {
+      breakfast: 0.2,
+      snack_am: 0.125,
+      lunch: 0.3,
+      snack_pm: 0.125,
+      dinner: 0.25
+   }
+}
+
+export const MEAL_MIN_KCAL: Record<MealType, number> = {
+   breakfast: 250,
+   lunch: 350,
+   dinner: 250,
+   snack_am: 100,
+   snack_pm: 100
+}
+
+export const getActiveMealTypes = (mealsPerDay: MealsPerDay): MealType[] =>
+   Object.keys(MEAL_DISTRIBUTIONS[mealsPerDay]) as MealType[]
 
 export type ValidationReason =
    | 'invalid_json'
@@ -110,10 +140,14 @@ export const computeMealTarget = (input: {
    dailyCarbsG: number
    dailyFatsG: number
    mealType: MealType
-}): MacroTarget => {
-   const r = MEAL_DISTRIBUTION[input.mealType]
+   mealsPerDay?: MealsPerDay
+}): MacroTarget | null => {
+   const dist = MEAL_DISTRIBUTIONS[input.mealsPerDay ?? 3]
+   const r = dist[input.mealType]
+   if (r === undefined) return null
+   const minKcal = MEAL_MIN_KCAL[input.mealType]
    return {
-      kcal: Math.round(input.dailyKcal * r),
+      kcal: Math.max(minKcal, Math.round(input.dailyKcal * r)),
       proteinG: Math.round(input.dailyProteinG * r),
       carbsG: Math.round(input.dailyCarbsG * r),
       fatsG: Math.round(input.dailyFatsG * r)
@@ -178,14 +212,41 @@ export const filterIngredientPool = (
 }
 
 // ============================================================
-//  COMPONENT SELECTOR
+//  COMPONENT SELECTOR (con fix bug 1200 kcal: mins por categoría + reintento)
 // ============================================================
-const MIN_GRAMS = 30
 const MAX_GRAMS = 400
-const clamp = (g: number) =>
-   Math.max(MIN_GRAMS, Math.min(MAX_GRAMS, Math.round(g / 5) * 5))
-const pickRandom = <T>(arr: T[], seed: number): T =>
-   arr[Math.abs(seed) % arr.length]
+const MIN_GRAMS_BY_CATEGORY = {
+   protein: 50,
+   carb: 30,
+   fat_concentrated: 5,
+   fat_volumed: 15,
+   vegetable: 80
+}
+
+const isConcentratedFat = (ing: Ingredient): boolean =>
+   ing.category === 'fat' && ing.kcalPer100g >= 700
+
+const minGramsFor = (ing: Ingredient): number => {
+   if (ing.category === 'protein') return MIN_GRAMS_BY_CATEGORY.protein
+   if (ing.category === 'carb') return MIN_GRAMS_BY_CATEGORY.carb
+   if (ing.category === 'fat') {
+      return isConcentratedFat(ing)
+         ? MIN_GRAMS_BY_CATEGORY.fat_concentrated
+         : MIN_GRAMS_BY_CATEGORY.fat_volumed
+   }
+   if (ing.category === 'vegetable') return MIN_GRAMS_BY_CATEGORY.vegetable
+   return 5
+}
+
+const clampForIngredient = (grams: number, ing: Ingredient): number => {
+   const min = minGramsFor(ing)
+   const rounded = Math.round(grams / 5) * 5
+   return Math.max(min, Math.min(MAX_GRAMS, rounded))
+}
+
+const pickByIndex = <T>(arr: T[], index: number): T =>
+   arr[Math.abs(index) % arr.length]
+
 const gramsForMacro = (
    ing: Ingredient,
    macro: 'protein' | 'carb' | 'fat',
@@ -200,6 +261,7 @@ const gramsForMacro = (
    if (per100 <= 0) return 0
    return (targetGrams / per100) * 100
 }
+
 const macrosFor = (ing: Ingredient, grams: number): MacroTarget => ({
    kcal: (ing.kcalPer100g * grams) / 100,
    proteinG: (ing.proteinPer100g * grams) / 100,
@@ -207,40 +269,10 @@ const macrosFor = (ing: Ingredient, grams: number): MacroTarget => ({
    fatsG: (ing.fatsPer100g * grams) / 100
 })
 
-export const selectComponents = (input: {
-   pool: Ingredient[]
-   target: MacroTarget
-   seed?: number
-}): MealComponents | null => {
-   const seed = input.seed ?? 0
-   const proteins = input.pool.filter((p) => p.category === 'protein')
-   const carbs = input.pool.filter((p) => p.category === 'carb')
-   const fats = input.pool.filter((p) => p.category === 'fat')
-   const veg = input.pool.filter((p) => p.category === 'vegetable')
-   const cond = input.pool.filter((p) => p.category === 'condiment')
-
-   if (!proteins.length || !carbs.length || !fats.length) return null
-   const protein = pickRandom(proteins, seed)
-   const carb = pickRandom(carbs, seed + 1)
-   const fat = pickRandom(fats, seed + 2)
-   const vegetable = veg.length ? pickRandom(veg, seed + 3) : null
-
-   const proteinG = clamp(
-      gramsForMacro(protein, 'protein', input.target.proteinG * 0.7)
-   )
-   const carbG = clamp(gramsForMacro(carb, 'carb', input.target.carbsG * 0.8))
-   const fatG = clamp(gramsForMacro(fat, 'fat', input.target.fatsG * 0.7))
-   const vegG = vegetable ? 150 : 0
-
-   const servings = [
-      { ingredient: protein, grams: proteinG },
-      { ingredient: carb, grams: carbG },
-      { ingredient: fat, grams: fatG },
-      vegetable ? { ingredient: vegetable, grams: vegG } : null
-   ].filter(Boolean) as IngredientServing[]
-
-   const sum = servings.reduce(
+const sumMacros = (servings: IngredientServing[]): MacroTarget =>
+   servings.reduce(
       (acc, s) => {
+         if (s.grams === 0) return acc
          const m = macrosFor(s.ingredient, s.grams)
          return {
             kcal: acc.kcal + m.kcal,
@@ -252,21 +284,108 @@ export const selectComponents = (input: {
       { kcal: 0, proteinG: 0, carbsG: 0, fatsG: 0 }
    )
 
+const buildCombination = (
+   pool: Ingredient[],
+   target: MacroTarget,
+   seed: number
+): MealComponents | null => {
+   const proteins = pool.filter((p) => p.category === 'protein')
+   const carbs = pool.filter((p) => p.category === 'carb')
+   const fats = pool.filter((p) => p.category === 'fat')
+   const veg = pool.filter((p) => p.category === 'vegetable')
+   const cond = pool.filter((p) => p.category === 'condiment')
+
+   if (!proteins.length || !carbs.length || !fats.length) return null
+
+   const protein = pickByIndex(proteins, seed)
+   const carb = pickByIndex(carbs, seed + 1)
+   const fat = pickByIndex(fats, seed + 2)
+   const vegetable = veg.length ? pickByIndex(veg, seed + 3) : null
+
+   const proteinG = clampForIngredient(
+      gramsForMacro(protein, 'protein', target.proteinG * 0.7),
+      protein
+   )
+   const carbG = clampForIngredient(
+      gramsForMacro(carb, 'carb', target.carbsG * 0.7),
+      carb
+   )
+   const fatG = clampForIngredient(
+      gramsForMacro(fat, 'fat', target.fatsG * 0.5),
+      fat
+   )
+   const vegG = vegetable ? clampForIngredient(120, vegetable) : 0
+
+   const initialSum = sumMacros([
+      { ingredient: protein, grams: proteinG },
+      { ingredient: carb, grams: carbG },
+      { ingredient: fat, grams: fatG },
+      vegetable ? { ingredient: vegetable, grams: vegG } : { ingredient: protein, grams: 0 }
+   ])
+
+   let scaledCarbG = carbG
+   let scaledFatG = fatG
+   const ratio = initialSum.kcal / Math.max(1, target.kcal)
+   if (ratio > 1.15) {
+      const factor = 1.15 / ratio
+      scaledCarbG = clampForIngredient(carbG * factor, carb)
+      scaledFatG = clampForIngredient(fatG * factor, fat)
+   }
+
+   const finalServings: IngredientServing[] = [
+      { ingredient: protein, grams: proteinG },
+      { ingredient: carb, grams: scaledCarbG },
+      { ingredient: fat, grams: scaledFatG },
+      vegetable ? { ingredient: vegetable, grams: vegG } : { ingredient: protein, grams: 0 }
+   ]
+   const finalSum = sumMacros(finalServings)
+
    return {
       protein: { ingredient: protein, grams: proteinG },
-      carb: { ingredient: carb, grams: carbG },
-      fat: { ingredient: fat, grams: fatG },
+      carb: { ingredient: carb, grams: scaledCarbG },
+      fat: { ingredient: fat, grams: scaledFatG },
       vegetable: vegetable
          ? { ingredient: vegetable, grams: vegG }
          : { ingredient: protein, grams: 0 },
       condiments: cond.slice(0, 5),
       actualMacros: {
-         kcal: Math.round(sum.kcal),
-         proteinG: Math.round(sum.proteinG),
-         carbsG: Math.round(sum.carbsG),
-         fatsG: Math.round(sum.fatsG)
+         kcal: Math.round(finalSum.kcal),
+         proteinG: Math.round(finalSum.proteinG),
+         carbsG: Math.round(finalSum.carbsG),
+         fatsG: Math.round(finalSum.fatsG)
       }
    }
+}
+
+export const selectComponents = (input: {
+   pool: Ingredient[]
+   target: MacroTarget
+   seed?: number
+}): MealComponents | null => {
+   const MAX_ATTEMPTS = 5
+   const MAX_ALLOWED_RATIO = 1.2
+   const seed = input.seed ?? 0
+
+   let best: MealComponents | null = null
+   let bestErr = Infinity
+
+   for (let i = 0; i < MAX_ATTEMPTS; i++) {
+      const candidate = buildCombination(input.pool, input.target, seed + i * 7)
+      if (!candidate) continue
+      const ratio = candidate.actualMacros.kcal / Math.max(1, input.target.kcal)
+      const err = Math.abs(ratio - 1)
+      if (ratio <= 1.15 && ratio >= 0.85) return candidate
+      if (err < bestErr) {
+         best = candidate
+         bestErr = err
+      }
+   }
+
+   if (best) {
+      const ratio = best.actualMacros.kcal / Math.max(1, input.target.kcal)
+      if (ratio > MAX_ALLOWED_RATIO || ratio < 0.5) return null
+   }
+   return best
 }
 
 // ============================================================

@@ -157,6 +157,34 @@ export const MEDICAL_CONDITIONS: OnboardingOption<string>[] = [
    { value: 'pregnancy', label: 'Embarazo / postparto' }
 ]
 
+/** Patrones alimentarios validados por Lucía (files/formulas-nutricion.md). */
+export const MEALS_PER_DAY_OPTIONS: OnboardingOption<string>[] = [
+   {
+      value: '2',
+      label: '2 comidas',
+      description: 'Ayuno intermitente (16:8). Almuerzo + cena.',
+      emoji: '🌅'
+   },
+   {
+      value: '3',
+      label: '3 comidas',
+      description: 'Patrón clásico. Desayuno + almuerzo + cena.',
+      emoji: '🌱'
+   },
+   {
+      value: '4',
+      label: '4 comidas',
+      description: '+ snack media tarde para más saciedad.',
+      emoji: '☕'
+   },
+   {
+      value: '5',
+      label: '5 comidas',
+      description: 'Atletas / hipertrofia. Distribuye proteína al máximo.',
+      emoji: '💪'
+   }
+]
+
 /** Etiquetas de los días de la semana (0=Domingo, 6=Sábado, ISO-friendly para el motor). */
 export const WEEK_DAYS: { value: number; short: string; long: string }[] = [
    { value: 1, short: 'L', long: 'Lunes' },

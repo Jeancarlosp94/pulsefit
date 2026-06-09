@@ -93,13 +93,48 @@ export interface ItfUserContextForMeal {
    dislikedFoods: string[]
    budgetLevel: 'low' | 'medium' | 'high'
    cooksAtHome: 'yes' | 'sometimes' | 'rarely'
+   /** Cuántas comidas por día hace el usuario (2-5). Default 3. */
+   mealsPerDay: 2 | 3 | 4 | 5
 }
 
-/** Targets por comida según la distribución por meal_type. */
+export type ItfMealsPerDay = 2 | 3 | 4 | 5
+
+/**
+ * Distribuciones validadas por Lucía según `meals_per_day`:
+ *   2 → ayuno intermitente 16:8 (almuerzo + cena).
+ *   3 → patrón clásico (desayuno + almuerzo + cena).
+ *   4 → + snack media tarde.
+ *   5 → atletas / hipertrofia, distribuye proteína en más ingestas.
+ *
+ * Los ratios suman 1.0 en cada caso (sumas validadas en tests).
+ */
+export const MEAL_DISTRIBUTIONS: Record<ItfMealsPerDay, Partial<Record<ItfMealType, number>>> = {
+   2: { lunch: 0.4, dinner: 0.6 },
+   3: { breakfast: 0.3, lunch: 0.4, dinner: 0.3 },
+   4: { breakfast: 0.25, lunch: 0.35, snack_pm: 0.15, dinner: 0.25 },
+   5: {
+      breakfast: 0.2,
+      snack_am: 0.125,
+      lunch: 0.3,
+      snack_pm: 0.125,
+      dinner: 0.25
+   }
+}
+
+/** Compat: distribución por defecto (5 comidas). Mantener para no romper imports. */
 export const MEAL_DISTRIBUTION: Record<ItfMealType, number> = {
-   breakfast: 0.25,
-   lunch: 0.35,
-   dinner: 0.3,
-   snack_am: 0.05,
-   snack_pm: 0.05
+   breakfast: 0.2,
+   snack_am: 0.125,
+   lunch: 0.3,
+   snack_pm: 0.125,
+   dinner: 0.25
+}
+
+/** Mínimos por meal_type según Lucía (en kcal absolutas, no proporciones). */
+export const MEAL_MIN_KCAL: Record<ItfMealType, number> = {
+   breakfast: 250,
+   lunch: 350,
+   dinner: 250,
+   snack_am: 100,
+   snack_pm: 100
 }

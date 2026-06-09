@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import {
    Clock,
    Flame,
@@ -8,7 +8,8 @@ import {
    Coffee,
    Moon,
    Loader2,
-   AlertCircle
+   AlertCircle,
+   Cookie
 } from 'lucide-react'
 import { AppShell } from '@/layout'
 import { TitleUI } from '@/components/TitleUI'
@@ -18,7 +19,12 @@ import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { useAuth } from '@/hooks/useAuth'
 import { useGenerateMeal } from '@/hooks/useGenerateMeal'
-import type { ItfMealType, ItfPlateOption } from '@/features/meal-generator'
+import {
+   getActiveMealTypes,
+   type ItfMealType,
+   type ItfMealsPerDay,
+   type ItfPlateOption
+} from '@/features/meal-generator'
 import { cn } from '@/utils'
 
 interface MealTypeOption {
@@ -27,16 +33,19 @@ interface MealTypeOption {
    icon: React.ComponentType<{ className?: string }>
 }
 
-const MEAL_TYPES: MealTypeOption[] = [
-   { value: 'breakfast', label: 'Desayuno', icon: Coffee },
-   { value: 'lunch', label: 'Almuerzo', icon: Salad },
-   { value: 'dinner', label: 'Cena', icon: Moon },
-   { value: 'snack_pm', label: 'Snack', icon: Sparkles }
-]
+const MEAL_TYPE_CATALOG: Record<ItfMealType, MealTypeOption> = {
+   breakfast: { value: 'breakfast', label: 'Desayuno', icon: Coffee },
+   snack_am: { value: 'snack_am', label: 'Media mañana', icon: Sparkles },
+   lunch: { value: 'lunch', label: 'Almuerzo', icon: Salad },
+   snack_pm: { value: 'snack_pm', label: 'Media tarde', icon: Cookie },
+   dinner: { value: 'dinner', label: 'Cena', icon: Moon }
+}
 
 const PlanPage = () => {
    const { profile, onboardingCompleted } = useAuth()
-   const [mealType, setMealType] = useState<ItfMealType>('lunch')
+   const mealsPerDay = (profile?.meals_per_day as ItfMealsPerDay | null) ?? 3
+   const activeMealTypes = useMemo(() => getActiveMealTypes(mealsPerDay), [mealsPerDay])
+   const [mealType, setMealType] = useState<ItfMealType>(activeMealTypes[0] ?? 'lunch')
    const [selected, setSelected] = useState<number>(0)
    const mutation = useGenerateMeal()
 
@@ -62,22 +71,43 @@ const PlanPage = () => {
    const options = data?.options ?? []
    const selectedOption: ItfPlateOption | undefined = options[selected]
 
+   /* Indicador visual de la diferencia target vs actual. */
+   const drift = data
+      ? Math.round(
+           ((data.components.actualMacros.kcal - data.target.kcal) / data.target.kcal) * 100
+        )
+      : 0
+   const driftSign = drift >= 0 ? '+' : ''
+
    return (
       <AppShell userName={profile?.name ?? null}>
-         <TitleUI title='Tu plan' subtitle='Elige una comida y mirá las 3 opciones que armamos.' />
+         <TitleUI
+            title='Tu plan'
+            subtitle={`Distribuido en ${mealsPerDay} comidas al día. Elige una y armamos 3 opciones.`}
+         />
 
          <div className='space-y-4'>
-            {/* Selector de meal_type */}
+            {/* Selector de meal_type — solo muestra los activos según mealsPerDay */}
             <Card>
                <CardContent className='pt-6'>
-                  <div className='grid grid-cols-4 gap-2'>
-                     {MEAL_TYPES.map(({ value, label, icon: Icon }) => {
-                        const active = mealType === value
+                  <div
+                     className={cn(
+                        'grid gap-2',
+                        activeMealTypes.length === 2 && 'grid-cols-2',
+                        activeMealTypes.length === 3 && 'grid-cols-3',
+                        activeMealTypes.length === 4 && 'grid-cols-4',
+                        activeMealTypes.length === 5 && 'grid-cols-5'
+                     )}
+                  >
+                     {activeMealTypes.map((mt) => {
+                        const opt = MEAL_TYPE_CATALOG[mt]
+                        const Icon = opt.icon
+                        const active = mealType === mt
                         return (
                            <button
-                              key={value}
+                              key={mt}
                               type='button'
-                              onClick={() => setMealType(value)}
+                              onClick={() => setMealType(mt)}
                               aria-pressed={active}
                               className={cn(
                                  'flex flex-col items-center gap-1 rounded-md border p-2 text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
@@ -87,7 +117,7 @@ const PlanPage = () => {
                               )}
                            >
                               <Icon className='h-5 w-5' />
-                              <span>{label}</span>
+                              <span className='text-center leading-tight'>{opt.label}</span>
                            </button>
                         )
                      })}
@@ -138,27 +168,60 @@ const PlanPage = () => {
                      </Card>
                   ) : null}
 
-                  {/* Macros target */}
+                  {/* Macros target + actual */}
                   <Card>
-                     <CardHeader>
-                        <CardTitle className='text-base'>Esta comida apunta a</CardTitle>
+                     <CardHeader className='pb-3'>
+                        <CardTitle className='flex items-center justify-between text-base'>
+                           <span>Esta comida apunta a</span>
+                           <span
+                              className={cn(
+                                 'text-xs font-normal',
+                                 Math.abs(drift) <= 15 ? 'text-primary' : 'text-secondary'
+                              )}
+                           >
+                              {driftSign}
+                              {drift}% vs target
+                           </span>
+                        </CardTitle>
                      </CardHeader>
-                     <CardContent className='grid grid-cols-4 gap-2 text-center text-sm'>
-                        <div>
-                           <p className='text-xs text-muted-foreground'>Kcal</p>
-                           <p className='font-medium text-foreground'>{data.target.kcal}</p>
-                        </div>
-                        <div>
-                           <p className='text-xs text-muted-foreground'>Prot</p>
-                           <p className='font-medium text-foreground'>{data.target.proteinG}g</p>
-                        </div>
-                        <div>
-                           <p className='text-xs text-muted-foreground'>Carbs</p>
-                           <p className='font-medium text-foreground'>{data.target.carbsG}g</p>
-                        </div>
-                        <div>
-                           <p className='text-xs text-muted-foreground'>Gras</p>
-                           <p className='font-medium text-foreground'>{data.target.fatsG}g</p>
+                     <CardContent className='space-y-3 text-sm'>
+                        <div className='grid grid-cols-4 gap-2 text-center'>
+                           <div>
+                              <p className='text-xs text-muted-foreground'>Kcal</p>
+                              <p className='font-medium text-foreground'>
+                                 {data.components.actualMacros.kcal}
+                              </p>
+                              <p className='text-[10px] text-muted-foreground'>
+                                 / {data.target.kcal}
+                              </p>
+                           </div>
+                           <div>
+                              <p className='text-xs text-muted-foreground'>Prot</p>
+                              <p className='font-medium text-foreground'>
+                                 {data.components.actualMacros.proteinG}g
+                              </p>
+                              <p className='text-[10px] text-muted-foreground'>
+                                 / {data.target.proteinG}g
+                              </p>
+                           </div>
+                           <div>
+                              <p className='text-xs text-muted-foreground'>Carbs</p>
+                              <p className='font-medium text-foreground'>
+                                 {data.components.actualMacros.carbsG}g
+                              </p>
+                              <p className='text-[10px] text-muted-foreground'>
+                                 / {data.target.carbsG}g
+                              </p>
+                           </div>
+                           <div>
+                              <p className='text-xs text-muted-foreground'>Gras</p>
+                              <p className='font-medium text-foreground'>
+                                 {data.components.actualMacros.fatsG}g
+                              </p>
+                              <p className='text-[10px] text-muted-foreground'>
+                                 / {data.target.fatsG}g
+                              </p>
+                           </div>
                         </div>
                      </CardContent>
                   </Card>

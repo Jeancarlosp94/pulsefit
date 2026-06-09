@@ -14,7 +14,13 @@ import { Input } from '@/components/ui/input'
 import { OnboardingFooter, OnboardingLayout, OptionCard } from '@/components/onboarding'
 import { useOnboardingStore } from '@/store/onboarding'
 import { step5Schema, type Step5Values } from '@/validations'
-import { BUDGET_OPTIONS, COOKS_AT_HOME_OPTIONS, DIETARY_RESTRICTIONS } from '@/config'
+import {
+   BUDGET_OPTIONS,
+   COOKS_AT_HOME_OPTIONS,
+   DIETARY_RESTRICTIONS,
+   MEALS_PER_DAY_OPTIONS
+} from '@/config'
+import type { ItfMealsPerDay } from '@/features/meal-generator'
 
 const Step5Diet = () => {
    const navigate = useNavigate()
@@ -27,7 +33,8 @@ const Step5Diet = () => {
          dietaryRestrictions: data.dietaryRestrictions ?? [],
          allergies: data.allergies ?? '',
          dislikedFoods: data.dislikedFoods ?? [],
-         budgetLevel: data.budgetLevel ?? undefined
+         budgetLevel: data.budgetLevel ?? undefined,
+         mealsPerDay: data.mealsPerDay ?? 3
       }
    })
 
@@ -37,7 +44,8 @@ const Step5Diet = () => {
          dietaryRestrictions: values.dietaryRestrictions,
          allergies: values.allergies ?? '',
          dislikedFoods: values.dislikedFoods,
-         budgetLevel: values.budgetLevel
+         budgetLevel: values.budgetLevel,
+         mealsPerDay: values.mealsPerDay as ItfMealsPerDay
       })
       next()
       navigate('/onboarding/6')
@@ -50,6 +58,7 @@ const Step5Diet = () => {
    }
 
    const selectedRestrictions = form.watch('dietaryRestrictions') ?? []
+   const selectedMeals = form.watch('mealsPerDay') ?? 3
 
    return (
       <OnboardingLayout
@@ -59,6 +68,38 @@ const Step5Diet = () => {
       >
          <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-5'>
+               {/* NUEVO: cuántas comidas hace por día */}
+               <FormField
+                  control={form.control}
+                  name='mealsPerDay'
+                  render={({ field }) => (
+                     <FormItem className='space-y-3'>
+                        <FormLabel>¿Cuántas comidas haces al día?</FormLabel>
+                        <div className='space-y-2'>
+                           {MEALS_PER_DAY_OPTIONS.map((opt) => {
+                              const n = Number.parseInt(opt.value, 10)
+                              return (
+                                 <OptionCard
+                                    key={opt.value}
+                                    selected={selectedMeals === n}
+                                    onSelect={() => field.onChange(n)}
+                                    label={opt.label}
+                                    description={opt.description}
+                                    emoji={opt.emoji}
+                                    compact
+                                 />
+                              )
+                           })}
+                        </div>
+                        <p className='text-xs text-muted-foreground'>
+                           Distribuimos tus calorías y proteínas entre estas comidas. Lo puedes
+                           cambiar después.
+                        </p>
+                        <FormMessage />
+                     </FormItem>
+                  )}
+               />
+
                <FormField
                   control={form.control}
                   name='cooksAtHome'

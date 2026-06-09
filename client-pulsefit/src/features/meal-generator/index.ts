@@ -4,6 +4,7 @@
 
 export type {
    ItfMealType,
+   ItfMealsPerDay,
    ItfDifficulty,
    ItfMacroTarget,
    ItfIngredient,
@@ -15,9 +16,9 @@ export type {
    ItfValidationReason,
    ItfUserContextForMeal
 } from './types'
-export { MEAL_DISTRIBUTION } from './types'
+export { MEAL_DISTRIBUTION, MEAL_DISTRIBUTIONS, MEAL_MIN_KCAL } from './types'
 
-export { computeMealTarget } from './nutritional-target'
+export { computeMealTarget, getActiveMealTypes } from './nutritional-target'
 export { filterIngredientPool, prioritizeByRegion } from './ingredient-pool'
 export { selectComponents, isWithinTolerance } from './component-selector'
 export { SYSTEM_PROMPT, buildUserPrompt, maxPrepTimeForUser } from './compose-prompt'

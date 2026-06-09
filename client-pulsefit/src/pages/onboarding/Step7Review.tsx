@@ -94,6 +94,7 @@ const Step7Review = () => {
             allergies: data.allergies || null,
             disliked_foods: data.dislikedFoods,
             budget_level: data.budgetLevel,
+            meals_per_day: data.mealsPerDay,
             medical_conditions: data.medicalConditions,
             tmb: summary.tmb,
             get_kcal: summary.getKcal,

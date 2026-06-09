@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { LogOut, Sun, Moon, Monitor, Trash2 } from 'lucide-react'
+import { LogOut, Sun, Moon, Monitor, Trash2, UtensilsCrossed } from 'lucide-react'
 import { toast } from 'sonner'
+import { MealsPerDayDialog } from '@/components'
 import { AppShell } from '@/layout'
 import { TitleUI } from '@/components/TitleUI'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -40,6 +41,7 @@ const ProfilePage = () => {
    const { handleApiError } = useErrorHandling()
 
    const [signOutOpen, setSignOutOpen] = useState(false)
+   const [mealsDialogOpen, setMealsDialogOpen] = useState(false)
 
    const displayName = profile?.name ?? user?.email?.split('@')[0] ?? 'Bienvenida'
    const email = user?.email ?? '—'
@@ -76,6 +78,31 @@ const ProfilePage = () => {
                         {email}
                      </span>
                   </div>
+               </CardContent>
+            </Card>
+
+            <Card>
+               <CardHeader>
+                  <CardTitle className='flex items-center gap-2 text-base'>
+                     <UtensilsCrossed className='h-4 w-4 text-primary' />
+                     Patrón alimentario
+                  </CardTitle>
+               </CardHeader>
+               <CardContent className='space-y-3'>
+                  <div className='flex items-center justify-between text-sm'>
+                     <span className='text-muted-foreground'>Comidas por día</span>
+                     <span className='font-medium text-foreground'>
+                        {profile?.meals_per_day ?? 3}
+                     </span>
+                  </div>
+                  <Button
+                     variant='outline'
+                     size='sm'
+                     onClick={() => setMealsDialogOpen(true)}
+                     className='w-full'
+                  >
+                     Cambiar
+                  </Button>
                </CardContent>
             </Card>
 
@@ -149,6 +176,8 @@ const ProfilePage = () => {
                </CardContent>
             </Card>
          </div>
+
+         <MealsPerDayDialog open={mealsDialogOpen} onOpenChange={setMealsDialogOpen} />
 
          <Dialog open={signOutOpen} onOpenChange={setSignOutOpen}>
             <DialogContent>

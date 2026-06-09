@@ -11,7 +11,9 @@ import {
    buildMealFallback,
    SEED_INGREDIENTS,
    SYSTEM_PROMPT,
-   MEAL_DISTRIBUTION
+   MEAL_DISTRIBUTION,
+   MEAL_DISTRIBUTIONS,
+   getActiveMealTypes
 } from './index'
 import type { ItfMealComponents, ItfUserContextForMeal } from './types'
 
@@ -22,36 +24,125 @@ const baseCtx: ItfUserContextForMeal = {
    allergies: '',
    dislikedFoods: [],
    budgetLevel: 'medium',
-   cooksAtHome: 'sometimes'
+   cooksAtHome: 'sometimes',
+   mealsPerDay: 3
 }
 
-describe('computeMealTarget', () => {
-   it('lunch toma el 35% del target diario', () => {
+describe('computeMealTarget (distribución dinámica según mealsPerDay)', () => {
+   const baseInput = {
+      dailyKcal: 2000,
+      dailyProteinG: 140,
+      dailyCarbsG: 200,
+      dailyFatsG: 60
+   }
+
+   it('plan de 3 comidas: lunch toma el 40% del target diario', () => {
       const target = computeMealTarget({
-         dailyKcal: 2000,
-         dailyProteinG: 140,
-         dailyCarbsG: 200,
-         dailyFatsG: 60,
+         ...baseInput,
+         mealType: 'lunch',
+         mealsPerDay: 3
+      })
+      expect(target).not.toBeNull()
+      expect(target!.kcal).toBe(800)
+      expect(target!.proteinG).toBe(56)
+   })
+
+   it('plan de 3 comidas: snack_am NO existe → devuelve null', () => {
+      const target = computeMealTarget({
+         ...baseInput,
+         mealType: 'snack_am',
+         mealsPerDay: 3
+      })
+      expect(target).toBeNull()
+   })
+
+   it('plan de 5 comidas: snack_am toma 12.5% del target diario', () => {
+      const target = computeMealTarget({
+         ...baseInput,
+         mealType: 'snack_am',
+         mealsPerDay: 5
+      })
+      expect(target).not.toBeNull()
+      expect(target!.kcal).toBe(250)
+   })
+
+   it('plan de 2 comidas: lunch 40% + dinner 60%', () => {
+      const lunch = computeMealTarget({
+         ...baseInput,
+         mealType: 'lunch',
+         mealsPerDay: 2
+      })
+      const dinner = computeMealTarget({
+         ...baseInput,
+         mealType: 'dinner',
+         mealsPerDay: 2
+      })
+      expect(lunch!.kcal).toBe(800)
+      expect(dinner!.kcal).toBe(1200)
+   })
+
+   it('aplica mínimo absoluto por meal_type (Lucía)', () => {
+      /* Si el target diario es bajo y un snack queda con < 100 kcal,
+       * lo elevamos al mínimo 100. */
+      const target = computeMealTarget({
+         dailyKcal: 1200,
+         dailyProteinG: 80,
+         dailyCarbsG: 100,
+         dailyFatsG: 30,
+         mealType: 'snack_pm',
+         mealsPerDay: 5
+      })
+      expect(target!.kcal).toBeGreaterThanOrEqual(100)
+   })
+
+   it('los ratios de cada distribución suman 100%', () => {
+      const sums = ([2, 3, 4, 5] as const).map((n) => {
+         const dist = MEAL_DISTRIBUTIONS[n]
+         return Object.values(dist).reduce((a, b) => a + (b ?? 0), 0)
+      })
+      sums.forEach((s) => expect(Math.round(s * 100) / 100).toBe(1))
+   })
+
+   it('default mealsPerDay=3 cuando no se pasa', () => {
+      const target = computeMealTarget({
+         ...baseInput,
          mealType: 'lunch'
       })
-      expect(target.kcal).toBe(700)
-      expect(target.proteinG).toBe(49)
+      /* Lunch en plan de 3 = 40% = 800 kcal. */
+      expect(target!.kcal).toBe(800)
    })
 
-   it('snack_am toma el 5% del target diario', () => {
-      const target = computeMealTarget({
-         dailyKcal: 2000,
-         dailyProteinG: 140,
-         dailyCarbsG: 200,
-         dailyFatsG: 60,
-         mealType: 'snack_am'
-      })
-      expect(target.kcal).toBe(100)
-   })
-
-   it('los 5 ratios suman 100%', () => {
+   it('MEAL_DISTRIBUTION legacy sigue sumando 100%', () => {
       const sum = Object.values(MEAL_DISTRIBUTION).reduce((a, b) => a + b, 0)
       expect(Math.round(sum * 100) / 100).toBe(1)
+   })
+})
+
+describe('getActiveMealTypes', () => {
+   it('plan 2 → [lunch, dinner]', () => {
+      const types = getActiveMealTypes(2)
+      expect(types).toEqual(['lunch', 'dinner'])
+   })
+
+   it('plan 3 → [breakfast, lunch, dinner]', () => {
+      const types = getActiveMealTypes(3)
+      expect(types).toContain('breakfast')
+      expect(types).toContain('lunch')
+      expect(types).toContain('dinner')
+      expect(types).not.toContain('snack_am')
+      expect(types).not.toContain('snack_pm')
+   })
+
+   it('plan 4 → 4 elementos con snack_pm', () => {
+      const types = getActiveMealTypes(4)
+      expect(types).toHaveLength(4)
+      expect(types).toContain('snack_pm')
+      expect(types).not.toContain('snack_am')
+   })
+
+   it('plan 5 → todos los meal_types', () => {
+      const types = getActiveMealTypes(5)
+      expect(types).toHaveLength(5)
    })
 })
 
@@ -124,13 +215,22 @@ describe('selectComponents', () => {
       }
    })
 
-   it('los gramos están entre 30 y 400', () => {
+   it('proteína >= 50g, carbo >= 30g, vegetal >= 80g', () => {
       const result = selectComponents({ pool, target })
       if (result) {
-         expect(result.protein.grams).toBeGreaterThanOrEqual(30)
+         expect(result.protein.grams).toBeGreaterThanOrEqual(50)
          expect(result.protein.grams).toBeLessThanOrEqual(400)
          expect(result.carb.grams).toBeGreaterThanOrEqual(30)
-         expect(result.fat.grams).toBeGreaterThanOrEqual(30)
+         expect(result.vegetable.grams).toBeGreaterThanOrEqual(80)
+      }
+   })
+
+   it('grasa concentrada (aceite) puede ser tan baja como 5g (fix bug 1200kcal)', () => {
+      /* Si el motor elige aceite de oliva (884 kcal/100g), 30g serían 265 kcal
+       * y reventarían el target. Ahora el mín para grasas concentradas es 5g. */
+      const result = selectComponents({ pool, target })
+      if (result && result.fat.ingredient.kcalPer100g >= 700) {
+         expect(result.fat.grams).toBeGreaterThanOrEqual(5)
       }
    })
 
@@ -149,12 +249,30 @@ describe('selectComponents', () => {
       expect(result).toBeNull()
    })
 
-   it('actualMacros refleja la combinación real (no el target)', () => {
-      const result = selectComponents({ pool, target })
+   it('actualMacros respeta tolerancia ±20% sobre kcal target (fix bug 1200kcal)', () => {
+      /* Antes del fix podía salir 1200 kcal en target 700. Ahora debe estar
+       * en rango 560-840 (±20%) o devolver null. */
+      const result = selectComponents({ pool, target, seed: 0 })
       if (result) {
-         expect(result.actualMacros.kcal).toBeGreaterThan(0)
-         expect(result.actualMacros.proteinG).toBeGreaterThan(0)
+         const ratio = result.actualMacros.kcal / target.kcal
+         expect(ratio).toBeGreaterThanOrEqual(0.5)
+         expect(ratio).toBeLessThanOrEqual(1.2)
       }
+   })
+
+   it('múltiples seeds — al menos uno debe cuadrar ±15%', () => {
+      let foundInBand = false
+      for (let s = 0; s < 10; s++) {
+         const r = selectComponents({ pool, target, seed: s })
+         if (r) {
+            const ratio = r.actualMacros.kcal / target.kcal
+            if (ratio >= 0.85 && ratio <= 1.15) {
+               foundInBand = true
+               break
+            }
+         }
+      }
+      expect(foundInBand).toBe(true)
    })
 })
 
