@@ -7,6 +7,18 @@ La versión sigue el roadmap de fases (no semver tradicional).
 
 ---
 
+## [Documentación] — 2026-06-10
+
+### 📚 Agregado
+- `CHANGELOG.md` (raíz, este archivo) — historial completo Sprint 0 → 7.1.
+- `files/PROJECT_STATE.md` — snapshot one-pager del estado actual.
+- `.claude/skills/pulsefit/SKILL.md` — skill local con convenciones + 6 bugs recurrentes documentados.
+- `files/MEMORY.md` actualizado con bitácora comprimida de los 8 sprints.
+
+**Commit:** `7b0fba2`
+
+---
+
 ## [Sprint 7.1] — 2026-06-10
 
 ### ✨ Agregado
@@ -168,7 +180,10 @@ La versión sigue el roadmap de fases (no semver tradicional).
 ### 🛠️ Fase 4.5
 - Configuración `meals_per_day` (2-5) con migración SQL + banner Home + `MealsPerDayDialog` + distribución `MEAL_DISTRIBUTIONS` por número de comidas + `MEAL_MIN_KCAL` por meal_type. Fix bug "almuerzo 1200 kcal" con MIN_GRAMS_BY_CATEGORY adaptativo.
 
-**Commits:** `bb91751`, `4ca1303`, `7678b1e`, `280863d`, `309a21b`, `67f6ea8`
+### 🐛 Fix (precursor del refactor mayor de Fase 6)
+- `769462b`: primer fix del error handling de Edge Functions — normalizar `FunctionsHttpError.context.response` para extraer `{ msg, status }` reales. Agregar caso 429 (rate limit) en `useErrorHandling`. Mensaje específico cuando la Edge Function no está deployada ("Esa función todavía no está disponible 🍃"). _Nota: la versión correcta del SDK expone `.context` como Response directamente — eso se arregló definitivamente en el commit `3ab608c` de Fase 6._
+
+**Commits:** `bb91751`, `4ca1303`, `7678b1e`, `280863d`, `309a21b`, `67f6ea8`, `769462b`
 
 ---
 
