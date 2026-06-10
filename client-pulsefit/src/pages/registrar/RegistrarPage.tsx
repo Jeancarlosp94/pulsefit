@@ -8,18 +8,26 @@ import {
    AlertCircle,
    Sparkles,
    Heart,
-   PlayCircle
+   PlayCircle,
+   ClipboardCheck,
+   TrendingUp
 } from 'lucide-react'
 import { AppShell } from '@/layout'
 import { TitleUI } from '@/components/TitleUI'
 import { EmptyState } from '@/components/EmptyState'
 import { InfoTooltip } from '@/components/InfoTooltip'
-import { findVideoUrlForExercise } from '@/features/routine-generator'
+import { LogSetDialog } from '@/components/LogSetDialog'
+import {
+   findVideoUrlForExercise,
+   suggestNextWeight,
+   formatLastSession
+} from '@/features/routine-generator'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { useAuth } from '@/hooks/useAuth'
 import { useGenerateWorkout } from '@/hooks/useGenerateWorkout'
+import { useRecentLogsByExercise } from '@/hooks/useWorkoutLogs'
 import type { ItfSessionFocus } from '@/features/routine-generator'
 import { cn } from '@/utils'
 
@@ -38,9 +46,24 @@ const FOCUS_OPTIONS: FocusOption[] = [
 const RegistrarPage = () => {
    const { profile, onboardingCompleted } = useAuth()
    const [override, setOverride] = useState<ItfSessionFocus | undefined>(undefined)
+   const [logTarget, setLogTarget] = useState<{
+      exerciseId: string
+      exerciseName: string
+      sets: number
+      reps: number
+      suggestedWeight: number
+   } | null>(null)
    const mutation = useGenerateWorkout()
 
    const today = useMemo(() => new Date().getDay(), [])
+
+   const data = mutation.data
+   const session = data?.session
+
+   /* Lookup batch de logs recientes para los ejercicios de la sesión actual. */
+   const exerciseIds = useMemo(() => session?.blocks.map((b) => b.exercise_id) ?? [], [session])
+   const recentLogsQuery = useRecentLogsByExercise(exerciseIds)
+   const logsByExercise = recentLogsQuery.data ?? {}
 
    const handleGenerate = () => {
       mutation.mutate({ day_of_week: today, override_focus: override })
@@ -58,9 +81,6 @@ const RegistrarPage = () => {
          </AppShell>
       )
    }
-
-   const data = mutation.data
-   const session = data?.session
 
    return (
       <AppShell userName={profile?.name ?? null}>
@@ -205,6 +225,17 @@ const RegistrarPage = () => {
                   {/* Bloques */}
                   {session.blocks.map((b, i) => {
                      const videoUrl = findVideoUrlForExercise(b.name)
+                     const recentLogs = logsByExercise[b.exercise_id] ?? []
+                     const lastLog = recentLogs[0]
+                     /* b.reps puede venir como "8" o "8-12". Parseamos el primer número. */
+                     const repsNumber = Number.parseInt(String(b.reps).match(/\d+/)?.[0] ?? '8', 10)
+                     const suggestion = suggestNextWeight({
+                        recentLogs,
+                        targetRpe: data.prescribedRpe,
+                        isCompound: true /* asumimos compound por default; el motor no lo expone aún */,
+                        prescribedReps: repsNumber,
+                        isDeloadWeek: data.isDeloadWeek
+                     })
                      return (
                         <Card key={b.exercise_id}>
                            <CardHeader className='pb-3'>
@@ -230,6 +261,32 @@ const RegistrarPage = () => {
                                     Ver técnica en YouTube
                                  </a>
                               ) : null}
+
+                              {/* Última vez + sugerencia de progresión */}
+                              {lastLog ? (
+                                 <div className='rounded-md border border-border bg-muted/30 p-2 text-xs'>
+                                    <div className='flex items-center gap-1.5 text-muted-foreground'>
+                                       <ClipboardCheck className='h-3 w-3' />
+                                       <span>
+                                          Última vez:{' '}
+                                          <span className='font-medium text-foreground'>
+                                             {formatLastSession(lastLog)}
+                                          </span>
+                                       </span>
+                                    </div>
+                                    {suggestion.kind === 'progress' ? (
+                                       <div className='mt-1 flex items-start gap-1.5 text-primary'>
+                                          <TrendingUp className='mt-0.5 h-3 w-3 shrink-0' />
+                                          <span>{suggestion.reason}</span>
+                                       </div>
+                                    ) : (
+                                       <p className='mt-1 text-muted-foreground'>
+                                          {suggestion.reason}
+                                       </p>
+                                    )}
+                                 </div>
+                              ) : null}
+
                               <Separator />
                               <div className='flex items-center justify-between text-xs text-muted-foreground'>
                                  <span className='flex items-center gap-1'>
@@ -241,6 +298,25 @@ const RegistrarPage = () => {
                                     {b.sets * 30}s aprox.
                                  </span>
                               </div>
+
+                              <Button
+                                 type='button'
+                                 variant='outline'
+                                 size='sm'
+                                 onClick={() =>
+                                    setLogTarget({
+                                       exerciseId: b.exercise_id,
+                                       exerciseName: b.name,
+                                       sets: b.sets,
+                                       reps: repsNumber,
+                                       suggestedWeight: suggestion.weightKg
+                                    })
+                                 }
+                                 className='w-full'
+                              >
+                                 <ClipboardCheck className='h-3.5 w-3.5' />
+                                 Registrar set
+                              </Button>
                            </CardContent>
                         </Card>
                      )
@@ -265,6 +341,20 @@ const RegistrarPage = () => {
                </>
             ) : null}
          </div>
+
+         {logTarget ? (
+            <LogSetDialog
+               open={true}
+               onOpenChange={(v) => {
+                  if (!v) setLogTarget(null)
+               }}
+               exerciseId={logTarget.exerciseId}
+               exerciseName={logTarget.exerciseName}
+               prescribedSets={logTarget.sets}
+               prescribedReps={logTarget.reps}
+               suggestedWeightKg={logTarget.suggestedWeight}
+            />
+         ) : null}
       </AppShell>
    )
 }
