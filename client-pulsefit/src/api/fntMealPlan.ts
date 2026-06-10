@@ -46,6 +46,22 @@ export const fntGenerateMealPlan = async (
  * Lee el plan vigente del usuario actual (el más reciente).
  * Devuelve `null` si nunca generó plan.
  */
+/**
+ * Borra el plan vigente del usuario. RLS protege que solo el dueño pueda
+ * borrar su propio plan. Después del DELETE, useMealPlan vuelve a null.
+ */
+export const fntDeleteCurrentMealPlan = async (): Promise<void> => {
+   const { data: auth } = await supabase.auth.getUser()
+   const userId = auth.user?.id
+   if (!userId) throw new Error('Sesión inválida, vuelve a entrar 🌱')
+
+   /* Borrar TODOS los planes del usuario (típicamente solo hay 1 vigente). */
+   const { error } = await supabase.from('meal_plans').delete().eq('user_id', userId)
+   if (error) {
+      throw new Error(`No pudimos limpiar el plan: ${error.message.slice(0, 100)} 🌿`)
+   }
+}
+
 export const fntGetCurrentMealPlan = async (): Promise<ItfMealPlan | null> => {
    const { data: auth } = await supabase.auth.getUser()
    const userId = auth.user?.id

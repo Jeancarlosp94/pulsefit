@@ -10,13 +10,15 @@ import {
    Heart,
    PlayCircle,
    ClipboardCheck,
-   TrendingUp
+   TrendingUp,
+   Play
 } from 'lucide-react'
 import { AppShell } from '@/layout'
 import { TitleUI } from '@/components/TitleUI'
 import { EmptyState } from '@/components/EmptyState'
 import { InfoTooltip } from '@/components/InfoTooltip'
 import { LogSetDialog } from '@/components/LogSetDialog'
+import { WorkoutSessionView } from '@/components/workout'
 import {
    findVideoUrlForExercise,
    suggestNextWeight,
@@ -53,6 +55,7 @@ const RegistrarPage = () => {
       reps: number
       suggestedWeight: number
    } | null>(null)
+   const [executing, setExecuting] = useState(false)
    const mutation = useGenerateWorkout()
 
    const today = useMemo(() => new Date().getDay(), [])
@@ -78,6 +81,20 @@ const RegistrarPage = () => {
                title='Falta tu onboarding'
                description='Termina los 7 pasos y vuelve aquí para tu primera rutina personalizada.'
             />
+         </AppShell>
+      )
+   }
+
+   /* Modo "ejecutando sesión": muestra la vista de ejecución y oculta
+    * el generador. El usuario sale con onExit y vuelve al generador. */
+   if (executing && data && session) {
+      return (
+         <AppShell userName={profile?.name ?? null}>
+            <TitleUI
+               title='En sesión 💪'
+               subtitle='Marca cada serie como hecha. El cronómetro se activa solo.'
+            />
+            <WorkoutSessionView data={data} onExit={() => setExecuting(false)} />
          </AppShell>
       )
    }
@@ -204,6 +221,12 @@ const RegistrarPage = () => {
                         </div>
                      </CardContent>
                   </Card>
+
+                  {/* Empezar entrenamiento */}
+                  <Button onClick={() => setExecuting(true)} className='w-full' size='lg'>
+                     <Play className='h-4 w-4' />
+                     Empezar entrenamiento
+                  </Button>
 
                   {/* Warmup */}
                   <Card>

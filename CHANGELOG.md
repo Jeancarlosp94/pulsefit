@@ -19,6 +19,32 @@ La versión sigue el roadmap de fases (no semver tradicional).
 
 ---
 
+## [Sprint 7.3] — 2026-06-10
+
+### ✨ Agregado (Sprint 7.3A — Vista de ejecución de entrenamiento)
+- **`WorkoutSessionView`** completo: una vez que se generó la rutina, el botón **"Empezar entrenamiento"** activa una vista enfocada en la ejecución:
+  - Header sticky con progreso "2/5 ejercicios" + botón Salir con confirmación.
+  - **Lista vertical de bloques** — cada bloque expandido por default con su tip + link "Ver técnica" + "Última vez: 3×8 @ 22.5 kg" si hay historial.
+  - **Por cada serie**: fila con inputs separados de **peso (kg, step 0.25)** y **reps logradas** + botón ✓ que la marca como hecha (visual primary + bloquea edición).
+  - **Cronómetro de descanso flotante** (`RestTimer`): aparece al marcar una serie como hecha y cuenta hacia atrás desde `rest_sec` del bloque. Cambia a color primary cuando faltan ≤ 5 segundos. Cierre manual con X.
+  - **Selector de RPE** (10 botones 1-10) que aparece solo cuando TODAS las series del ejercicio están hechas + botón **"Guardar ejercicio"** que llama `useLogSet` una vez con el resumen (sets_completed = doneSets.length, reps_completed = promedio, weight_kg = máximo).
+  - Card final **"¡Sesión completa! 💪"** cuando todos los ejercicios fueron guardados.
+  - Warmup y cool-down se muestran informativos en los extremos.
+- Estado de la sesión vive en el componente (no se persiste si el usuario sale a mitad). Los ejercicios YA guardados quedan en `workout_logs`.
+- Sugerencia de progresión inicial (Sprint 3) pre-rellena el peso del primer set.
+
+### ✨ Agregado (Sprint 7.3B — Limpiar plan + FAB Quick Actions)
+- **Botón "Limpiar plan"** en PlanPage (al lado de "Lista de compras"). Dialog de confirmación. `fntDeleteCurrentMealPlan` → `DELETE FROM meal_plans WHERE user_id = auth.uid()`. Después del DELETE, el cache de react-query se limpia y vuelve a aparecer "Generar mi plan". **Solo toca `meal_plans` — logs y perfil quedan intactos.**
+- **`QuickActionFAB`** en HomePage (botón flotante coral en esquina inferior derecha): tap → menú de 3 acciones:
+  - 💧 **+ Agua**: suma 1 vaso al instante (optimistic update del `WaterTrackerCard`).
+  - ⚖️ **Peso**: abre `WeightLogDialog`.
+  - 🏋️ **Entrenar**: navega a `/registrar`.
+- Backdrop con blur cuando está abierto. El botón principal rota 45° y se convierte en X.
+
+**Commit:** próximo push
+
+---
+
 ## [Sprint 7.2] — 2026-06-10
 
 ### ✨ Agregado (Sprint 7.2A — Registro de comida en 3 taps)

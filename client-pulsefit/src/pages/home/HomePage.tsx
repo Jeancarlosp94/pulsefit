@@ -4,7 +4,7 @@ import { UtensilsCrossed, CalendarDays, Dumbbell, ChevronRight, Scale } from 'lu
 import { AppShell } from '@/layout'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { MealsPerDayDialog, MealLogDialog, WeightLogDialog } from '@/components'
+import { MealsPerDayDialog, MealLogDialog, WeightLogDialog, QuickActionFAB } from '@/components'
 import { WelcomeCard, MealsRowCard, MacrosProgressCard, WaterTrackerCard } from '@/components/home'
 import { useAuth } from '@/hooks/useAuth'
 import { useTodayState } from '@/hooks/useTodayState'
@@ -159,6 +159,8 @@ const HomePage = () => {
 
          <MealsPerDayDialog open={dialogOpen} onOpenChange={setDialogOpen} />
          <WeightLogDialog open={weightOpen} onOpenChange={setWeightOpen} />
+
+         <QuickActionFAB />
 
          {logTarget && plan && state.dayIndex !== null ? (
             <MealLogDialog

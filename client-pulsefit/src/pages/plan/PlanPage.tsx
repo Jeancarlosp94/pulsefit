@@ -14,7 +14,8 @@ import {
    Ban,
    CalendarDays,
    ShoppingCart,
-   Repeat
+   Repeat,
+   Trash2
 } from 'lucide-react'
 import { AppShell } from '@/layout'
 import { TitleUI } from '@/components/TitleUI'
@@ -26,7 +27,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { useAuth } from '@/hooks/useAuth'
-import { useMealPlan, useGenerateMealPlan } from '@/hooks/useMealPlan'
+import { useMealPlan, useGenerateMealPlan, useDeleteMealPlan } from '@/hooks/useMealPlan'
+import {
+   Dialog,
+   DialogContent,
+   DialogDescription,
+   DialogHeader,
+   DialogTitle
+} from '@/components/ui/dialog'
 import { type ItfMealType } from '@/features/meal-generator'
 import type { ItfDailySchedule, ItfMealAssignment, ItfRecipe } from '@/interface/itfMeals'
 import { cn } from '@/utils'
@@ -64,6 +72,8 @@ const PlanPage = () => {
    const [selectedDayIdx, setSelectedDayIdx] = useState(0)
    const [loaderIdx, setLoaderIdx] = useState(0)
    const [shoppingOpen, setShoppingOpen] = useState(false)
+   const [clearOpen, setClearOpen] = useState(false)
+   const deleteMealPlan = useDeleteMealPlan()
    const [swapTarget, setSwapTarget] = useState<{
       dayIndex: number
       mealType: ItfMealType
@@ -244,16 +254,22 @@ const PlanPage = () => {
                      </Card>
                   ) : null}
 
-                  {/* Lista de compras */}
-                  <Button
-                     type='button'
-                     variant='outline'
-                     onClick={() => setShoppingOpen(true)}
-                     className='w-full'
-                  >
-                     <ShoppingCart className='h-4 w-4' />
-                     Ver lista de compras
-                  </Button>
+                  {/* Lista de compras + limpiar plan */}
+                  <div className='grid grid-cols-2 gap-2'>
+                     <Button type='button' variant='outline' onClick={() => setShoppingOpen(true)}>
+                        <ShoppingCart className='h-4 w-4' />
+                        Lista de compras
+                     </Button>
+                     <Button
+                        type='button'
+                        variant='outline'
+                        onClick={() => setClearOpen(true)}
+                        className='text-muted-foreground hover:text-foreground'
+                     >
+                        <Trash2 className='h-4 w-4' />
+                        Limpiar plan
+                     </Button>
+                  </div>
 
                   {/* Selector de día */}
                   <Card>
@@ -347,6 +363,40 @@ const PlanPage = () => {
                  )
               })()
             : null}
+
+         {/* Confirmar limpiar plan */}
+         <Dialog open={clearOpen} onOpenChange={setClearOpen}>
+            <DialogContent className='sm:max-w-md'>
+               <DialogHeader>
+                  <DialogTitle>¿Limpiar tu plan?</DialogTitle>
+                  <DialogDescription>
+                     Vamos a borrar el plan vigente. Tus comidas, entrenamientos y demás datos no se
+                     tocan. Cuando quieras generamos uno nuevo.
+                  </DialogDescription>
+               </DialogHeader>
+               <div className='grid grid-cols-2 gap-2 pt-2'>
+                  <Button
+                     variant='outline'
+                     size='sm'
+                     onClick={() => setClearOpen(false)}
+                     disabled={deleteMealPlan.isPending}
+                  >
+                     Cancelar
+                  </Button>
+                  <Button
+                     size='sm'
+                     onClick={() =>
+                        deleteMealPlan.mutate(undefined, {
+                           onSuccess: () => setClearOpen(false)
+                        })
+                     }
+                     disabled={deleteMealPlan.isPending}
+                  >
+                     {deleteMealPlan.isPending ? 'Limpiando…' : 'Sí, limpiar'}
+                  </Button>
+               </div>
+            </DialogContent>
+         </Dialog>
       </AppShell>
    )
 }

@@ -1,6 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { fntGenerateMealPlan, fntGetCurrentMealPlan } from '@/api/fntMealPlan'
+import {
+   fntDeleteCurrentMealPlan,
+   fntGenerateMealPlan,
+   fntGetCurrentMealPlan
+} from '@/api/fntMealPlan'
 import { fntSwapIngredient } from '@/api/fntSwapIngredient'
 import { useErrorHandling } from './useErrorHandling'
 import { useAuth } from './useAuth'
@@ -60,6 +64,24 @@ interface SwapVars {
    slot: 'protein' | 'carb' | 'fat' | 'vegetable'
    newComponent: ItfMealComponentSummary
    newGrams: number
+}
+
+/**
+ * Borra el plan vigente del usuario. Útil para "empezar limpio" sin
+ * tocar el resto de datos (logs, perfil, etc.).
+ */
+export const useDeleteMealPlan = () => {
+   const queryClient = useQueryClient()
+   const { handleApiError } = useErrorHandling()
+   return useMutation<void, Error, void>({
+      mutationFn: fntDeleteCurrentMealPlan,
+      onSuccess: () => {
+         queryClient.setQueryData(PLAN_QUERY_KEY, null)
+         queryClient.invalidateQueries({ queryKey: ['meal-logs'] })
+         toast.success('Plan limpiado. Cuando quieras generamos uno nuevo 🌱')
+      },
+      onError: (e) => handleApiError(e)
+   })
 }
 
 /**
