@@ -2,42 +2,59 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { UtensilsCrossed, CalendarDays, Dumbbell, ChevronRight } from 'lucide-react'
 import { AppShell } from '@/layout'
-import { TitleUI } from '@/components/TitleUI'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { MealsPerDayDialog } from '@/components'
+import { WelcomeCard, MealsRowCard, MacrosProgressCard } from '@/components/home'
 import { useAuth } from '@/hooks/useAuth'
-import { useMealPlan } from '@/hooks/useMealPlan'
+import { useTodayState } from '@/hooks/useTodayState'
+import { useLogMeal } from '@/hooks/useMealLogs'
+import type { ItfMealOfToday } from '@/interface/itfMeals'
 
 const HomePage = () => {
    const { profile, user } = useAuth()
    const navigate = useNavigate()
    const [dialogOpen, setDialogOpen] = useState(false)
-   const planQuery = useMealPlan()
-   const plan = planQuery.data ?? null
+   const { state } = useTodayState()
+   const logMeal = useLogMeal()
 
-   const displayName = profile?.name ?? user?.email?.split('@')[0]
+   const displayName = profile?.name ?? user?.email?.split('@')[0] ?? null
    const mealsPerDay = (profile?.meals_per_day as number | null) ?? null
-   /* Solo mostramos el banner cuando NUNCA configuró meals_per_day.
-    * Si eligió 3 conscientemente en el onboarding, NO molestar más. */
    const needsMealsConfig = !mealsPerDay
+
+   /* Tap rápido en una comida del día: marca como "planned".
+    * (En Sprint 7.2 abriremos un dialog con 3 opciones; por ahora tap único). */
+   const handleTapMeal = (meal: ItfMealOfToday) => {
+      if (meal.status !== 'pending') {
+         /* Si ya está registrada, navegamos al plan para que la veas. */
+         navigate('/plan')
+         return
+      }
+      logMeal.mutate({
+         plan_id: state.hasPlan ? undefined : undefined,
+         day_index: state.dayIndex ?? undefined,
+         meal_type: meal.meal_type,
+         status: 'planned',
+         recipe_name: meal.recipe_name,
+         kcal: meal.plannedKcal,
+         protein_g: meal.plannedProteinG,
+         carbs_g: meal.plannedCarbsG,
+         fats_g: meal.plannedFatsG
+      })
+   }
 
    return (
       <AppShell userName={displayName}>
-         <TitleUI
-            title={`Hola${displayName ? `, ${displayName}` : ''} 👋`}
-            subtitle='Tu coach personal. Empieza por donde quieras.'
-         />
-
          <div className='space-y-4'>
+            {/* Saludo dinámico + contexto del día */}
+            <WelcomeCard name={displayName} state={state} />
+
+            {/* Banner: configurar comidas (solo si nunca configuró) */}
             {needsMealsConfig ? (
                <Card className='border-primary/40 bg-primary/5'>
                   <CardContent className='space-y-3 pt-6 text-sm'>
                      <div className='flex items-start gap-3'>
-                        <UtensilsCrossed
-                           className='mt-0.5 h-5 w-5 shrink-0 text-primary'
-                           aria-hidden='true'
-                        />
+                        <UtensilsCrossed className='mt-0.5 h-5 w-5 shrink-0 text-primary' />
                         <div className='space-y-1'>
                            <p className='font-medium text-foreground'>
                               ¿Cuántas comidas haces al día?
@@ -54,32 +71,34 @@ const HomePage = () => {
                </Card>
             ) : null}
 
-            {/* Atajo: plan de comidas */}
-            <Card
-               className='cursor-pointer transition-colors hover:bg-muted/40'
-               onClick={() => navigate('/plan')}
-            >
-               <CardContent className='flex items-center justify-between gap-3 pt-6'>
-                  <div className='flex items-start gap-3'>
-                     <CalendarDays className='mt-0.5 h-5 w-5 shrink-0 text-primary' />
-                     <div className='space-y-0.5'>
-                        <p className='text-sm font-medium'>
-                           {plan
-                              ? `Tu plan de ${plan.days} ${plan.days === 1 ? 'día' : 'días'}`
-                              : 'Generar plan de comidas'}
-                        </p>
-                        <p className='text-xs text-muted-foreground'>
-                           {plan
-                              ? `${plan.target_kcal} kcal/día · ${plan.meals_per_day} comidas`
-                              : 'Una semana completa en una sola operación.'}
-                        </p>
+            {/* Sin plan: invitar a generar uno */}
+            {!state.hasPlan ? (
+               <Card
+                  className='cursor-pointer transition-colors hover:bg-muted/40'
+                  onClick={() => navigate('/plan')}
+               >
+                  <CardContent className='flex items-center justify-between gap-3 pt-6'>
+                     <div className='flex items-start gap-3'>
+                        <CalendarDays className='mt-0.5 h-5 w-5 shrink-0 text-primary' />
+                        <div className='space-y-0.5'>
+                           <p className='text-sm font-medium'>Generar plan de comidas</p>
+                           <p className='text-xs text-muted-foreground'>
+                              Una semana completa en una sola operación.
+                           </p>
+                        </div>
                      </div>
-                  </div>
-                  <ChevronRight className='h-4 w-4 text-muted-foreground' />
-               </CardContent>
-            </Card>
+                     <ChevronRight className='h-4 w-4 text-muted-foreground' />
+                  </CardContent>
+               </Card>
+            ) : null}
 
-            {/* Atajo: rutina */}
+            {/* Comidas de hoy (scroll horizontal) */}
+            <MealsRowCard meals={state.meals} onTapMeal={handleTapMeal} />
+
+            {/* Progreso de macros del día */}
+            <MacrosProgressCard state={state} />
+
+            {/* Atajo a rutina */}
             <Card
                className='cursor-pointer transition-colors hover:bg-muted/40'
                onClick={() => navigate('/registrar')}
@@ -98,7 +117,7 @@ const HomePage = () => {
                </CardContent>
             </Card>
 
-            {/* Atajo: perfil */}
+            {/* Atajo a perfil */}
             <Card
                className='cursor-pointer transition-colors hover:bg-muted/40'
                onClick={() => navigate('/perfil')}

@@ -117,3 +117,73 @@ export interface ItfGenerateMealPlanParams {
 export interface ItfMealPlanResponse {
    plan: ItfMealPlan
 }
+
+/* ============================================================
+ *  Fase 7 — Estado del día + registro rápido
+ * ============================================================ */
+
+export type ItfMealLogStatus = 'planned' | 'substituted' | 'skipped'
+
+export interface ItfMealLog {
+   id: string
+   user_id: string
+   logged_at: string
+   plan_id: string | null
+   day_index: number | null
+   meal_type: ItfMealType | null
+   status: ItfMealLogStatus
+   recipe_name: string | null
+   kcal: number | null
+   protein_g: number | null
+   carbs_g: number | null
+   fats_g: number | null
+   notes: string | null
+}
+
+export interface ItfLogMealInput {
+   plan_id?: string
+   day_index?: number
+   meal_type: ItfMealType
+   status: ItfMealLogStatus
+   recipe_name?: string
+   kcal?: number
+   protein_g?: number
+   carbs_g?: number
+   fats_g?: number
+   notes?: string
+}
+
+/** Snapshot del día: lo que el usuario tiene "pendiente vs hecho" hoy. */
+export interface ItfMealOfToday {
+   meal_type: ItfMealType
+   recipe_name: string
+   plannedKcal: number
+   plannedProteinG: number
+   plannedCarbsG: number
+   plannedFatsG: number
+   status: ItfMealLogStatus | 'pending'
+   logId: string | null
+}
+
+export interface ItfMacrosConsumed {
+   kcal: number
+   proteinG: number
+   carbsG: number
+   fatsG: number
+}
+
+export interface ItfTodayState {
+   /** ¿La persona tiene un plan vigente? */
+   hasPlan: boolean
+   /** Índice del día actual dentro del plan (0..days-1). null si está fuera de rango. */
+   dayIndex: number | null
+   /** Total target del día (del plan). */
+   targetKcal: number
+   targetProteinG: number
+   targetCarbsG: number
+   targetFatsG: number
+   /** Comidas del día con su estado. */
+   meals: ItfMealOfToday[]
+   /** Macros ya consumidas (suma de status != skipped). */
+   consumed: ItfMacrosConsumed
+}
