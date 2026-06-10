@@ -498,41 +498,71 @@ describe('validateMealResponse', () => {
       if (!r.valid) expect(r.reason).toBe('forbidden_words')
    })
 
-   it('introducir queso (no permitido) falla con unknown_ingredient', () => {
+   it('queso amarillo (procesado) falla con forbidden_words', () => {
+      const validStep = 'Cocina el pollo a la plancha con aceite de oliva por seis minutos.'
       const bad = JSON.stringify({
          options: [
             {
                name: 'Plato A',
-               description: 'Pollo con queso parmesano y arroz.',
+               description: 'Pollo con queso amarillo derretido y arroz blanco.',
                prep_time_min: 20,
                difficulty: 'easy',
-               steps: [
-                  'Cocina el pollo a la plancha con aceite de oliva 6 minutos.',
-                  'Sirve sobre arroz blanco con queso parmesano rallado encima.'
-               ]
+               steps: [validStep, 'Sirve sobre arroz blanco con queso amarillo derretido encima.']
             },
             {
                name: 'X',
-               description: 'D',
+               description: 'Plato simple de pollo y arroz blanco bien sazonado.',
                prep_time_min: 20,
                difficulty: 'easy',
-               steps: ['abcdefghij', 'klmnopqrst']
+               steps: [validStep, validStep]
             },
             {
                name: 'X',
-               description: 'D',
+               description: 'Plato simple de pollo y arroz blanco bien sazonado.',
                prep_time_min: 20,
                difficulty: 'easy',
-               steps: ['abcdefghij', 'klmnopqrst']
+               steps: [validStep, validStep]
             }
          ]
       })
       const r = validateMealResponse({ raw: bad, allowedIngredients: allowed })
       expect(r.valid).toBe(false)
-      if (!r.valid) expect(r.reason).toBe('unknown_ingredient')
+      if (!r.valid) expect(r.reason).toBe('forbidden_words')
+   })
+
+   it('queso fresco (versión sana LATAM) NO falla', () => {
+      const validStep = 'Cocina el pollo a la plancha con aceite de oliva por seis minutos.'
+      const ok = JSON.stringify({
+         options: [
+            {
+               name: 'Plato A',
+               description: 'Pollo a la plancha con arroz y queso fresco encima.',
+               prep_time_min: 20,
+               difficulty: 'easy',
+               steps: [validStep, 'Sirve sobre arroz blanco con queso fresco rallado.']
+            },
+            {
+               name: 'X',
+               description: 'Plato simple de pollo y arroz blanco bien sazonado.',
+               prep_time_min: 20,
+               difficulty: 'easy',
+               steps: [validStep, validStep]
+            },
+            {
+               name: 'X',
+               description: 'Plato simple de pollo y arroz blanco bien sazonado.',
+               prep_time_min: 20,
+               difficulty: 'easy',
+               steps: [validStep, validStep]
+            }
+         ]
+      })
+      const r = validateMealResponse({ raw: ok, allowedIngredients: allowed })
+      expect(r.valid).toBe(true)
    })
 
    it('difficulty inválida falla', () => {
+      const validStep = 'Cocina el pollo a la plancha con aceite de oliva por seis minutos.'
       const bad = JSON.stringify({
          options: [
             {
@@ -540,21 +570,21 @@ describe('validateMealResponse', () => {
                description: 'd',
                prep_time_min: 20,
                difficulty: 'super-hard',
-               steps: ['abcdefghij', 'klmnopqrst']
+               steps: [validStep, validStep]
             },
             {
                name: 'X',
-               description: 'D',
+               description: 'Plato simple de pollo y arroz blanco bien sazonado.',
                prep_time_min: 20,
                difficulty: 'easy',
-               steps: ['abcdefghij', 'klmnopqrst']
+               steps: [validStep, validStep]
             },
             {
                name: 'X',
-               description: 'D',
+               description: 'Plato simple de pollo y arroz blanco bien sazonado.',
                prep_time_min: 20,
                difficulty: 'easy',
-               steps: ['abcdefghij', 'klmnopqrst']
+               steps: [validStep, validStep]
             }
          ]
       })

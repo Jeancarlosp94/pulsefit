@@ -23,37 +23,41 @@ const FORBIDDEN_WORDS = [
    'régimen estricto'
 ]
 
-/** Condimentos y básicos que siempre puede usar sin que sean "ingrediente nuevo". */
-const FREE_USE = new Set([
-   'sal',
-   'pimienta',
-   'ajo',
-   'limón',
-   'limon',
-   'agua',
-   'hierbas',
-   'orégano',
-   'tomillo',
-   'cilantro',
-   'perejil',
-   'comino',
-   'aceite',
-   'vinagre'
-])
+/**
+ * Patrones de comida ULTRA-PROCESADA que NO queremos que aparezca en recetas.
+ * Cuidado: NO bloqueamos "queso" / "mantequilla" / "jamón" genéricos porque
+ * son base de la cocina LATAM (queso fresco, mantequilla sin sal, jamón cocido
+ * magro). Solo bloqueamos las versiones procesadas/industriales por sodio o
+ * aceites trans.
+ */
+const FORBIDDEN_PROCESSED_FOODS = [
+   'azúcar añadida',
+   'azúcar refinada',
+   'queso amarillo',
+   'queso cheddar',
+   'queso procesado',
+   'queso americano',
+   'margarina',
+   'crema de leche',
+   'nata para batir',
+   'tocino',
+   'panceta',
+   'jamón serrano',
+   'jamón ibérico',
+   'jamón crudo',
+   'jamón ahumado',
+   'salchicha',
+   'chorizo',
+   'mortadela',
+   'salami',
+   'pepperoni'
+]
 
 const fail = (reason: ItfValidationFail['reason'], detail?: string): ItfValidationFail => ({
    valid: false,
    reason,
    ...(detail ? { detail } : {})
 })
-
-const tokenize = (text: string): string[] =>
-   text
-      .toLowerCase()
-      .split(/[\s,.;:()¡!¿?\n]+/u)
-      .filter((t) => t.length >= 4)
-
-const FOOD_HEURISTIC = /^[a-záéíóúñ]+$/u
 
 interface ValidateInput {
    raw: string
@@ -92,7 +96,7 @@ export const validateMealResponse = ({
       return fail('wrong_option_count', `recibí ${opts?.length ?? 0}`)
    }
 
-   const allowed = allowedIngredients.map((s) => s.toLowerCase().trim())
+   void allowedIngredients /* legacy: ya no filtramos por allowed (era contraproducente). */
 
    for (let i = 0; i < opts.length; i++) {
       const opt = opts[i]
@@ -119,9 +123,9 @@ export const validateMealResponse = ({
          return fail('steps_out_of_range', `option ${i}: ${opt.steps.length}`)
       }
 
-      // 7 — longitud de cada step
+      // 7 — longitud de cada step (rango amplio para no rechazar técnicas reales)
       const badStep = opt.steps.find(
-         (s) => typeof s !== 'string' || s.length < 10 || s.length > 200
+         (s) => typeof s !== 'string' || s.length < 20 || s.length > 250
       )
       if (badStep !== undefined) return fail('step_length', `option ${i}`)
 
@@ -130,21 +134,18 @@ export const validateMealResponse = ({
          return fail('bad_difficulty', `option ${i}: ${opt.difficulty}`)
       }
 
-      // 9 — palabras prohibidas
+      // 9 — palabras prohibidas (lenguaje punitivo + comida procesada)
       const fullText = [opt.name, opt.description, ...opt.steps].join(' ').toLowerCase()
       const forbidden = FORBIDDEN_WORDS.find((w) => fullText.includes(w))
       if (forbidden) return fail('forbidden_words', `option ${i}: "${forbidden}"`)
+      const processed = FORBIDDEN_PROCESSED_FOODS.find((p) => fullText.includes(p))
+      if (processed) return fail('forbidden_words', `option ${i}: "${processed}"`)
 
-      // 4 — ingredientes permitidos
-      const tokens = tokenize(fullText)
-      const unknown = tokens.find(
-         (t) =>
-            FOOD_HEURISTIC.test(t) &&
-            !FREE_USE.has(t) &&
-            allowed.every((a) => !a.includes(t) && !t.includes(a)) &&
-            ['azúcar', 'queso', 'mantequilla', 'crema', 'tocino', 'jamón', 'salchicha'].includes(t)
-      )
-      if (unknown) return fail('unknown_ingredient', unknown)
+      /* Antes había un check de "tokens desconocidos" que bloqueaba palabras
+       * de cocina como "sartén", "minutos", "fuego" o ingredientes regionales
+       * (cebolla colorada, ají amarillo). Era contraproducente y la lista negra
+       * solo cubría 7 palabras genéricas. El check #9 + FORBIDDEN_PROCESSED_FOODS
+       * ya cubre los procesados peligrosos sin falsos positivos. */
    }
 
    return { valid: true, options: opts }
@@ -187,7 +188,7 @@ export const validateSinglePlate = ({
       return { valid: false, reason: 'steps_out_of_range' }
    }
    const badStep = parsed.steps.find(
-      (s) => typeof s !== 'string' || s.length < 10 || s.length > 220
+      (s) => typeof s !== 'string' || s.length < 20 || s.length > 250
    )
    if (badStep !== undefined) return { valid: false, reason: 'step_length' }
 
@@ -198,17 +199,9 @@ export const validateSinglePlate = ({
    const fullText = [parsed.name, parsed.description, ...parsed.steps].join(' ').toLowerCase()
    const forbidden = FORBIDDEN_WORDS.find((w) => fullText.includes(w))
    if (forbidden) return { valid: false, reason: 'forbidden_words', detail: forbidden }
-
-   const allowed = allowedIngredients.map((s) => s.toLowerCase().trim())
-   const tokens = fullText.split(/[\s,.;:()¡!¿?\n]+/u).filter((t) => t.length >= 4)
-   const unknown = tokens.find(
-      (t) =>
-         FOOD_HEURISTIC.test(t) &&
-         !FREE_USE.has(t) &&
-         allowed.every((a) => !a.includes(t) && !t.includes(a)) &&
-         ['azúcar', 'queso', 'mantequilla', 'crema', 'tocino', 'jamón', 'salchicha'].includes(t)
-   )
-   if (unknown) return { valid: false, reason: 'unknown_ingredient', detail: unknown }
+   const processed = FORBIDDEN_PROCESSED_FOODS.find((p) => fullText.includes(p))
+   if (processed) return { valid: false, reason: 'forbidden_words', detail: processed }
+   void allowedIngredients /* legacy: ya no filtramos por allowed (era contraproducente). */
 
    return {
       valid: true,

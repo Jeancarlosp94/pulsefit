@@ -1,19 +1,31 @@
 import type { ItfIngredient } from './types'
 
 /**
- * Pool inicial de ingredientes LATAM con `appropriateMealTypes` validado por Lucía.
+ * Pool de ingredientes de PulseFit. Tags clave:
+ *   - tier de presupuesto: 'cheap' | 'mid' | 'high'
+ *   - tipo (animal/dieta): 'meat' | 'fish' | 'egg' | 'dairy' | 'vegan' | 'vegetarian' | 'pescatarian'
+ *   - gluten: 'gluten' | 'gluten_free'
+ *   - región preferida: 'LATAM'
  *
- * Reglas de asignación:
+ * Pool firmado por Lucía (nutricionista) + Diego (chef). Cambios requieren
+ * revisión de ambos.
+ *
+ * Decisiones de re-tier (junio 2026):
+ *   - tofu / cottage / whey / granola sin azúcar / salmón → 'high' (poco accesibles en LATAM media).
+ *   - aguacate → 'cheap' (es accesible en casi toda la región).
+ *   - queso fresco, mantequilla sin sal, jamón cocido low-sodium, ricotta → agregados como 'mid'.
+ *   - cebolla, pimentón rojo, zanahoria, choclo, ají dulce, vainita, yuca → agregados (base de cocina LATAM).
+ *   - aceite de girasol → agregado como 'cheap' (en LATAM se cocina más con girasol que con oliva).
+ *
+ * Reglas de assignación de appropriateMealTypes (Lucía):
  *   - Huevos / avena / yogurt / frutos secos / mantequilla de maní → breakfast + snack.
- *   - Pollo / res / pescados / tofu / lentejas (cocción media-larga) → lunch + dinner.
+ *   - Pollo / res / pescados / tofu / lentejas → lunch + dinner.
  *   - Atún en lata → todas (se come rápido).
- *   - Cereales pesados (quinua cocida) → lunch + dinner principalmente.
- *   - Plátano / fruta / camote dulce → breakfast + snack.
- *   - Verduras → todas (acompañamiento universal).
- *   - Condimentos sin appropriateMealTypes = válidos en todas (default).
+ *   - Frutas → breakfast + snack.
+ *   - Vegetales → casi todas excepto donde no haga sentido.
  */
 export const SEED_INGREDIENTS: ItfIngredient[] = [
-   // === PROTEÍNAS ===
+   /* === PROTEÍNAS === */
    {
       id: 'chicken-breast',
       name: 'pechuga de pollo',
@@ -82,7 +94,7 @@ export const SEED_INGREDIENTS: ItfIngredient[] = [
       proteinPer100g: 17,
       carbsPer100g: 3,
       fatsPer100g: 9,
-      tags: ['mid', 'vegan', 'vegetarian', 'pescatarian'],
+      tags: ['high', 'vegan', 'vegetarian', 'pescatarian'],
       source: 'manual',
       appropriateMealTypes: ['lunch', 'dinner']
    },
@@ -118,7 +130,31 @@ export const SEED_INGREDIENTS: ItfIngredient[] = [
       proteinPer100g: 11,
       carbsPer100g: 3.4,
       fatsPer100g: 4.3,
-      tags: ['dairy', 'vegetarian', 'mid'],
+      tags: ['dairy', 'vegetarian', 'high'],
+      source: 'manual',
+      appropriateMealTypes: ['breakfast', 'snack_am', 'snack_pm']
+   },
+   {
+      id: 'queso-fresco',
+      name: 'queso fresco / blanco',
+      category: 'protein',
+      kcalPer100g: 250,
+      proteinPer100g: 18,
+      carbsPer100g: 3,
+      fatsPer100g: 20,
+      tags: ['LATAM', 'dairy', 'vegetarian', 'mid'],
+      source: 'manual',
+      appropriateMealTypes: ['breakfast', 'lunch', 'snack_am', 'snack_pm']
+   },
+   {
+      id: 'ricotta',
+      name: 'ricotta fresca',
+      category: 'protein',
+      kcalPer100g: 174,
+      proteinPer100g: 11,
+      carbsPer100g: 3,
+      fatsPer100g: 13,
+      tags: ['LATAM', 'dairy', 'vegetarian', 'mid'],
       source: 'manual',
       appropriateMealTypes: ['breakfast', 'snack_am', 'snack_pm']
    },
@@ -130,7 +166,7 @@ export const SEED_INGREDIENTS: ItfIngredient[] = [
       proteinPer100g: 80,
       carbsPer100g: 7,
       fatsPer100g: 5,
-      tags: ['dairy', 'mid', 'vegetarian'],
+      tags: ['high', 'dairy', 'vegetarian'],
       source: 'manual',
       appropriateMealTypes: ['breakfast', 'snack_am', 'snack_pm']
    },
@@ -147,6 +183,18 @@ export const SEED_INGREDIENTS: ItfIngredient[] = [
       appropriateMealTypes: ['breakfast', 'lunch', 'snack_am', 'snack_pm']
    },
    {
+      id: 'ham-cooked-low-sodium',
+      name: 'jamón cocido bajo en sodio',
+      category: 'protein',
+      kcalPer100g: 145,
+      proteinPer100g: 21,
+      carbsPer100g: 1,
+      fatsPer100g: 7,
+      tags: ['LATAM', 'meat', 'mid'],
+      source: 'manual',
+      appropriateMealTypes: ['breakfast', 'lunch', 'snack_am', 'snack_pm']
+   },
+   {
       id: 'salmon-fresh',
       name: 'filete de salmón',
       category: 'protein',
@@ -154,7 +202,7 @@ export const SEED_INGREDIENTS: ItfIngredient[] = [
       proteinPer100g: 20,
       carbsPer100g: 0,
       fatsPer100g: 13,
-      tags: ['fish', 'mid', 'pescatarian'],
+      tags: ['fish', 'high', 'pescatarian'],
       source: 'manual',
       appropriateMealTypes: ['lunch', 'dinner']
    },
@@ -195,7 +243,7 @@ export const SEED_INGREDIENTS: ItfIngredient[] = [
       appropriateMealTypes: ['lunch', 'dinner']
    },
 
-   // === CARBOHIDRATOS ===
+   /* === CARBOHIDRATOS === */
    {
       id: 'rice-white',
       name: 'arroz blanco cocido',
@@ -324,7 +372,7 @@ export const SEED_INGREDIENTS: ItfIngredient[] = [
       proteinPer100g: 10,
       carbsPer100g: 65,
       fatsPer100g: 17,
-      tags: ['mid', 'vegan'],
+      tags: ['high', 'vegan'],
       source: 'manual',
       appropriateMealTypes: ['breakfast', 'snack_am', 'snack_pm']
    },
@@ -340,8 +388,20 @@ export const SEED_INGREDIENTS: ItfIngredient[] = [
       source: 'manual',
       appropriateMealTypes: ['breakfast', 'snack_am', 'snack_pm']
    },
+   {
+      id: 'yuca',
+      name: 'yuca cocida',
+      category: 'carb',
+      kcalPer100g: 160,
+      proteinPer100g: 1.4,
+      carbsPer100g: 38,
+      fatsPer100g: 0.3,
+      tags: ['LATAM', 'cheap', 'vegan', 'gluten_free'],
+      source: 'manual',
+      appropriateMealTypes: ['lunch', 'dinner']
+   },
 
-   // === GRASAS ===
+   /* === GRASAS === */
    {
       id: 'olive-oil',
       name: 'aceite de oliva',
@@ -352,17 +412,39 @@ export const SEED_INGREDIENTS: ItfIngredient[] = [
       fatsPer100g: 100,
       tags: ['mid', 'vegan'],
       source: 'manual'
-      /* Sin appropriateMealTypes = válido en todas. */
+   },
+   {
+      id: 'sunflower-oil',
+      name: 'aceite de girasol',
+      category: 'fat',
+      kcalPer100g: 884,
+      proteinPer100g: 0,
+      carbsPer100g: 0,
+      fatsPer100g: 100,
+      tags: ['LATAM', 'cheap', 'vegan'],
+      source: 'manual'
+   },
+   {
+      id: 'butter-unsalted',
+      name: 'mantequilla sin sal',
+      category: 'fat',
+      kcalPer100g: 717,
+      proteinPer100g: 0.9,
+      carbsPer100g: 0.1,
+      fatsPer100g: 81,
+      tags: ['LATAM', 'dairy', 'vegetarian', 'mid'],
+      source: 'manual',
+      appropriateMealTypes: ['breakfast']
    },
    {
       id: 'avocado',
-      name: 'aguacate',
+      name: 'aguacate / palta',
       category: 'fat',
       kcalPer100g: 160,
       proteinPer100g: 2,
       carbsPer100g: 8.5,
       fatsPer100g: 14.7,
-      tags: ['LATAM', 'mid', 'vegan'],
+      tags: ['LATAM', 'cheap', 'vegan'],
       source: 'manual',
       appropriateMealTypes: ['breakfast', 'lunch', 'dinner', 'snack_am', 'snack_pm']
    },
@@ -415,7 +497,7 @@ export const SEED_INGREDIENTS: ItfIngredient[] = [
       appropriateMealTypes: ['breakfast', 'snack_am', 'snack_pm']
    },
 
-   // === VEGETALES (default: válidos en todas) ===
+   /* === VEGETALES === */
    {
       id: 'broccoli',
       name: 'brócoli',
@@ -466,7 +548,7 @@ export const SEED_INGREDIENTS: ItfIngredient[] = [
    },
    {
       id: 'zucchini',
-      name: 'zapallito italiano',
+      name: 'zapallito italiano / calabacín',
       category: 'vegetable',
       kcalPer100g: 17,
       proteinPer100g: 1.2,
@@ -476,11 +558,83 @@ export const SEED_INGREDIENTS: ItfIngredient[] = [
       source: 'manual',
       appropriateMealTypes: ['lunch', 'dinner']
    },
+   {
+      id: 'onion',
+      name: 'cebolla',
+      category: 'vegetable',
+      kcalPer100g: 40,
+      proteinPer100g: 1.1,
+      carbsPer100g: 9.3,
+      fatsPer100g: 0.1,
+      tags: ['LATAM', 'cheap', 'vegan', 'gluten_free'],
+      source: 'manual',
+      appropriateMealTypes: ['breakfast', 'lunch', 'dinner']
+   },
+   {
+      id: 'bell-pepper-red',
+      name: 'pimentón rojo / morrón',
+      category: 'vegetable',
+      kcalPer100g: 31,
+      proteinPer100g: 1,
+      carbsPer100g: 6,
+      fatsPer100g: 0.3,
+      tags: ['LATAM', 'cheap', 'vegan', 'gluten_free'],
+      source: 'manual',
+      appropriateMealTypes: ['breakfast', 'lunch', 'dinner']
+   },
+   {
+      id: 'carrot',
+      name: 'zanahoria',
+      category: 'vegetable',
+      kcalPer100g: 41,
+      proteinPer100g: 0.9,
+      carbsPer100g: 10,
+      fatsPer100g: 0.2,
+      tags: ['LATAM', 'cheap', 'vegan', 'gluten_free'],
+      source: 'manual',
+      appropriateMealTypes: ['lunch', 'dinner', 'snack_am', 'snack_pm']
+   },
+   {
+      id: 'corn-fresh',
+      name: 'choclo / elote / maíz tierno',
+      category: 'vegetable',
+      kcalPer100g: 86,
+      proteinPer100g: 3.3,
+      carbsPer100g: 19,
+      fatsPer100g: 1.4,
+      tags: ['LATAM', 'cheap', 'vegan', 'gluten_free'],
+      source: 'manual',
+      appropriateMealTypes: ['lunch', 'dinner']
+   },
+   {
+      id: 'aji-dulce',
+      name: 'ají dulce / pimiento criollo',
+      category: 'vegetable',
+      kcalPer100g: 32,
+      proteinPer100g: 1.5,
+      carbsPer100g: 6.7,
+      fatsPer100g: 0.4,
+      tags: ['LATAM', 'cheap', 'vegan', 'gluten_free'],
+      source: 'manual',
+      appropriateMealTypes: ['lunch', 'dinner']
+   },
+   {
+      id: 'green-beans',
+      name: 'vainita / chaucha',
+      category: 'vegetable',
+      kcalPer100g: 31,
+      proteinPer100g: 1.8,
+      carbsPer100g: 7,
+      fatsPer100g: 0.2,
+      tags: ['LATAM', 'cheap', 'vegan', 'gluten_free'],
+      source: 'manual',
+      appropriateMealTypes: ['lunch', 'dinner']
+   },
 
-   // === FRUTAS ===
+   /* === FRUTAS === */
    {
       id: 'banana',
-      name: 'banana',
+      name: 'banana / guineo',
       category: 'fruit',
       kcalPer100g: 89,
       proteinPer100g: 1.1,
@@ -551,7 +705,7 @@ export const SEED_INGREDIENTS: ItfIngredient[] = [
       appropriateMealTypes: ['breakfast', 'snack_am', 'snack_pm']
    },
 
-   // === CONDIMENTOS (libre uso, sin appropriateMealTypes = todas) ===
+   /* === CONDIMENTOS === */
    {
       id: 'garlic',
       name: 'ajo',
