@@ -101,7 +101,10 @@ export const step5Schema = z.object({
       .int()
       .min(2, { message: 'Mínimo 2 comidas al día' })
       .max(5, { message: 'Máximo 5 comidas al día' })
-      .default(3)
+      .default(3),
+   /* Gustos personales (opcionales). */
+   favoriteCuisines: z.array(z.string()).default([]),
+   favoriteIngredientIds: z.array(z.string()).default([])
 })
 
 // Step 6 — Horario

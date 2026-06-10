@@ -185,6 +185,78 @@ export const MEALS_PER_DAY_OPTIONS: OnboardingOption<string>[] = [
    }
 ]
 
+/** Cocinas favoritas (Step 5.5, multi-select). Validadas por Diego. */
+export const CUISINE_OPTIONS: OnboardingOption<string>[] = [
+   {
+      value: 'andina',
+      label: 'Andina',
+      description: 'Perú, Ecuador, Colombia, Venezuela: ceviche, ajiaco, arepa, lomo saltado.',
+      emoji: '🇵🇪'
+   },
+   {
+      value: 'mexicana',
+      label: 'Mexicana',
+      description: 'Chilaquiles, tinga, tacos, huevos rancheros.',
+      emoji: '🇲🇽'
+   },
+   {
+      value: 'cono_sur',
+      label: 'Cono Sur',
+      description: 'Argentina, Chile, Uruguay: milanesa, parrilla, guisos, tortilla.',
+      emoji: '🇦🇷'
+   },
+   {
+      value: 'brasilena',
+      label: 'Brasileña',
+      description: 'Feijoada, moqueca, frango grelhado, tapioca.',
+      emoji: '🇧🇷'
+   },
+   {
+      value: 'asiatica',
+      label: 'Asiática',
+      description: 'Teriyaki, salteado al wok, bowls con tofu.',
+      emoji: '🌏'
+   },
+   {
+      value: 'mediterranea',
+      label: 'Mediterránea',
+      description: 'Pastas, ensaladas, salmón, frittata.',
+      emoji: '🌊'
+   }
+]
+
+/** Ingredientes destacados para chips del Step 5.5 (no exhaustivo, son atajos). */
+export const FAVORITE_INGREDIENT_SUGGESTIONS = [
+   { id: 'chicken-breast', label: 'pollo' },
+   { id: 'eggs', label: 'huevos' },
+   { id: 'beef-lean', label: 'carne magra' },
+   { id: 'fish-tilapia', label: 'pescado blanco' },
+   { id: 'tuna-can', label: 'atún en lata' },
+   { id: 'shrimp', label: 'camarones' },
+   { id: 'lentils-cooked', label: 'lentejas' },
+   { id: 'black-beans', label: 'frijoles' },
+   { id: 'greek-yogurt', label: 'yogurt griego' },
+   { id: 'queso-fresco', label: 'queso fresco' },
+   { id: 'rice-white', label: 'arroz' },
+   { id: 'potato', label: 'papa' },
+   { id: 'sweet-potato', label: 'camote' },
+   { id: 'plantain', label: 'plátano maduro' },
+   { id: 'arepa-blanca', label: 'arepa' },
+   { id: 'tortilla-maiz', label: 'tortilla' },
+   { id: 'pasta-cooked', label: 'pasta' },
+   { id: 'oats', label: 'avena' },
+   { id: 'quinoa', label: 'quinua' },
+   { id: 'bread-whole', label: 'pan integral' },
+   { id: 'avocado', label: 'aguacate' },
+   { id: 'peanut-butter', label: 'mantequilla de maní' },
+   { id: 'broccoli', label: 'brócoli' },
+   { id: 'spinach', label: 'espinaca' },
+   { id: 'tomato', label: 'tomate' },
+   { id: 'banana', label: 'banana' },
+   { id: 'apple', label: 'manzana' },
+   { id: 'mango', label: 'mango' }
+] as const
+
 /** Etiquetas de los días de la semana (0=Domingo, 6=Sábado, ISO-friendly para el motor). */
 export const WEEK_DAYS: { value: number; short: string; long: string }[] = [
    { value: 1, short: 'L', long: 'Lunes' },

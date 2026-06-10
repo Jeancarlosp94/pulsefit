@@ -720,20 +720,26 @@ export const selectMultipleComponents = (input: {
    count?: number
    seed?: number
    mealType?: MealType
+   favoriteIngredientIds?: string[]
 }): MealComponents[] => {
    const count = input.count ?? 3
    const seed = input.seed ?? 0
    const mealType = input.mealType
+   const favIds = input.favoriteIngredientIds ?? []
    const results: MealComponents[] = []
    const usedProtein = new Set<string>()
    const usedCarb = new Set<string>()
    const usedFat = new Set<string>()
    const usedVeg = new Set<string>()
 
-   const allProteins = input.pool.filter((p) => p.category === 'protein')
-   const allCarbs = input.pool.filter((p) => p.category === 'carb')
-   const allFats = input.pool.filter((p) => p.category === 'fat')
-   const allVeg = input.pool.filter((p) => p.category === 'vegetable')
+   /* Boost de favoritos: poner los favoritos primero en cada categoría. */
+   const isFav = (id: string) => favIds.includes(id)
+   const sortFavFirst = (a: Ingredient, b: Ingredient) =>
+      (isFav(a.id) ? 0 : 1) - (isFav(b.id) ? 0 : 1)
+   const allProteins = input.pool.filter((p) => p.category === 'protein').slice().sort(sortFavFirst)
+   const allCarbs = input.pool.filter((p) => p.category === 'carb').slice().sort(sortFavFirst)
+   const allFats = input.pool.filter((p) => p.category === 'fat').slice().sort(sortFavFirst)
+   const allVeg = input.pool.filter((p) => p.category === 'vegetable').slice().sort(sortFavFirst)
 
    for (let i = 0; i < count; i++) {
       const availProtein = allProteins.filter((p) => !usedProtein.has(p.id))

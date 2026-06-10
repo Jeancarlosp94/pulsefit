@@ -17,9 +17,12 @@ import { step5Schema, type Step5Values } from '@/validations'
 import {
    BUDGET_OPTIONS,
    COOKS_AT_HOME_OPTIONS,
+   CUISINE_OPTIONS,
    DIETARY_RESTRICTIONS,
+   FAVORITE_INGREDIENT_SUGGESTIONS,
    MEALS_PER_DAY_OPTIONS
 } from '@/config'
+import { cn } from '@/utils'
 import type { ItfMealsPerDay } from '@/features/meal-generator'
 
 const Step5Diet = () => {
@@ -34,7 +37,9 @@ const Step5Diet = () => {
          allergies: data.allergies ?? '',
          dislikedFoods: data.dislikedFoods ?? [],
          budgetLevel: data.budgetLevel ?? undefined,
-         mealsPerDay: data.mealsPerDay ?? 3
+         mealsPerDay: data.mealsPerDay ?? 3,
+         favoriteCuisines: data.favoriteCuisines ?? [],
+         favoriteIngredientIds: data.favoriteIngredientIds ?? []
       }
    })
 
@@ -45,7 +50,9 @@ const Step5Diet = () => {
          allergies: values.allergies ?? '',
          dislikedFoods: values.dislikedFoods,
          budgetLevel: values.budgetLevel,
-         mealsPerDay: values.mealsPerDay as ItfMealsPerDay
+         mealsPerDay: values.mealsPerDay as ItfMealsPerDay,
+         favoriteCuisines: values.favoriteCuisines ?? [],
+         favoriteIngredientIds: values.favoriteIngredientIds ?? []
       })
       next()
       navigate('/onboarding/6')
@@ -57,8 +64,16 @@ const Step5Diet = () => {
       form.setValue('dietaryRestrictions', next)
    }
 
+   const toggleArrayValue = (field: 'favoriteCuisines' | 'favoriteIngredientIds', val: string) => {
+      const current = form.getValues(field) ?? []
+      const next = current.includes(val) ? current.filter((c) => c !== val) : [...current, val]
+      form.setValue(field, next)
+   }
+
    const selectedRestrictions = form.watch('dietaryRestrictions') ?? []
    const selectedMeals = form.watch('mealsPerDay') ?? 3
+   const selectedCuisines = form.watch('favoriteCuisines') ?? []
+   const selectedFavIng = form.watch('favoriteIngredientIds') ?? []
 
    return (
       <OnboardingLayout
@@ -184,6 +199,70 @@ const Step5Diet = () => {
                            ))}
                         </div>
                         <FormMessage />
+                     </FormItem>
+                  )}
+               />
+
+               {/* Gustos personales — cocinas favoritas */}
+               <FormField
+                  control={form.control}
+                  name='favoriteCuisines'
+                  render={() => (
+                     <FormItem className='space-y-3'>
+                        <FormLabel>¿Qué cocinas te gustan? (opcional)</FormLabel>
+                        <p className='text-xs text-muted-foreground'>
+                           Marcá las que quieras. Te vamos a priorizar recetas de esas tradiciones.
+                        </p>
+                        <div className='grid grid-cols-2 gap-2'>
+                           {CUISINE_OPTIONS.map((opt) => (
+                              <OptionCard
+                                 key={opt.value}
+                                 selected={selectedCuisines.includes(opt.value)}
+                                 onSelect={() => toggleArrayValue('favoriteCuisines', opt.value)}
+                                 label={opt.label}
+                                 description={opt.description}
+                                 emoji={opt.emoji}
+                                 compact
+                              />
+                           ))}
+                        </div>
+                     </FormItem>
+                  )}
+               />
+
+               {/* Gustos personales — ingredientes favoritos (chips) */}
+               <FormField
+                  control={form.control}
+                  name='favoriteIngredientIds'
+                  render={() => (
+                     <FormItem className='space-y-3'>
+                        <FormLabel>¿Qué ingredientes te encantan? (opcional)</FormLabel>
+                        <p className='text-xs text-muted-foreground'>
+                           Marcá los que sí o sí querés que aparezcan seguido.
+                        </p>
+                        <div className='flex flex-wrap gap-2'>
+                           {FAVORITE_INGREDIENT_SUGGESTIONS.map((ing) => {
+                              const isSelected = selectedFavIng.includes(ing.id)
+                              return (
+                                 <button
+                                    key={ing.id}
+                                    type='button'
+                                    aria-pressed={isSelected}
+                                    onClick={() =>
+                                       toggleArrayValue('favoriteIngredientIds', ing.id)
+                                    }
+                                    className={cn(
+                                       'rounded-full border px-3 py-1.5 text-xs transition-colors',
+                                       isSelected
+                                          ? 'border-primary bg-primary/10 text-primary'
+                                          : 'border-border text-muted-foreground hover:bg-muted'
+                                    )}
+                                 >
+                                    {ing.label}
+                                 </button>
+                              )
+                           })}
+                        </div>
                      </FormItem>
                   )}
                />

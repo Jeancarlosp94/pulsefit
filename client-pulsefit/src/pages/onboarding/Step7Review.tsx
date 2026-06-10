@@ -95,6 +95,8 @@ const Step7Review = () => {
             disliked_foods: data.dislikedFoods,
             budget_level: data.budgetLevel,
             meals_per_day: data.mealsPerDay,
+            favorite_cuisines: data.favoriteCuisines,
+            favorite_ingredient_ids: data.favoriteIngredientIds,
             medical_conditions: data.medicalConditions,
             tmb: summary.tmb,
             get_kcal: summary.getKcal,

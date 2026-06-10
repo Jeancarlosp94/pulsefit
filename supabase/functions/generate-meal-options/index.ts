@@ -200,7 +200,9 @@ serve(async (req) => {
          target: mealTarget,
          count: 3,
          seed,
-         mealType
+         mealType,
+         favoriteIngredientIds:
+            (p as { favorite_ingredient_ids?: string[] | null }).favorite_ingredient_ids ?? []
       })
       if (componentsList.length === 0) {
          return jsonRes(

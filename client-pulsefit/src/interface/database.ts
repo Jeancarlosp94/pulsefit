@@ -46,6 +46,8 @@ export interface ProfileRow {
    accepted_terms_at: string | null
    accepted_privacy_at: string | null
    meals_per_day: number
+   favorite_cuisines: string[]
+   favorite_ingredient_ids: string[]
    created_at: string
    updated_at: string
 }

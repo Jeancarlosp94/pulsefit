@@ -301,13 +301,16 @@ export const selectMultipleComponents = ({
    target,
    count = 3,
    seed = 0,
-   mealType
+   mealType,
+   favoriteIngredientIds = []
 }: {
    pool: ItfIngredient[]
    target: ItfMacroTarget
    count?: number
    seed?: number
    mealType?: ItfMealType
+   /** IDs marcados como favoritos por el usuario en el onboarding. */
+   favoriteIngredientIds?: string[]
 }): ItfMealComponents[] => {
    const results: ItfMealComponents[] = []
    const usedProteinIds = new Set<string>()
@@ -315,10 +318,31 @@ export const selectMultipleComponents = ({
    const usedFatIds = new Set<string>()
    const usedVegIds = new Set<string>()
 
-   const allProteins = pool.filter((p) => p.category === 'protein')
-   const allCarbs = pool.filter((p) => p.category === 'carb')
-   const allFats = pool.filter((p) => p.category === 'fat')
-   const allVeg = pool.filter((p) => p.category === 'vegetable')
+   /* Boost de favoritos: ponemos los favoritos primero dentro de cada categoría,
+    * así pickByIndex(seed) tiene más probabilidad de seleccionarlos en los
+    * primeros sets. NO los duplica para no romper la lógica de variedad. */
+   const isFav = (id: string) => favoriteIngredientIds.includes(id)
+   const sortFavFirst = (a: ItfIngredient, b: ItfIngredient) => {
+      const aFav = isFav(a.id) ? 0 : 1
+      const bFav = isFav(b.id) ? 0 : 1
+      return aFav - bFav
+   }
+   const allProteins = pool
+      .filter((p) => p.category === 'protein')
+      .slice()
+      .sort(sortFavFirst)
+   const allCarbs = pool
+      .filter((p) => p.category === 'carb')
+      .slice()
+      .sort(sortFavFirst)
+   const allFats = pool
+      .filter((p) => p.category === 'fat')
+      .slice()
+      .sort(sortFavFirst)
+   const allVeg = pool
+      .filter((p) => p.category === 'vegetable')
+      .slice()
+      .sort(sortFavFirst)
 
    for (let i = 0; i < count; i++) {
       /* Para cada categoría, si quedan opciones sin usar, las usamos;

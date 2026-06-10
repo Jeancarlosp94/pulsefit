@@ -39,6 +39,10 @@ export interface OnboardingData {
    budgetLevel: 'low' | 'medium' | 'high' | null
    /** Patrón alimentario (2-5 comidas/día). Decisión de Lucía. */
    mealsPerDay: 2 | 3 | 4 | 5
+   /** Cocinas favoritas (multi-select). El motor prioriza recetas canónicas de estas regiones. */
+   favoriteCuisines: string[]
+   /** IDs de ingredientes que le gustan (boost en el selector). */
+   favoriteIngredientIds: string[]
 
    // Step 6 — horario
    availableDays: number[]
@@ -69,6 +73,8 @@ const initialData: OnboardingData = {
    dislikedFoods: [],
    budgetLevel: null,
    mealsPerDay: 3,
+   favoriteCuisines: [],
+   favoriteIngredientIds: [],
 
    availableDays: [],
    availableMinutes: null,

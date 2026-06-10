@@ -69,6 +69,8 @@ interface ProfileRow {
    budget_level: 'low' | 'medium' | 'high' | null
    cooks_at_home: 'yes' | 'sometimes' | 'rarely' | null
    meals_per_day: number | null
+   favorite_cuisines: string[] | null
+   favorite_ingredient_ids: string[] | null
    onboarding_completed: boolean
 }
 
@@ -104,7 +106,7 @@ serve(async (req) => {
       const { data: profile, error: profileError } = await supabase
          .from('profiles')
          .select(
-            'id, region, goal, target_kcal, target_protein_g, target_carbs_g, target_fats_g, dietary_restrictions, allergies, disliked_foods, budget_level, cooks_at_home, meals_per_day, onboarding_completed'
+            'id, region, goal, target_kcal, target_protein_g, target_carbs_g, target_fats_g, dietary_restrictions, allergies, disliked_foods, budget_level, cooks_at_home, meals_per_day, favorite_cuisines, favorite_ingredient_ids, onboarding_completed'
          )
          .eq('id', user.id)
          .single()
@@ -210,7 +212,8 @@ serve(async (req) => {
                target: mealTarget,
                count: 3,
                seed: seed + mealType.length,
-               mealType
+               mealType,
+               favoriteIngredientIds: p.favorite_ingredient_ids ?? []
             })
             if (componentsList.length === 0) {
                recipesByMealType[mealType] = []
