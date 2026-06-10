@@ -47,7 +47,7 @@ export const TopBar = ({ userName, avatarUrl, onAvatarClick }: TopBarProps) => {
                <div className='text-left'>
                   <p className='text-xs text-muted-foreground'>{greeting}</p>
                   <p className='text-sm font-medium leading-tight text-foreground'>
-                     {firstName || 'Bienvenida'}
+                     {firstName || 'Hola 👋'}
                   </p>
                </div>
             </button>

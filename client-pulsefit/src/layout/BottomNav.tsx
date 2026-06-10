@@ -1,4 +1,4 @@
-import { Home, ClipboardList, PlusCircle, LineChart, User } from 'lucide-react'
+import { Home, ClipboardList, PlusCircle, User } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
 import { cn } from '@/utils'
 
@@ -9,11 +9,12 @@ interface NavItem {
    highlight?: boolean
 }
 
+/* Progreso fue retirado temporalmente hasta que tengamos gráficas reales
+ * (Mariana + Joaquín reportaron que verlo vacío rompía la confianza). */
 const items: NavItem[] = [
    { to: '/home', label: 'Hoy', icon: Home },
    { to: '/plan', label: 'Plan', icon: ClipboardList },
    { to: '/registrar', label: 'Registrar', icon: PlusCircle, highlight: true },
-   { to: '/progreso', label: 'Progreso', icon: LineChart },
    { to: '/perfil', label: 'Perfil', icon: User }
 ]
 
