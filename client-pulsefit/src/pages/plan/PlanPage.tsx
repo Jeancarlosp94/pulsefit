@@ -12,11 +12,13 @@ import {
    X,
    RefreshCcw,
    Ban,
-   CalendarDays
+   CalendarDays,
+   ShoppingCart
 } from 'lucide-react'
 import { AppShell } from '@/layout'
 import { TitleUI } from '@/components/TitleUI'
 import { EmptyState } from '@/components/EmptyState'
+import { ShoppingListDialog } from '@/components/ShoppingListDialog'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
@@ -58,6 +60,7 @@ const PlanPage = () => {
    const [blockedIds, setBlockedIds] = useState<string[]>([])
    const [selectedDayIdx, setSelectedDayIdx] = useState(0)
    const [loaderIdx, setLoaderIdx] = useState(0)
+   const [shoppingOpen, setShoppingOpen] = useState(false)
 
    /* Rotación de mensajes mientras carga (cada 2.5s). */
    useEffect(() => {
@@ -233,6 +236,17 @@ const PlanPage = () => {
                      </Card>
                   ) : null}
 
+                  {/* Lista de compras */}
+                  <Button
+                     type='button'
+                     variant='outline'
+                     onClick={() => setShoppingOpen(true)}
+                     className='w-full'
+                  >
+                     <ShoppingCart className='h-4 w-4' />
+                     Ver lista de compras
+                  </Button>
+
                   {/* Selector de día */}
                   <Card>
                      <CardHeader className='pb-3'>
@@ -283,6 +297,10 @@ const PlanPage = () => {
                </>
             ) : null}
          </div>
+
+         {plan ? (
+            <ShoppingListDialog plan={plan} open={shoppingOpen} onOpenChange={setShoppingOpen} />
+         ) : null}
       </AppShell>
    )
 }

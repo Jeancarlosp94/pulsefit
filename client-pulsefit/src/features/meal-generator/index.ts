@@ -34,3 +34,11 @@ export { buildMealFallback } from './fallback-templates'
 export { SEED_INGREDIENTS } from './seed-ingredients'
 export { CANONICAL_DISHES, filterDishesByCuisines } from './seed-canonical-dishes'
 export type { ItfCanonicalDish, ItfCuisine } from './seed-canonical-dishes'
+export {
+   buildShoppingList,
+   shoppingListToPlainText,
+   getShoppingListSummary,
+   SHOPPING_UNITS,
+   formatQuantity
+} from './shopping-list'
+export type { ItfShoppingList, ItfShoppingItem, ItfShoppingSection } from './shopping-list'
