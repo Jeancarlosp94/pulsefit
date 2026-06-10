@@ -1,9 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { fntGenerateMealPlan, fntGetCurrentMealPlan } from '@/api/fntMealPlan'
+import { fntSwapIngredient } from '@/api/fntSwapIngredient'
 import { useErrorHandling } from './useErrorHandling'
 import { useAuth } from './useAuth'
 import type { ItfGenerateMealPlanParams, ItfMealPlan } from '@/interface/itfMeals'
+import type { ItfMealType } from '@/features/meal-generator'
+import type { ItfMealComponentSummary } from '@/interface/itfMeals'
 
 const PLAN_QUERY_KEY = ['meal-plan', 'current'] as const
 
@@ -45,6 +48,32 @@ export const useGenerateMealPlan = () => {
          } else {
             toast.success(`Tu plan de ${plan.days} días está listo 🌱`)
          }
+      },
+      onError: (e) => handleApiError(e)
+   })
+}
+
+interface SwapVars {
+   plan: ItfMealPlan
+   dayIndex: number
+   mealType: ItfMealType
+   slot: 'protein' | 'carb' | 'fat' | 'vegetable'
+   newComponent: ItfMealComponentSummary
+   newGrams: number
+}
+
+/**
+ * Sustituye un ingrediente puntual del plan vigente sin regenerar IA.
+ * Persiste el override por día en `meal_plans.daily_schedule`.
+ */
+export const useSwapIngredient = () => {
+   const queryClient = useQueryClient()
+   const { handleApiError } = useErrorHandling()
+   return useMutation<ItfMealPlan, Error, SwapVars>({
+      mutationFn: fntSwapIngredient,
+      onSuccess: (plan) => {
+         queryClient.setQueryData(PLAN_QUERY_KEY, plan)
+         toast.success('Cambiado, ese día va con tu elección 🌱')
       },
       onError: (e) => handleApiError(e)
    })

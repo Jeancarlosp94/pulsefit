@@ -42,3 +42,5 @@ export {
    formatQuantity
 } from './shopping-list'
 export type { ItfShoppingList, ItfShoppingItem, ItfShoppingSection } from './shopping-list'
+export { findIngredientAlternatives, rescaleGrams } from './ingredient-alternatives'
+export type { FindAlternativesInput } from './ingredient-alternatives'

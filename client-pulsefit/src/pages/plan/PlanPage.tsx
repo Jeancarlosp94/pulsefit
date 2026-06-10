@@ -13,13 +13,15 @@ import {
    RefreshCcw,
    Ban,
    CalendarDays,
-   ShoppingCart
+   ShoppingCart,
+   Repeat
 } from 'lucide-react'
 import { AppShell } from '@/layout'
 import { TitleUI } from '@/components/TitleUI'
 import { EmptyState } from '@/components/EmptyState'
 import { ShoppingListDialog } from '@/components/ShoppingListDialog'
 import { InfoTooltip } from '@/components/InfoTooltip'
+import { SwapIngredientDialog } from '@/components/SwapIngredientDialog'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
@@ -62,6 +64,11 @@ const PlanPage = () => {
    const [selectedDayIdx, setSelectedDayIdx] = useState(0)
    const [loaderIdx, setLoaderIdx] = useState(0)
    const [shoppingOpen, setShoppingOpen] = useState(false)
+   const [swapTarget, setSwapTarget] = useState<{
+      dayIndex: number
+      mealType: ItfMealType
+      slot: 'protein' | 'carb' | 'fat' | 'vegetable'
+   } | null>(null)
 
    /* Rotación de mensajes mientras carga (cada 2.5s). */
    useEffect(() => {
@@ -293,6 +300,9 @@ const PlanPage = () => {
                         plan={plan}
                         targetKcal={plan.target_kcal}
                         onBlock={handleBlock}
+                        onSwap={(mealType, slot) =>
+                           setSwapTarget({ dayIndex: selectedDayIdx, mealType, slot })
+                        }
                      />
                   ) : null}
                </>
@@ -307,6 +317,36 @@ const PlanPage = () => {
                familyMultiplier={(profile?.family_size as number | null) ?? 1}
             />
          ) : null}
+
+         {plan && swapTarget
+            ? (() => {
+                 const assignment =
+                    plan.daily_schedule[swapTarget.dayIndex]?.meals[swapTarget.mealType]
+                 const recipe = assignment
+                    ? plan.recipes_by_meal_type[swapTarget.mealType]?.[assignment.recipeIdx]
+                    : undefined
+                 if (!assignment || !recipe) return null
+                 const ov = assignment.componentOverrides
+                 const currentComp =
+                    ov?.[swapTarget.slot] ?? recipe.components[swapTarget.slot] ?? null
+                 if (!currentComp) return null
+                 return (
+                    <SwapIngredientDialog
+                       open={true}
+                       onOpenChange={(v) => {
+                          if (!v) setSwapTarget(null)
+                       }}
+                       plan={plan}
+                       dayIndex={swapTarget.dayIndex}
+                       mealType={swapTarget.mealType}
+                       slot={swapTarget.slot}
+                       currentComponent={currentComp}
+                       currentGrams={assignment.scaledGrams[swapTarget.slot]}
+                       favoriteIds={(profile?.favorite_ingredient_ids as string[] | null) ?? []}
+                    />
+                 )
+              })()
+            : null}
       </AppShell>
    )
 }
@@ -319,9 +359,10 @@ interface DayDetailProps {
    plan: NonNullable<ReturnType<typeof useMealPlan>['data']>
    targetKcal: number
    onBlock: (id: string | undefined, label: string) => void
+   onSwap: (mealType: ItfMealType, slot: 'protein' | 'carb' | 'fat' | 'vegetable') => void
 }
 
-const DayDetail = ({ day, plan, targetKcal, onBlock }: DayDetailProps) => {
+const DayDetail = ({ day, plan, targetKcal, onBlock, onSwap }: DayDetailProps) => {
    const mealEntries = Object.entries(day.meals) as Array<[ItfMealType, ItfMealAssignment]>
    const drift = Math.round(((day.totalKcal - targetKcal) / targetKcal) * 100)
    return (
@@ -356,6 +397,7 @@ const DayDetail = ({ day, plan, targetKcal, onBlock }: DayDetailProps) => {
                   assignment={assignment}
                   recipe={recipe}
                   onBlock={onBlock}
+                  onSwap={(slot) => onSwap(mealType, slot)}
                />
             )
          })}
@@ -371,13 +413,20 @@ interface MealCardProps {
    assignment: ItfMealAssignment
    recipe: ItfRecipe
    onBlock: (id: string | undefined, label: string) => void
+   onSwap: (slot: 'protein' | 'carb' | 'fat' | 'vegetable') => void
 }
 
-const MealCard = ({ mealType, assignment, recipe, onBlock }: MealCardProps) => {
+const MealCard = ({ mealType, assignment, recipe, onBlock, onSwap }: MealCardProps) => {
    const meta = MEAL_TYPE_CATALOG[mealType]
    const Icon = meta.icon
    const [expanded, setExpanded] = useState(false)
    const c = recipe.components
+   /* Aplicar overrides del usuario para ESTE día específico. */
+   const ov = assignment.componentOverrides
+   const proteinComp = ov?.protein ?? c.protein
+   const carbComp = ov?.carb ?? c.carb
+   const fatComp = ov?.fat ?? c.fat
+   const vegComp = ov?.vegetable ?? c.vegetable
    return (
       <Card>
          <CardHeader className='pb-2'>
@@ -418,27 +467,31 @@ const MealCard = ({ mealType, assignment, recipe, onBlock }: MealCardProps) => {
                   <div className='space-y-1.5'>
                      <p className='text-xs font-medium text-muted-foreground'>Ingredientes</p>
                      <IngredientRow
-                        name={c.protein.name}
+                        name={proteinComp.name}
                         grams={assignment.scaledGrams.protein}
-                        onBlock={() => onBlock(c.protein.id, c.protein.name)}
+                        onBlock={() => onBlock(proteinComp.id, proteinComp.name)}
+                        onSwap={() => onSwap('protein')}
                      />
                      <IngredientRow
-                        name={c.carb.name}
+                        name={carbComp.name}
                         grams={assignment.scaledGrams.carb}
-                        onBlock={() => onBlock(c.carb.id, c.carb.name)}
+                        onBlock={() => onBlock(carbComp.id, carbComp.name)}
+                        onSwap={() => onSwap('carb')}
                      />
                      {assignment.scaledGrams.fat > 0 ? (
                         <IngredientRow
-                           name={c.fat.name}
+                           name={fatComp.name}
                            grams={assignment.scaledGrams.fat}
-                           onBlock={() => onBlock(c.fat.id, c.fat.name)}
+                           onBlock={() => onBlock(fatComp.id, fatComp.name)}
+                           onSwap={() => onSwap('fat')}
                         />
                      ) : null}
-                     {c.vegetable && assignment.scaledGrams.vegetable > 0 ? (
+                     {vegComp && assignment.scaledGrams.vegetable > 0 ? (
                         <IngredientRow
-                           name={c.vegetable.name}
+                           name={vegComp.name}
                            grams={assignment.scaledGrams.vegetable}
-                           onBlock={() => onBlock(c.vegetable?.id, c.vegetable?.name ?? '')}
+                           onBlock={() => onBlock(vegComp.id, vegComp.name)}
+                           onSwap={() => onSwap('vegetable')}
                         />
                      ) : null}
                   </div>
@@ -461,24 +514,38 @@ const MealCard = ({ mealType, assignment, recipe, onBlock }: MealCardProps) => {
 const IngredientRow = ({
    name,
    grams,
-   onBlock
+   onBlock,
+   onSwap
 }: {
    name: string
    grams: number
    onBlock: () => void
+   onSwap: () => void
 }) => (
    <div className='flex items-center justify-between text-xs'>
-      <span>
+      <span className='capitalize'>
          {name} <span className='text-muted-foreground'>· {grams}g</span>
       </span>
-      <button
-         type='button'
-         onClick={onBlock}
-         className='rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground'
-         title='No volver a mostrar este ingrediente'
-      >
-         <Ban className='h-3.5 w-3.5' />
-      </button>
+      <div className='flex items-center gap-1'>
+         <button
+            type='button'
+            onClick={onSwap}
+            className='rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground'
+            title='Cambiar por otro ingrediente (solo este día)'
+            aria-label='Cambiar ingrediente'
+         >
+            <Repeat className='h-3.5 w-3.5' />
+         </button>
+         <button
+            type='button'
+            onClick={onBlock}
+            className='rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground'
+            title='No volver a mostrar este ingrediente'
+            aria-label='Bloquear ingrediente'
+         >
+            <Ban className='h-3.5 w-3.5' />
+         </button>
+      </div>
    </div>
 )
 

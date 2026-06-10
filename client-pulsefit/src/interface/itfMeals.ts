@@ -71,6 +71,16 @@ export interface ItfMealAssignment {
       fat: number
       vegetable: number
    }
+   /** Sustituciones manuales del usuario para ese día específico.
+    * Cuando está presente, el cliente renderiza el override en lugar del
+    * componente original de la receta. NO afecta a otros días que usan
+    * la misma receta. */
+   componentOverrides?: Partial<{
+      protein: ItfMealComponentSummary
+      carb: ItfMealComponentSummary
+      fat: ItfMealComponentSummary
+      vegetable: ItfMealComponentSummary
+   }>
 }
 
 /** Schedule de un día completo. */
