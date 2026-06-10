@@ -19,6 +19,7 @@ import { AppShell } from '@/layout'
 import { TitleUI } from '@/components/TitleUI'
 import { EmptyState } from '@/components/EmptyState'
 import { ShoppingListDialog } from '@/components/ShoppingListDialog'
+import { InfoTooltip } from '@/components/InfoTooltip'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
@@ -299,7 +300,12 @@ const PlanPage = () => {
          </div>
 
          {plan ? (
-            <ShoppingListDialog plan={plan} open={shoppingOpen} onOpenChange={setShoppingOpen} />
+            <ShoppingListDialog
+               plan={plan}
+               open={shoppingOpen}
+               onOpenChange={setShoppingOpen}
+               familyMultiplier={(profile?.family_size as number | null) ?? 1}
+            />
          ) : null}
       </AppShell>
    )
@@ -326,6 +332,7 @@ const DayDetail = ({ day, plan, targetKcal, onBlock }: DayDetailProps) => {
                <div className='flex items-center gap-2'>
                   <Flame className='h-4 w-4 text-primary' />
                   <span className='font-medium'>{day.totalKcal} kcal</span>
+                  <InfoTooltip topic='kcal' />
                   <span className='text-xs text-muted-foreground'>/ {targetKcal} objetivo</span>
                </div>
                <span

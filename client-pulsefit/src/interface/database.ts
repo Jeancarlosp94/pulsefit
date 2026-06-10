@@ -48,6 +48,8 @@ export interface ProfileRow {
    meals_per_day: number
    favorite_cuisines: string[]
    favorite_ingredient_ids: string[]
+   /** Cuántas personas comen del plan (1-8). Multiplica gramos y lista de compras. */
+   family_size: number
    created_at: string
    updated_at: string
 }

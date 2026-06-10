@@ -12,6 +12,7 @@ import {
 import { AppShell } from '@/layout'
 import { TitleUI } from '@/components/TitleUI'
 import { EmptyState } from '@/components/EmptyState'
+import { InfoTooltip } from '@/components/InfoTooltip'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
@@ -173,7 +174,10 @@ const RegistrarPage = () => {
                            <p className='font-medium'>{session.estimated_total_min} min</p>
                         </div>
                         <div>
-                           <p className='text-xs text-muted-foreground'>RPE objetivo</p>
+                           <p className='inline-flex items-center gap-1 text-xs text-muted-foreground'>
+                              RPE objetivo
+                              <InfoTooltip topic='rpe' />
+                           </p>
                            <p className='font-medium'>{data.prescribedRpe}/10</p>
                         </div>
                      </CardContent>

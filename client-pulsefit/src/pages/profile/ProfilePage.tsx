@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { LogOut, Sun, Moon, Monitor, Trash2, UtensilsCrossed } from 'lucide-react'
+import { LogOut, Sun, Moon, Monitor, Trash2, UtensilsCrossed, Users } from 'lucide-react'
 import { toast } from 'sonner'
 import { MealsPerDayDialog } from '@/components'
+import { InfoTooltip } from '@/components/InfoTooltip'
 import { AppShell } from '@/layout'
 import { TitleUI } from '@/components/TitleUI'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -36,12 +37,30 @@ const themeOptions: ThemeOption[] = [
 
 const ProfilePage = () => {
    const navigate = useNavigate()
-   const { profile, user, signOut } = useAuth()
+   const { profile, user, signOut, updateProfile } = useAuth()
    const { theme, setTheme } = useTheme()
    const { handleApiError } = useErrorHandling()
 
    const [signOutOpen, setSignOutOpen] = useState(false)
    const [mealsDialogOpen, setMealsDialogOpen] = useState(false)
+   const [savingFamily, setSavingFamily] = useState(false)
+
+   const familySize = (profile?.family_size as number | null) ?? 1
+
+   const handleFamilyChange = async (n: number) => {
+      if (n === familySize || savingFamily) return
+      setSavingFamily(true)
+      try {
+         await updateProfile({ family_size: n })
+         toast.success(
+            n === 1 ? 'Listo, cocinás para vos 🌱' : `Listo, cocinás para ${n} personas 🌱`
+         )
+      } catch (e) {
+         handleApiError(e)
+      } finally {
+         setSavingFamily(false)
+      }
+   }
 
    const displayName = profile?.name ?? user?.email?.split('@')[0] ?? 'Bienvenida'
    const email = user?.email ?? '—'
@@ -105,6 +124,87 @@ const ProfilePage = () => {
                   </Button>
                </CardContent>
             </Card>
+
+            <Card>
+               <CardHeader>
+                  <CardTitle className='flex items-center gap-2 text-base'>
+                     <Users className='h-4 w-4 text-primary' />
+                     ¿Para cuántas personas cocinas?
+                  </CardTitle>
+               </CardHeader>
+               <CardContent className='space-y-2 text-sm'>
+                  <p className='text-xs text-muted-foreground'>
+                     Las porciones de las recetas y la lista de compras se multiplican × este
+                     número.
+                  </p>
+                  <div className='grid grid-cols-4 gap-2'>
+                     {([1, 2, 3, 4] as const).map((n) => (
+                        <button
+                           key={n}
+                           type='button'
+                           disabled={savingFamily}
+                           onClick={() => handleFamilyChange(n)}
+                           aria-pressed={familySize === n}
+                           className={cn(
+                              'rounded-md border p-2 text-xs transition-colors disabled:opacity-50',
+                              familySize === n
+                                 ? 'border-primary bg-primary/10 text-primary'
+                                 : 'border-border text-muted-foreground hover:bg-muted'
+                           )}
+                        >
+                           {n === 1 ? 'Solo yo' : `${n} 👥`}
+                        </button>
+                     ))}
+                  </div>
+               </CardContent>
+            </Card>
+
+            {profile?.target_kcal ? (
+               <Card>
+                  <CardHeader>
+                     <CardTitle className='text-base'>Tus números</CardTitle>
+                  </CardHeader>
+                  <CardContent className='space-y-2 text-sm'>
+                     <div className='flex items-center justify-between'>
+                        <span className='inline-flex items-center gap-1 text-muted-foreground'>
+                           Calorías objetivo
+                           <InfoTooltip topic='target_kcal' />
+                        </span>
+                        <span className='font-medium text-foreground'>
+                           {profile.target_kcal} kcal
+                        </span>
+                     </div>
+                     <Separator />
+                     <div className='flex items-center justify-between'>
+                        <span className='inline-flex items-center gap-1 text-muted-foreground'>
+                           Proteína
+                           <InfoTooltip topic='protein' />
+                        </span>
+                        <span className='font-medium text-foreground'>
+                           {profile.target_protein_g}g
+                        </span>
+                     </div>
+                     <div className='flex items-center justify-between'>
+                        <span className='inline-flex items-center gap-1 text-muted-foreground'>
+                           Carbohidratos
+                           <InfoTooltip topic='carbs' />
+                        </span>
+                        <span className='font-medium text-foreground'>
+                           {profile.target_carbs_g}g
+                        </span>
+                     </div>
+                     <div className='flex items-center justify-between'>
+                        <span className='inline-flex items-center gap-1 text-muted-foreground'>
+                           Grasas
+                           <InfoTooltip topic='fats' />
+                        </span>
+                        <span className='font-medium text-foreground'>
+                           {profile.target_fats_g}g
+                        </span>
+                     </div>
+                  </CardContent>
+               </Card>
+            ) : null}
 
             <Card>
                <CardHeader>
