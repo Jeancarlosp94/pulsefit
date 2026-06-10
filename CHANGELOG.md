@@ -19,6 +19,33 @@ La versión sigue el roadmap de fases (no semver tradicional).
 
 ---
 
+## [Fase 9 — Progreso real con gráficas] — 2026-06-10
+
+### ✨ Agregado
+- **`ProgresoPage` rediseñada** con 4 tabs: Peso · Bienestar · Fuerza · Logros. Card de adherencia siempre visible arriba con racha actual, días activos en 30, % comidas registradas, entrenamientos esta semana.
+- **`components/charts/`** con Recharts (ya instalado):
+  - `WeightChart` — LineChart de peso 90 días con tooltip + dominio Y adaptativo.
+  - `WellbeingChart` — LineChart dual (energía + ánimo) 30 días, eje 1-5.
+  - `StrengthChart` — LineChart de carga por ejercicio (top 3 por count de logs).
+  - `AdherenceCard` — 4 stats: racha · días activos · % comidas · entrenos semana.
+- **Comparativa "hace 30 días"** en el tab Peso: muestra peso pasado vs actual + delta con color sutil.
+- **Sistema de logros**:
+  - Migración `20260618000000_seed_achievements.sql` con 12 logros LATAM-friendly (sin "perdiste X kg" para evitar reforzar obsesión con balanza). Premia consistencia, hidratación, flexibilidad, primer PR, racha, etc.
+  - Motor `features/achievement-engine/` con `checkAchievements()` que evalúa criteria simple (días activos, racha, counts) contra el catálogo y desbloquea solo los nuevos.
+  - Hook `useDetectNewAchievements()` se monta al cargar ProgresoPage. Si hay logros nuevos: invalida cache + toast por cada uno (`{icon} ¡Logro desbloqueado! {nombre}`).
+  - Tab Logros muestra desbloqueados con fecha + locked en versión dimmed.
+- **API + hooks de progreso**:
+  - `fntProgress.ts`: `fntGetWeightHistory`, `fntGetWellbeingHistory`, `fntGetAdherenceSummary` (calcula racha + % adherencia client-side), `fntGetStrengthProgress` (top 3 por count).
+  - `useWeightHistory`, `useWellbeingHistory`, `useAdherenceSummary`, `useStrengthProgress`, `useAllAchievements`, `useUserAchievements`.
+- **Tab Progreso reactivado en BottomNav** (estaba oculto desde Sprint 0.3 esperando esta fase). Ya no hay placeholder "Fase 9".
+
+### Acciones del usuario
+- Aplicar migración `20260618000000_seed_achievements.sql` en Supabase SQL Editor.
+
+**Commit:** próximo push
+
+---
+
 ## [Sprint 7.4 — Fase 7 COMPLETA] — 2026-06-10
 
 ### ✨ Agregado
