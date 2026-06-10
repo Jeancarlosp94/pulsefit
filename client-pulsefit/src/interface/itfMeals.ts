@@ -172,6 +172,27 @@ export interface ItfMacrosConsumed {
    fatsG: number
 }
 
+export interface ItfWaterLog {
+   id: string
+   user_id: string
+   logged_at: string
+   delta_glasses: 1 | -1
+}
+
+export interface ItfWeightLog {
+   id: string
+   user_id: string
+   log_date: string /* YYYY-MM-DD */
+   weight_kg: number
+   notes: string | null
+   logged_at: string
+}
+
+export interface ItfLogWeightInput {
+   weight_kg: number
+   notes?: string
+}
+
 export interface ItfTodayState {
    /** ¿La persona tiene un plan vigente? */
    hasPlan: boolean

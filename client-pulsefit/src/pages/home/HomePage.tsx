@@ -1,46 +1,42 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { UtensilsCrossed, CalendarDays, Dumbbell, ChevronRight } from 'lucide-react'
+import { UtensilsCrossed, CalendarDays, Dumbbell, ChevronRight, Scale } from 'lucide-react'
 import { AppShell } from '@/layout'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { MealsPerDayDialog } from '@/components'
-import { WelcomeCard, MealsRowCard, MacrosProgressCard } from '@/components/home'
+import { MealsPerDayDialog, MealLogDialog, WeightLogDialog } from '@/components'
+import { WelcomeCard, MealsRowCard, MacrosProgressCard, WaterTrackerCard } from '@/components/home'
 import { useAuth } from '@/hooks/useAuth'
 import { useTodayState } from '@/hooks/useTodayState'
-import { useLogMeal } from '@/hooks/useMealLogs'
+import { useMealPlan } from '@/hooks/useMealPlan'
 import type { ItfMealOfToday } from '@/interface/itfMeals'
 
 const HomePage = () => {
    const { profile, user } = useAuth()
    const navigate = useNavigate()
    const [dialogOpen, setDialogOpen] = useState(false)
+   const [logTarget, setLogTarget] = useState<ItfMealOfToday | null>(null)
+   const [weightOpen, setWeightOpen] = useState(false)
    const { state } = useTodayState()
-   const logMeal = useLogMeal()
+   const planQuery = useMealPlan()
+   const plan = planQuery.data ?? null
 
    const displayName = profile?.name ?? user?.email?.split('@')[0] ?? null
    const mealsPerDay = (profile?.meals_per_day as number | null) ?? null
    const needsMealsConfig = !mealsPerDay
 
-   /* Tap rápido en una comida del día: marca como "planned".
-    * (En Sprint 7.2 abriremos un dialog con 3 opciones; por ahora tap único). */
+   /* Vasos objetivo = peso × 35 ml ÷ 250 ml/vaso. Default 8 si no hay peso. */
+   const currentWeight = (profile?.current_weight_kg as number | null) ?? null
+   const targetGlasses = currentWeight ? Math.max(6, Math.round((currentWeight * 35) / 250)) : 8
+
+   /* Tap en card de comida: abre el dialog de 3 opciones.
+    * Si ya está registrada, navegamos al Plan para ver el detalle. */
    const handleTapMeal = (meal: ItfMealOfToday) => {
       if (meal.status !== 'pending') {
-         /* Si ya está registrada, navegamos al plan para que la veas. */
          navigate('/plan')
          return
       }
-      logMeal.mutate({
-         plan_id: state.hasPlan ? undefined : undefined,
-         day_index: state.dayIndex ?? undefined,
-         meal_type: meal.meal_type,
-         status: 'planned',
-         recipe_name: meal.recipe_name,
-         kcal: meal.plannedKcal,
-         protein_g: meal.plannedProteinG,
-         carbs_g: meal.plannedCarbsG,
-         fats_g: meal.plannedFatsG
-      })
+      setLogTarget(meal)
    }
 
    return (
@@ -98,6 +94,28 @@ const HomePage = () => {
             {/* Progreso de macros del día */}
             <MacrosProgressCard state={state} />
 
+            {/* Hidratación del día */}
+            <WaterTrackerCard targetGlasses={targetGlasses} />
+
+            {/* Registrar peso (quick action) */}
+            <Card
+               className='cursor-pointer transition-colors hover:bg-muted/40'
+               onClick={() => setWeightOpen(true)}
+            >
+               <CardContent className='flex items-center justify-between gap-3 pt-6'>
+                  <div className='flex items-start gap-3'>
+                     <Scale className='mt-0.5 h-5 w-5 shrink-0 text-primary' />
+                     <div className='space-y-0.5'>
+                        <p className='text-sm font-medium'>Registrar peso</p>
+                        <p className='text-xs text-muted-foreground'>
+                           Una entrada por día. Sin presión.
+                        </p>
+                     </div>
+                  </div>
+                  <ChevronRight className='h-4 w-4 text-muted-foreground' />
+               </CardContent>
+            </Card>
+
             {/* Atajo a rutina */}
             <Card
                className='cursor-pointer transition-colors hover:bg-muted/40'
@@ -140,6 +158,19 @@ const HomePage = () => {
          </div>
 
          <MealsPerDayDialog open={dialogOpen} onOpenChange={setDialogOpen} />
+         <WeightLogDialog open={weightOpen} onOpenChange={setWeightOpen} />
+
+         {logTarget && plan && state.dayIndex !== null ? (
+            <MealLogDialog
+               open={true}
+               onOpenChange={(v) => {
+                  if (!v) setLogTarget(null)
+               }}
+               meal={logTarget}
+               plan={plan}
+               dayIndex={state.dayIndex}
+            />
+         ) : null}
       </AppShell>
    )
 }

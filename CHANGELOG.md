@@ -19,6 +19,28 @@ La versión sigue el roadmap de fases (no semver tradicional).
 
 ---
 
+## [Sprint 7.2] — 2026-06-10
+
+### ✨ Agregado (Sprint 7.2A — Registro de comida en 3 taps)
+- **`MealLogDialog`** con flujo de 3 botones grandes:
+  - ✅ **Sí, lo comí** → tap único, registra `planned` con macros del plan.
+  - 🔄 **Comí algo distinto** → muestra las otras recetas del mismo meal_type del plan + opción "Otra cosa — describe" con form de macros custom.
+  - ❌ **No comí esta comida** → registra `skipped` sin juicio.
+- `HomePage` ahora abre el dialog en lugar de hacer log directo al tap.
+
+### ✨ Agregado (Sprint 7.2B — Hidratación + peso)
+- **Migración `water_logs` y `weight_logs`** con DROP+CREATE limpio (siguiendo el patrón documentado en el skill para evitar el bug `IF NOT EXISTS`):
+  - `water_logs`: filas con `delta_glasses` ∈ {-1, 1}. La suma del día se calcula en cliente. Permite deshacer sin lógica extra.
+  - `weight_logs`: una entrada por día con `UNIQUE(user_id, log_date)`. Soporta upsert. `weight_kg` validado 20-300 kg.
+- **`WaterTrackerCard`** en HomePage: fila visual de chips de vasos (target derivado de peso × 35 ml ÷ 250 ml, default 8). Botones `+ / -` con **optimistic update** — el contador reacciona al instante. Toast "Vaso registrado 💧" en cada tap positivo.
+- **`WeightLogDialog`** abierto desde card "Registrar peso" del Home: input con step 0.1 kg, muestra delta vs último registro ("+0.3 kg vs 2026-06-08"), notas opcionales, mensaje compasivo de cierre ("Mira la tendencia, no un solo número 🌿"). Upsert vía `onConflict: 'user_id,log_date'`.
+- API + hooks: `fntWaterLogs.ts`, `fntWeightLogs.ts`, `useTodayWater`, `useAddWater` (con optimistic), `useRecentWeights`, `useLogWeight`.
+
+### Acciones del usuario
+- Aplicar migración `20260616000000_create_water_and_weight_logs.sql` en Supabase SQL Editor.
+
+---
+
 ## [Sprint 7.1] — 2026-06-10
 
 ### ✨ Agregado
