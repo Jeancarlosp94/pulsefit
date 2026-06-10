@@ -19,6 +19,33 @@ La versión sigue el roadmap de fases (no semver tradicional).
 
 ---
 
+## [Sprint 7.4 — Fase 7 COMPLETA] — 2026-06-10
+
+### ✨ Agregado
+- **`MoodCheckCard`** en el Home (sobre `MealsRowCard`): aparece **solo si no respondió hoy**. 2 grupos de 5 botones con emojis (😟 😕 😐 🙂 😄) para energía y ánimo (1-5 cada uno) + nota compasiva *"Solo te lo preguntamos una vez al día 🌿"*. Después de guardar, se reemplaza por una **versión colapsada compacta** con los 2 emojis del día.
+- **Tabla SQL `mood_logs`** con DROP+CREATE limpio + RLS. `UNIQUE(user_id, log_date)` garantiza una entrada por día. Upsert al guardar.
+- **Microinteracciones con framer-motion** en el HomePage:
+  - **Stagger sutil** al cargar: cada card aparece 50 ms después de la anterior con `opacity 0→1` y `y: 8→0` (duración 250 ms, ease-out).
+  - **Scale-down al tap** (`whileTap: { scale: 0.97 }`) en cards interactivas (Plan / Entrenar / Perfil / Registrar peso).
+  - Respeta `prefers-reduced-motion` — si el usuario lo tiene activado, las cards aparecen sin animación.
+- **Test E2E** nuevo `home-flow.spec.ts` con 5 specs:
+  - Rutas privadas redirigen a `/login` (guard de AuthRoute).
+  - Login renderiza CTAs sin crashear.
+  - Validación inline de register sin lenguaje punitivo.
+  - Landing sin "fallaste/régimen estricto/debes" (regla inviolable del producto).
+  - UI pública en español neutro — sin voseo (`tocá/podés/cocinás/querés`).
+- API + hooks: `fntMoodLogs.ts`, `useTodayMood`, `useLogMood`.
+
+### 🎯 Cierra Fase 7
+Con este sprint, la **Fase 7 (Home dinámico + registro rápido) queda 100% completa**. La app ya tiene un flujo completo de "ver el día / registrar la realidad / ejecutar el plan" desde el HomePage. Próxima fase: 8 (Sistema de Rescates) o salto directo a 9 (Progreso con gráficas).
+
+### Acciones del usuario
+- Aplicar migración `20260617000000_create_mood_logs.sql` en Supabase SQL Editor.
+
+**Commit:** próximo push
+
+---
+
 ## [Sprint 7.3] — 2026-06-10
 
 ### ✨ Agregado (Sprint 7.3A — Vista de ejecución de entrenamiento)

@@ -193,6 +193,24 @@ export interface ItfLogWeightInput {
    notes?: string
 }
 
+export type ItfMoodLevel = 1 | 2 | 3 | 4 | 5
+
+export interface ItfMoodLog {
+   id: string
+   user_id: string
+   log_date: string
+   energy_level: ItfMoodLevel
+   mood_level: ItfMoodLevel
+   notes: string | null
+   logged_at: string
+}
+
+export interface ItfLogMoodInput {
+   energy_level: ItfMoodLevel
+   mood_level: ItfMoodLevel
+   notes?: string
+}
+
 export interface ItfTodayState {
    /** ¿La persona tiene un plan vigente? */
    hasPlan: boolean

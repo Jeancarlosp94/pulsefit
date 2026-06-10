@@ -14,7 +14,7 @@
 
 ## 🎯 Estado actual
 
-**Fase actual:** Sprint 7.1 cerrado. Faltan 7.2 / 7.3 / 7.4 para completar la Fase 7.
+**Fase actual:** **Fase 7 COMPLETA**. App con Home dinámico + registro rápido funcionando end-to-end.
 
 📋 **Para el snapshot completo** ver [PROJECT_STATE.md](PROJECT_STATE.md). El changelog técnico vive en [CHANGELOG.md (raíz)](../CHANGELOG.md).
 
@@ -27,14 +27,14 @@
 - [x] Fase 5 — meal-generator + Edge Function ✅ (+ Sprint 5.1/5.2 hardening)
 - [x] Fase 6 — routine-generator + Edge Function + Plan Semanal Dinámico ✅
 - [x] Sprints 0-4 — mejoras post-review consolidado (5 reviewers) ✅
-- [🟡] Fase 7 — Home dinámico + registro rápido (Sprint 7.1 cerrado, faltan 7.2/7.3/7.4) 👈 EN CURSO
-- [ ] Fase 8 — Sistema de rescates adaptativos
+- [x] Fase 7 — Home dinámico + registro rápido ✅ (Sprints 7.1/7.2/7.3/7.4)
+- [ ] Fase 8 — Sistema de rescates adaptativos 👈 SIGUIENTE (o saltar a Fase 9)
 - [ ] Fase 9 — Progreso, gráficas, logros
 - [ ] Fase 10 — Revisión semanal + IA Groq
 - [ ] Fase 11 — Patrones implícitos + Beta cerrada
 
 **Última actualización:** 2026-06-10
-**Última tarea trabajada:** Sprint 7.1 cerrado — Home dinámico con WelcomeCard + MealsRowCard + MacrosProgressCard + estado del día reactivo a meal_plans + meal_logs. 13 tests nuevos del today-state. Push `5ac9458`. Hotfixes posteriores `9e69789` y `4fa7623`.
+**Última tarea trabajada:** Sprint 7.4 cierra Fase 7 — MoodCheckCard + microinteracciones framer-motion (stagger + scale-down) + test E2E del Home + migración mood_logs. Push próximo.
 **Verificación final:** ✅ 402/402 tests, ✅ lint 0 errores, ✅ build OK.
 **Producción:** repo en `Jeancarlosp94/pulsefit` (GitHub), Supabase prod `jhktlubijlyzswldmncu`, app en Vercel (auto-deploy en cada push a main). Edge Functions `generate-meal-plan` y `generate-meal-options` deployadas. `generate-workout-session` puede estar desactualizada (espejo Deno con cambios pendientes desde Sprint 2.2).
 
@@ -42,33 +42,27 @@
 
 ## 📌 Pendientes inmediatos
 
-### 🚨 Inmediato — usuario debe aplicar 2 hotfixes SQL
+### 🚨 Inmediato — usuario debe aplicar la última migración
 
-En **Supabase SQL Editor** ([dashboard](https://supabase.com/dashboard/project/jhktlubijlyzswldmncu/sql/new)):
+En **Supabase SQL Editor**:
 
-1. `supabase/migrations/20260615000001_recreate_workout_logs_clean.sql` — arregla ERROR 42703 "column exercise_id does not exist".
-2. `supabase/migrations/20260615000002_recreate_meal_logs_clean.sql` — arregla ERROR 42703 "column logged_at does not exist".
+- `supabase/migrations/20260617000000_create_mood_logs.sql` — Sprint 7.4 — tabla mood_logs con energy_level + mood_level (1-5 cada uno).
 
-Ambos hacen DROP+CREATE limpio. **Es seguro** porque las versiones rotas no llegaron a tener datos.
+Es DROP+CREATE limpio. Cero impacto en datos existentes.
 
-### Después de las migraciones
+### Acciones del usuario CUMPLIDAS (ya aplicadas)
 
-- [ ] Probar `/home` con plan vigente → ver MealsRowCard con scroll horizontal y MacrosProgressCard reactivas.
-- [ ] Tap en una MealCard → ver toast "¡Listo! Comida registrada 🌱" → el card pasa a check verde.
-- [ ] Probar `/registrar` → generar rutina → "Registrar set" → ver "Última vez" + sugerencia de progresión.
+- ✅ `20260615000001_recreate_workout_logs_clean.sql`
+- ✅ `20260615000002_recreate_meal_logs_clean.sql`
+- ✅ `20260616000000_create_water_and_weight_logs.sql`
 
-### Redeploy opcional (después del usuario probar)
+### Próxima fase a planear
 
-`generate-workout-session` puede estar desactualizada. Redeploy:
-```powershell
-npx supabase functions deploy generate-workout-session --project-ref jhktlubijlyzswldmncu
-```
+**Fase 8 (Sistema de Rescates) vs Fase 9 (Progreso con gráficas)**:
+- Fase 8 — "Hoy no puedo cocinar" → 3 alternativas inteligentes. Diferenciador del producto.
+- Fase 9 — gráficas reales con los datos crudos ya capturados (weight, mood, mealLogs, workoutLogs, water). Visible para el usuario, retroalimenta motivación.
 
-### Sprint 7.2 (próximo, no arrancar hasta confirmación del usuario)
-
-- Reemplazar tap único en MealCard del Home por dialog de 3 opciones (✅ Sí / 🔄 Otra cosa / ❌ Saltada).
-- Búsqueda rápida para "comí otra cosa" (pool + favoritos + recientes).
-- Tablas + UI para agua y peso (registro diario).
+El usuario decide cuál arrancar después de probar Sprint 7.4.
 
 ---
 
@@ -133,6 +127,29 @@ Detalle completo (flujos paso a paso, prompts exactos a Groq, reglas del validad
 ---
 
 ## 📜 Bitácora de cambios
+
+### 2026-06-10 — Sprint 7.4 (cierre Fase 7: mood + microinteracciones + E2E)
+- Migración `mood_logs` (energy_level 1-5, mood_level 1-5, notes, UNIQUE por día). Upsert.
+- API `fntMoodLogs` + hooks `useTodayMood` / `useLogMood`.
+- `MoodCheckCard` en HomePage: 2 grupos de 5 botones con caritas (😟 😕 😐 🙂 😄). Aparece solo si NO respondió hoy. Después de guardar, se reemplaza por versión colapsada compacta con los 2 emojis. Mensaje "Solo te lo preguntamos una vez al día 🌿".
+- Microinteracciones framer-motion en HomePage: stagger sutil de cards al cargar (cada una 50ms después, fade-in + slide-up 8px en 250ms) + scale-down 0.97 al tap en cards interactivas. Respeta prefers-reduced-motion.
+- Test E2E nuevo `home-flow.spec.ts` con 5 specs (guards de auth, español neutro, no voseo, no punitivismo).
+- **Fase 7 COMPLETA**. Push próximo.
+
+### 2026-06-10 — Sprint 7.3 (vista de ejecución + limpiar plan + FAB)
+- `WorkoutSessionView`: vista enfocada en ejecutar la rutina generada. Header con progreso "X/Y ejercicios" + salir con confirm. Lista vertical de bloques. SetRow por serie con inputs peso+reps + botón ✓ que activa cronómetro flotante. Selector RPE al completar todas las series + "Guardar ejercicio" que llama useLogSet con resumen agregado.
+- `RestTimer` flotante sticky en bottom: countdown desde rest_sec, cambia a primary cuando faltan ≤5s, toast al completar.
+- Sugerencia de progresión (Sprint 3) pre-rellena peso del primer set.
+- `fntDeleteCurrentMealPlan` + `useDeleteMealPlan`. Botón "Limpiar plan" en PlanPage con confirm. Solo borra `meal_plans` (RLS), no toca logs ni perfil.
+- `QuickActionFAB` en HomePage (botón coral flotante esquina derecha). Backdrop con blur + 3 acciones rápidas: + Agua (optimistic) / Peso (dialog) / Entrenar (navega). Rotación 45° del botón principal al abrir.
+- Push `bd3d120`.
+
+### 2026-06-10 — Sprint 7.2 (registro rápido: comida + agua + peso)
+- `MealLogDialog` con 3 botones grandes: ✅ Sí lo comí (planned) / 🔄 Comí algo distinto (substituted con buscador de alternativas del plan + custom macros) / ❌ No comí esto (skipped).
+- Migración `water_logs` (filas con delta_glasses ∈ {-1,1}) + `weight_logs` (UNIQUE por día, upsert). DROP+CREATE limpio.
+- `WaterTrackerCard` con chips de vasos (target = peso × 35ml ÷ 250) + botones ± con optimistic update.
+- `WeightLogDialog` con input step 0.1 kg, delta vs último, notas, mensaje compasivo.
+- Push `9eda081`.
 
 ### 2026-06-10 — Sprint 7.1 (Home dinámico + estado del día)
 - Migración `meal_logs` con RLS por user_id (status `planned`/`substituted`/`skipped`, plan_id+day_index+meal_type, macros, notes). Hotfix posterior por mismo bug de `IF NOT EXISTS` que ya conocíamos.
