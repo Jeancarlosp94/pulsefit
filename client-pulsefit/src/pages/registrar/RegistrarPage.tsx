@@ -7,12 +7,14 @@ import {
    Activity,
    AlertCircle,
    Sparkles,
-   Heart
+   Heart,
+   PlayCircle
 } from 'lucide-react'
 import { AppShell } from '@/layout'
 import { TitleUI } from '@/components/TitleUI'
 import { EmptyState } from '@/components/EmptyState'
 import { InfoTooltip } from '@/components/InfoTooltip'
+import { findVideoUrlForExercise } from '@/features/routine-generator'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
@@ -201,34 +203,48 @@ const RegistrarPage = () => {
                   </Card>
 
                   {/* Bloques */}
-                  {session.blocks.map((b, i) => (
-                     <Card key={b.exercise_id}>
-                        <CardHeader className='pb-3'>
-                           <CardTitle className='flex items-center justify-between text-base'>
-                              <span>
-                                 {i + 1}. {b.name}
-                              </span>
-                              <span className='text-xs font-normal text-muted-foreground'>
-                                 {b.sets} × {b.reps}
-                              </span>
-                           </CardTitle>
-                        </CardHeader>
-                        <CardContent className='space-y-2 text-sm'>
-                           <p className='italic text-muted-foreground'>"{b.tip}"</p>
-                           <Separator />
-                           <div className='flex items-center justify-between text-xs text-muted-foreground'>
-                              <span className='flex items-center gap-1'>
-                                 <Timer className='h-3.5 w-3.5' />
-                                 Descanso {b.rest_sec}s
-                              </span>
-                              <span className='flex items-center gap-1'>
-                                 <Clock className='h-3.5 w-3.5' />
-                                 {b.sets * 30}s aprox.
-                              </span>
-                           </div>
-                        </CardContent>
-                     </Card>
-                  ))}
+                  {session.blocks.map((b, i) => {
+                     const videoUrl = findVideoUrlForExercise(b.name)
+                     return (
+                        <Card key={b.exercise_id}>
+                           <CardHeader className='pb-3'>
+                              <CardTitle className='flex items-center justify-between text-base'>
+                                 <span>
+                                    {i + 1}. {b.name}
+                                 </span>
+                                 <span className='text-xs font-normal text-muted-foreground'>
+                                    {b.sets} × {b.reps}
+                                 </span>
+                              </CardTitle>
+                           </CardHeader>
+                           <CardContent className='space-y-2 text-sm'>
+                              <p className='italic text-muted-foreground'>"{b.tip}"</p>
+                              {videoUrl ? (
+                                 <a
+                                    href={videoUrl}
+                                    target='_blank'
+                                    rel='noopener noreferrer'
+                                    className='inline-flex items-center gap-1 text-xs text-primary underline-offset-4 hover:underline'
+                                 >
+                                    <PlayCircle className='h-3.5 w-3.5' />
+                                    Ver técnica en YouTube
+                                 </a>
+                              ) : null}
+                              <Separator />
+                              <div className='flex items-center justify-between text-xs text-muted-foreground'>
+                                 <span className='flex items-center gap-1'>
+                                    <Timer className='h-3.5 w-3.5' />
+                                    Descanso {b.rest_sec}s
+                                 </span>
+                                 <span className='flex items-center gap-1'>
+                                    <Clock className='h-3.5 w-3.5' />
+                                    {b.sets * 30}s aprox.
+                                 </span>
+                              </div>
+                           </CardContent>
+                        </Card>
+                     )
+                  })}
 
                   {/* Cooldown */}
                   <Card>

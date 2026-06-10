@@ -38,6 +38,9 @@ export interface ItfExercise {
    formTips: string[]
    alternatives: string[] // ids de ejercicios alternativos
    isCompound: boolean
+   /** YouTube URL curada por Carlos. Demuestra la técnica correcta.
+    * Canales preferidos: FitnessFAQs, Jeff Nippard, AthleanX, Squat University. */
+   videoUrl?: string
 }
 
 export interface ItfPrescribedExercise {

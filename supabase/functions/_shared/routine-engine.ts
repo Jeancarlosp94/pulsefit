@@ -45,6 +45,7 @@ export interface Exercise {
    formTips: string[]
    alternatives: string[]
    isCompound: boolean
+   videoUrl?: string
 }
 
 export interface PrescribedExercise {
