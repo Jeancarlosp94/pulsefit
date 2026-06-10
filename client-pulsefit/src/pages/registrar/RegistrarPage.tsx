@@ -76,7 +76,7 @@ const RegistrarPage = () => {
             <EmptyState
                icon={Sparkles}
                title='Falta tu onboarding'
-               description='Termina los 7 pasos y volvé acá para tu primera rutina personalizada.'
+               description='Termina los 7 pasos y vuelve aquí para tu primera rutina personalizada.'
             />
          </AppShell>
       )

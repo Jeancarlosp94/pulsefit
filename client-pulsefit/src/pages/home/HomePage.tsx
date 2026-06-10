@@ -26,7 +26,7 @@ const HomePage = () => {
       <AppShell userName={displayName}>
          <TitleUI
             title={`Hola${displayName ? `, ${displayName}` : ''} 👋`}
-            subtitle='Tu coach personal. Empezá por donde quieras.'
+            subtitle='Tu coach personal. Empieza por donde quieras.'
          />
 
          <div className='space-y-4'>
@@ -43,7 +43,7 @@ const HomePage = () => {
                               ¿Cuántas comidas haces al día?
                            </p>
                            <p className='text-muted-foreground'>
-                              Configuralo para que distribuyamos bien tus calorías y proteínas.
+                              Configúralo para que distribuyamos bien tus calorías y proteínas.
                            </p>
                         </div>
                      </div>
@@ -111,7 +111,7 @@ const HomePage = () => {
                      <div className='space-y-0.5'>
                         <p className='text-sm font-medium'>Mi perfil</p>
                         <p className='text-xs text-muted-foreground'>
-                           Editá tus objetivos, preferencias y patrón alimentario.
+                           Edita tus objetivos, preferencias y patrón alimentario.
                         </p>
                      </div>
                   </div>

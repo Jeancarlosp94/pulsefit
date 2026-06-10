@@ -53,9 +53,9 @@ export const ShoppingListDialog = ({
       const text = shoppingListToPlainText(list)
       try {
          await navigator.clipboard.writeText(text)
-         toast.success('Lista copiada — pegala en WhatsApp 📋')
+         toast.success('Lista copiada — pégala en WhatsApp 📋')
       } catch {
-         toast.error('No pudimos copiar. Probá compartir directo 🌿')
+         toast.error('No pudimos copiar. Prueba compartir directo 🌿')
       }
    }
 
@@ -85,7 +85,7 @@ export const ShoppingListDialog = ({
                <DialogDescription>
                   {list.itemCount} ingredientes para {list.days} {list.days === 1 ? 'día' : 'días'}
                   {localFamily > 1 ? ` × ${localFamily} personas` : ''}.
-                  {checkedCount > 0 ? ` Ya tenés ${checkedCount} en casa.` : ''}
+                  {checkedCount > 0 ? ` Ya tienes ${checkedCount} en casa.` : ''}
                </DialogDescription>
             </DialogHeader>
 
@@ -172,7 +172,7 @@ export const ShoppingListDialog = ({
                </Button>
             </div>
             <p className='text-center text-[10px] text-muted-foreground'>
-               Tip: tocá cada item para marcarlo como ya tengo en casa 🌿
+               Tip: toca cada item para marcarlo como "ya tengo en casa" 🌿
             </p>
          </DialogContent>
       </Dialog>

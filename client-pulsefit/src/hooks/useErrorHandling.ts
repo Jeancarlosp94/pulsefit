@@ -67,7 +67,7 @@ export const useErrorHandling = () => {
       }
 
       if (status === 429) {
-         toast.warning(message || 'Esperá un poco antes de volver a intentar 🌿')
+         toast.warning(message || 'Espera un poco antes de volver a intentar 🌿')
          return
       }
 

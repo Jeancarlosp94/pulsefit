@@ -52,7 +52,7 @@ export const suggestNextWeight = (input: SuggestNextInput): ItfProgressionSugges
       return {
          weightKg: 0,
          reps: prescribedReps,
-         reason: 'Empezá con un peso cómodo (RPE 5-6). Lo registramos para la próxima.',
+         reason: 'Empieza con un peso cómodo (RPE 5-6). Lo registramos para la próxima.',
          kind: 'first_time'
       }
    }
@@ -65,7 +65,7 @@ export const suggestNextWeight = (input: SuggestNextInput): ItfProgressionSugges
       return {
          weightKg: suggested,
          reps: prescribedReps,
-         reason: `Han pasado ${Math.floor(daysSince)} días — empezá un poco más liviano (${suggested} kg) y subimos pronto.`,
+         reason: `Han pasado ${Math.floor(daysSince)} días — empieza un poco más liviano (${suggested} kg) y subimos pronto.`,
          kind: 'deload'
       }
    }
@@ -75,7 +75,7 @@ export const suggestNextWeight = (input: SuggestNextInput): ItfProgressionSugges
       return {
          weightKg: last.weight_kg,
          reps: prescribedReps,
-         reason: `Semana de descarga: mantenemos ${last.weight_kg} kg, RPE bajo.`,
+         reason: `Semana de descarga: mantenemos ${last.weight_kg} kg con RPE bajo.`,
          kind: 'maintain'
       }
    }
@@ -94,7 +94,7 @@ export const suggestNextWeight = (input: SuggestNextInput): ItfProgressionSugges
          return {
             weightKg: 0,
             reps: prescribedReps + 1,
-            reason: `Cerraste 2 sesiones al RPE objetivo — sumá 1 rep esta vez (${prescribedReps + 1}).`,
+            reason: `Cerraste 2 sesiones al RPE objetivo — suma 1 rep esta vez (${prescribedReps + 1}).`,
             kind: 'progress'
          }
       } else if (isCompound) {
@@ -106,7 +106,7 @@ export const suggestNextWeight = (input: SuggestNextInput): ItfProgressionSugges
       return {
          weightKg: suggested,
          reps: prescribedReps,
-         reason: `Cerraste 2 sesiones al RPE objetivo — probá ${suggested} kg (+${increment} kg).`,
+         reason: `Cerraste 2 sesiones al RPE objetivo — prueba ${suggested} kg (+${increment} kg).`,
          kind: 'progress'
       }
    }

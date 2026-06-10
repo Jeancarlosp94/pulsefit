@@ -211,7 +211,7 @@ const Step5Diet = () => {
                      <FormItem className='space-y-3'>
                         <FormLabel>¿Qué cocinas te gustan? (opcional)</FormLabel>
                         <p className='text-xs text-muted-foreground'>
-                           Marcá las que quieras. Te vamos a priorizar recetas de esas tradiciones.
+                           Marca las que quieras. Vamos a priorizar recetas de esas tradiciones.
                         </p>
                         <div className='grid grid-cols-2 gap-2'>
                            {CUISINE_OPTIONS.map((opt) => (
@@ -238,7 +238,7 @@ const Step5Diet = () => {
                      <FormItem className='space-y-3'>
                         <FormLabel>¿Qué ingredientes te encantan? (opcional)</FormLabel>
                         <p className='text-xs text-muted-foreground'>
-                           Marcá los que sí o sí querés que aparezcan seguido.
+                           Marca los que sí o sí quieres que aparezcan seguido.
                         </p>
                         <div className='flex flex-wrap gap-2'>
                            {FAVORITE_INGREDIENT_SUGGESTIONS.map((ing) => {

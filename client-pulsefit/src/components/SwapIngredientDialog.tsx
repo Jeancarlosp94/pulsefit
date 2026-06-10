@@ -109,7 +109,7 @@ export const SwapIngredientDialog = ({
 
             <div className='space-y-2'>
                <p className='text-xs font-medium text-muted-foreground'>
-                  Tocá una opción para reemplazar
+                  Toca una opción para reemplazar
                </p>
                <div className='space-y-1'>
                   {alternatives.length === 0 ? (

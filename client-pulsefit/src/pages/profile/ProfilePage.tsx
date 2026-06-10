@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { LogOut, Sun, Moon, Monitor, Trash2, UtensilsCrossed, Users } from 'lucide-react'
+import { LogOut, Sun, Moon, Monitor, UtensilsCrossed, Users, RotateCcw } from 'lucide-react'
 import { toast } from 'sonner'
 import { MealsPerDayDialog } from '@/components'
 import { InfoTooltip } from '@/components/InfoTooltip'
+import { FavoritesEditor } from '@/components/FavoritesEditor'
+import { ResetAccountDialog } from '@/components/ResetAccountDialog'
 import { AppShell } from '@/layout'
 import { TitleUI } from '@/components/TitleUI'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -43,6 +45,7 @@ const ProfilePage = () => {
 
    const [signOutOpen, setSignOutOpen] = useState(false)
    const [mealsDialogOpen, setMealsDialogOpen] = useState(false)
+   const [resetOpen, setResetOpen] = useState(false)
    const [savingFamily, setSavingFamily] = useState(false)
 
    const familySize = (profile?.family_size as number | null) ?? 1
@@ -53,7 +56,7 @@ const ProfilePage = () => {
       try {
          await updateProfile({ family_size: n })
          toast.success(
-            n === 1 ? 'Listo, cocinás para vos 🌱' : `Listo, cocinás para ${n} personas 🌱`
+            n === 1 ? 'Listo, cocinas para ti 🌱' : `Listo, cocinas para ${n} personas 🌱`
          )
       } catch (e) {
          handleApiError(e)
@@ -206,6 +209,8 @@ const ProfilePage = () => {
                </Card>
             ) : null}
 
+            <FavoritesEditor />
+
             <Card>
                <CardHeader>
                   <CardTitle>Apariencia</CardTitle>
@@ -259,25 +264,20 @@ const ProfilePage = () => {
 
             <Card className='border-accent/30'>
                <CardContent className='space-y-3 pt-6'>
+                  <Button variant='outline' className='w-full' onClick={() => setResetOpen(true)}>
+                     <RotateCcw className='h-4 w-4' />
+                     Empezar desde cero
+                  </Button>
                   <Button variant='outline' className='w-full' onClick={() => setSignOutOpen(true)}>
                      <LogOut className='h-4 w-4' />
                      Cerrar sesión
-                  </Button>
-                  <Button
-                     variant='ghost'
-                     className='w-full text-accent hover:bg-accent/10'
-                     onClick={() =>
-                        toast('Pronto podrás eliminar tu cuenta. La estamos puliendo 🌱')
-                     }
-                  >
-                     <Trash2 className='h-4 w-4' />
-                     Eliminar mi cuenta
                   </Button>
                </CardContent>
             </Card>
          </div>
 
          <MealsPerDayDialog open={mealsDialogOpen} onOpenChange={setMealsDialogOpen} />
+         <ResetAccountDialog open={resetOpen} onOpenChange={setResetOpen} />
 
          <Dialog open={signOutOpen} onOpenChange={setSignOutOpen}>
             <DialogContent>

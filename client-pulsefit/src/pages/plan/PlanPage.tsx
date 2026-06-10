@@ -133,7 +133,7 @@ const PlanPage = () => {
             <EmptyState
                icon={Sparkles}
                title='Falta tu onboarding'
-               description='Termina los 7 pasos y volvé acá para tu primer plan personalizado.'
+               description='Termina los 7 pasos y vuelve aquí para tu primer plan personalizado.'
             />
          </AppShell>
       )
@@ -152,7 +152,7 @@ const PlanPage = () => {
                <CardContent className='pt-6'>
                   <div className='space-y-3'>
                      <div>
-                        <p className='mb-2 text-xs text-muted-foreground'>¿Cuántos días querés?</p>
+                        <p className='mb-2 text-xs text-muted-foreground'>¿Cuántos días quieres?</p>
                         <div className='grid grid-cols-3 gap-2'>
                            {DAYS_OPTIONS.map((d) => (
                               <button
@@ -227,7 +227,7 @@ const PlanPage = () => {
                <EmptyState
                   icon={ChefHat}
                   title='Sin plan aún'
-                  description='Tocá "Generar mi plan" y armamos toda tu semana en una sola pasada.'
+                  description='Toca "Generar mi plan" y armamos toda tu semana en una sola pasada.'
                />
             ) : null}
 
