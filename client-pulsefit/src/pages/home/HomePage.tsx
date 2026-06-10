@@ -1,11 +1,24 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
-import { UtensilsCrossed, CalendarDays, Dumbbell, ChevronRight, Scale } from 'lucide-react'
+import {
+   UtensilsCrossed,
+   CalendarDays,
+   Dumbbell,
+   ChevronRight,
+   Scale,
+   LifeBuoy
+} from 'lucide-react'
 import { AppShell } from '@/layout'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { MealsPerDayDialog, MealLogDialog, WeightLogDialog, QuickActionFAB } from '@/components'
+import {
+   MealsPerDayDialog,
+   MealLogDialog,
+   WeightLogDialog,
+   QuickActionFAB,
+   RescueDialog
+} from '@/components'
 import {
    WelcomeCard,
    MealsRowCard,
@@ -27,6 +40,7 @@ const HomePage = () => {
    const [dialogOpen, setDialogOpen] = useState(false)
    const [logTarget, setLogTarget] = useState<ItfMealOfToday | null>(null)
    const [weightOpen, setWeightOpen] = useState(false)
+   const [rescueOpen, setRescueOpen] = useState(false)
    const { state } = useTodayState()
    const planQuery = useMealPlan()
    const plan = planQuery.data ?? null
@@ -135,6 +149,27 @@ const HomePage = () => {
                <MacrosProgressCard state={state} />
             </motion.div>
 
+            {/* "Hoy no puedo" — abre el flujo de rescates adaptativos */}
+            <motion.div {...fadeIn(next())} {...tapScale}>
+               <Card
+                  className='cursor-pointer border-secondary/30 bg-secondary/5 transition-colors hover:bg-secondary/10'
+                  onClick={() => setRescueOpen(true)}
+               >
+                  <CardContent className='flex items-center justify-between gap-3 pt-6'>
+                     <div className='flex items-start gap-3'>
+                        <LifeBuoy className='mt-0.5 h-5 w-5 shrink-0 text-secondary' />
+                        <div className='space-y-0.5'>
+                           <p className='text-sm font-medium'>Hoy no puedo</p>
+                           <p className='text-xs text-muted-foreground'>
+                              Sin tiempo, sin energía, sin ingredientes… te damos 3 opciones que sí.
+                           </p>
+                        </div>
+                     </div>
+                     <ChevronRight className='h-4 w-4 text-muted-foreground' />
+                  </CardContent>
+               </Card>
+            </motion.div>
+
             {/* Hidratación del día */}
             <motion.div {...fadeIn(next())}>
                <WaterTrackerCard targetGlasses={targetGlasses} />
@@ -208,6 +243,7 @@ const HomePage = () => {
 
          <MealsPerDayDialog open={dialogOpen} onOpenChange={setDialogOpen} />
          <WeightLogDialog open={weightOpen} onOpenChange={setWeightOpen} />
+         <RescueDialog open={rescueOpen} onOpenChange={setRescueOpen} />
 
          <QuickActionFAB />
 

@@ -19,6 +19,29 @@ La versión sigue el roadmap de fases (no semver tradicional).
 
 ---
 
+## [Fase 8 — Sistema de Rescates Adaptativos] — 2026-06-10
+
+### ✨ Agregado
+- **Motor `features/rescue-engine/`** 100% determinístico (sin IA):
+  - `workout-rescues.ts` — 5 triggers × 3 alternativas (`no_time`, `no_energy`, `low_mood`, `away_from_home`, `injury`). Incluye rutina exprés 15 min, caminata, micro-sesión, bodyweight, hotel-room, movilidad.
+  - `meal-rescues.ts` — 5 triggers × 3 alternativas (`no_cooking`, `no_ingredients`, `eating_out`, `craving`, `low_budget_today`). Recetas LATAM económicas (lentejas + arroz, huevos, pasta con atún, bowl frío, sándwich integral).
+  - `emotional-rescues.ts` — 3 triggers (`overwhelmed`, `binge`, `low_mood_streak`) con severity `info`/`warn`. Si severity=warn, banner sugiere hablar con profesional.
+  - `index.ts` con router `generateRescue({ domain, trigger })`.
+- **Migración `20260619000000_recreate_rescue_events_clean.sql`** con DROP+CREATE limpio. Reemplaza la tabla legacy con schema simplificado: `domain`, `trigger_type`, `alternatives_offered (jsonb)`, `alternative_chosen (jsonb)`, `user_completed`.
+- **API + hook**: `fntLogRescueEvent` + `useLogRescue` con toast "Vamos por esa opción 🌿".
+- **`RescueDialog`** con flujo de 3 pasos:
+  1. **Dominio** (Entrenamiento / Comida / Ánimo).
+  2. **Trigger** (ej: "Sin tiempo", "Sin ingredientes", "Estoy abrumada/o").
+  3. **3 opciones** con icono + título + descripción + botón "Ninguna me sirve hoy" para registrar el evento sin alternativa elegida.
+- **Card "Hoy no puedo"** en HomePage (border secondary): abre el `RescueDialog`.
+
+### Acciones del usuario
+- Aplicar migración `20260619000000_recreate_rescue_events_clean.sql` en Supabase SQL Editor.
+
+**Commit:** próximo push
+
+---
+
 ## [Fase 9 — Progreso real con gráficas] — 2026-06-10
 
 ### ✨ Agregado

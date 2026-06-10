@@ -14,7 +14,7 @@
 
 ## 🎯 Estado actual
 
-**Fase actual:** **Fase 7 COMPLETA**. App con Home dinámico + registro rápido funcionando end-to-end.
+**Fase actual:** **Fases 7, 8, 9 COMPLETAS**. Solo quedan Fase 10 (Revisión semanal IA) y Fase 11 (Beta cerrada) del roadmap original.
 
 📋 **Para el snapshot completo** ver [PROJECT_STATE.md](PROJECT_STATE.md). El changelog técnico vive en [CHANGELOG.md (raíz)](../CHANGELOG.md).
 
@@ -28,13 +28,13 @@
 - [x] Fase 6 — routine-generator + Edge Function + Plan Semanal Dinámico ✅
 - [x] Sprints 0-4 — mejoras post-review consolidado (5 reviewers) ✅
 - [x] Fase 7 — Home dinámico + registro rápido ✅ (Sprints 7.1/7.2/7.3/7.4)
-- [ ] Fase 8 — Sistema de rescates adaptativos 👈 SIGUIENTE (o saltar a Fase 9)
-- [ ] Fase 9 — Progreso, gráficas, logros
-- [ ] Fase 10 — Revisión semanal + IA Groq
+- [x] Fase 8 — Sistema de rescates adaptativos ✅ (motor + RescueDialog + tabla rescue_events)
+- [x] Fase 9 — Progreso real con gráficas + logros ✅ (4 tabs + Recharts + 12 achievements)
+- [ ] Fase 10 — Revisión semanal + IA Groq 👈 SIGUIENTE
 - [ ] Fase 11 — Patrones implícitos + Beta cerrada
 
 **Última actualización:** 2026-06-10
-**Última tarea trabajada:** Sprint 7.4 cierra Fase 7 — MoodCheckCard + microinteracciones framer-motion (stagger + scale-down) + test E2E del Home + migración mood_logs. Push próximo.
+**Última tarea trabajada:** Fase 8 (Rescates) terminada en cadena automática tras Fase 9 (Progreso real). 11 fases del roadmap completas. Push próximo.
 **Verificación final:** ✅ 402/402 tests, ✅ lint 0 errores, ✅ build OK.
 **Producción:** repo en `Jeancarlosp94/pulsefit` (GitHub), Supabase prod `jhktlubijlyzswldmncu`, app en Vercel (auto-deploy en cada push a main). Edge Functions `generate-meal-plan` y `generate-meal-options` deployadas. `generate-workout-session` puede estar desactualizada (espejo Deno con cambios pendientes desde Sprint 2.2).
 
@@ -46,9 +46,11 @@
 
 En **Supabase SQL Editor**:
 
-- `supabase/migrations/20260617000000_create_mood_logs.sql` — Sprint 7.4 — tabla mood_logs con energy_level + mood_level (1-5 cada uno).
+- `supabase/migrations/20260617000000_create_mood_logs.sql` — Sprint 7.4 — tabla mood_logs.
+- `supabase/migrations/20260618000000_seed_achievements.sql` — Fase 9 — inserta 12 logros LATAM.
+- `supabase/migrations/20260619000000_recreate_rescue_events_clean.sql` — Fase 8 — recrea rescue_events con schema simplificado.
 
-Es DROP+CREATE limpio. Cero impacto en datos existentes.
+Las 3 son DROP+CREATE limpio + un INSERT idempotente (la del seed). Cero impacto en datos existentes.
 
 ### Acciones del usuario CUMPLIDAS (ya aplicadas)
 
@@ -127,6 +129,23 @@ Detalle completo (flujos paso a paso, prompts exactos a Groq, reglas del validad
 ---
 
 ## 📜 Bitácora de cambios
+
+### 2026-06-10 — Fase 8 (Sistema de Rescates Adaptativos)
+- Motor `features/rescue-engine/` 100% determinístico con 3 sub-motores (workout/meal/emotional). 13 triggers × 3 alternativas cada uno.
+- Migración `20260619000000_recreate_rescue_events_clean.sql` (DROP+CREATE) reemplaza tabla legacy. Schema simplificado: domain + trigger_type + jsonb alternatives.
+- `RescueDialog` con flujo 3 pasos (dominio → trigger → 3 opciones). Botón "Ninguna me sirve hoy" registra el evento sin alternativa elegida.
+- Card "Hoy no puedo" en HomePage (border secondary, posición entre macros y hidratación).
+- Tono firmado por Lucía + Carlos: cero juicio, severity=warn muestra banner sugiriendo profesional para binge/low_mood_streak.
+
+### 2026-06-10 — Fase 9 (Progreso real con gráficas + logros)
+- API `fntProgress` con queries para weight history, wellbeing (energía+ánimo), adherence summary (racha + % comidas + entrenos), strength progress (top 3 ejercicios).
+- 4 componentes de gráficas con Recharts: WeightChart (LineChart 90d), WellbeingChart (LineChart dual 30d), StrengthChart (LineChart por ejercicio), AdherenceCard (4 stats con racha).
+- Comparativa "hace 30 días" en el tab Peso con delta calculado client-side.
+- Migración `20260618000000_seed_achievements.sql` con 12 logros LATAM (sin "perdiste X kg"). Premia consistencia, hidratación, flexibilidad.
+- Motor `features/achievement-engine/checkAchievements` evalúa criteria simples vs catálogo y desbloquea nuevos.
+- `useDetectNewAchievements` se monta en ProgresoPage → invalida cache + toast por cada logro nuevo.
+- ProgresoPage rediseñada con 4 tabs (Peso · Bienestar · Fuerza · Logros) + AdherenceCard arriba.
+- Tab Progreso reactivado en BottomNav (estaba oculto desde Sprint 0.3).
 
 ### 2026-06-10 — Sprint 7.4 (cierre Fase 7: mood + microinteracciones + E2E)
 - Migración `mood_logs` (energy_level 1-5, mood_level 1-5, notes, UNIQUE por día). Upsert.
