@@ -14,59 +14,61 @@
 
 ## 🎯 Estado actual
 
-**Fase actual:** Fases 1-6 completas en código. App en producción (Vercel + Supabase prod). Pendiente: deploy de ambas Edge Functions (`generate-meal-options` + `generate-workout-session`). Lista para Fase 7.
+**Fase actual:** Sprint 7.1 cerrado. Faltan 7.2 / 7.3 / 7.4 para completar la Fase 7.
+
+📋 **Para el snapshot completo** ver [PROJECT_STATE.md](PROJECT_STATE.md). El changelog técnico vive en [CHANGELOG.md (raíz)](../CHANGELOG.md).
+
 - [x] Fase 1 — Setup base ✅
 - [x] Fase 2 — Diseño y componentes base ✅
 - [x] Fase 3 — Auth + Estructura + PWA operativa ✅
-- [x] Fase 3.5 — Offline y PWA polish ✅ (Lighthouse pendiente de auditoría manual)
+- [x] Fase 3.5 — Offline y PWA polish ✅
 - [x] Fase 3.6 — Testing y CI/CD ✅
-- [x] Fase 4 — Onboarding completo + cálculos nutricionales ✅
-- [x] Fase 5 — Motor `meal-generator` híbrido + Edge Function ✅
-- [x] Fase 6 — Motor `routine-generator` híbrido + Edge Function ✅
-- [ ] Fase 7 — Home dinámico + registro rápido 👈 SIGUIENTE
+- [x] Fase 4 — Onboarding completo + nutrition-engine ✅
+- [x] Fase 5 — meal-generator + Edge Function ✅ (+ Sprint 5.1/5.2 hardening)
+- [x] Fase 6 — routine-generator + Edge Function + Plan Semanal Dinámico ✅
+- [x] Sprints 0-4 — mejoras post-review consolidado (5 reviewers) ✅
+- [🟡] Fase 7 — Home dinámico + registro rápido (Sprint 7.1 cerrado, faltan 7.2/7.3/7.4) 👈 EN CURSO
 - [ ] Fase 8 — Sistema de rescates adaptativos
 - [ ] Fase 9 — Progreso, gráficas, logros
 - [ ] Fase 10 — Revisión semanal + IA Groq
-- [ ] Fase 11 — Detección de patrones
-- [ ] Fase 12 — Beta cerrada
+- [ ] Fase 11 — Patrones implícitos + Beta cerrada
 
-**Última actualización:** 2026-06-08
-**Última tarea trabajada:** Fase 6 cerrada — motor `routine-generator` (29 tests) + Edge Function `generate-workout-session` con cascada Groq → Gemini → fallback + RegistrarPage demo. Push commit `1469096`.
-**Verificación final:** ✅ build limpio (804 KiB), ✅ 113/113 tests, ✅ lint 0 errores, ✅ tsc strict OK.
-**Producción:** repo en `Jeancarlosp94/pulsefit` (GitHub), Supabase prod en `jhktlubijlyzswldmncu`, app en Vercel, Groq + Gemini secrets configurados. Ambas Edge Functions pendientes de deploy.
+**Última actualización:** 2026-06-10
+**Última tarea trabajada:** Sprint 7.1 cerrado — Home dinámico con WelcomeCard + MealsRowCard + MacrosProgressCard + estado del día reactivo a meal_plans + meal_logs. 13 tests nuevos del today-state. Push `5ac9458`. Hotfixes posteriores `9e69789` y `4fa7623`.
+**Verificación final:** ✅ 402/402 tests, ✅ lint 0 errores, ✅ build OK.
+**Producción:** repo en `Jeancarlosp94/pulsefit` (GitHub), Supabase prod `jhktlubijlyzswldmncu`, app en Vercel (auto-deploy en cada push a main). Edge Functions `generate-meal-plan` y `generate-meal-options` deployadas. `generate-workout-session` puede estar desactualizada (espejo Deno con cambios pendientes desde Sprint 2.2).
 
 ---
 
 ## 📌 Pendientes inmediatos
 
-### 🚨 Inmediato — deploy de las 2 Edge Functions (Fase 5 + Fase 6)
+### 🚨 Inmediato — usuario debe aplicar 2 hotfixes SQL
 
+En **Supabase SQL Editor** ([dashboard](https://supabase.com/dashboard/project/jhktlubijlyzswldmncu/sql/new)):
+
+1. `supabase/migrations/20260615000001_recreate_workout_logs_clean.sql` — arregla ERROR 42703 "column exercise_id does not exist".
+2. `supabase/migrations/20260615000002_recreate_meal_logs_clean.sql` — arregla ERROR 42703 "column logged_at does not exist".
+
+Ambos hacen DROP+CREATE limpio. **Es seguro** porque las versiones rotas no llegaron a tener datos.
+
+### Después de las migraciones
+
+- [ ] Probar `/home` con plan vigente → ver MealsRowCard con scroll horizontal y MacrosProgressCard reactivas.
+- [ ] Tap en una MealCard → ver toast "¡Listo! Comida registrada 🌱" → el card pasa a check verde.
+- [ ] Probar `/registrar` → generar rutina → "Registrar set" → ver "Última vez" + sugerencia de progresión.
+
+### Redeploy opcional (después del usuario probar)
+
+`generate-workout-session` puede estar desactualizada. Redeploy:
 ```powershell
-cd "C:\Users\jeanc\OneDrive\Escritorio\pulsefit app"
-
-# Setup (una sola vez):
-npx supabase login
-npx supabase link --project-ref jhktlubijlyzswldmncu
-
-# Deploy de ambas:
-npx supabase functions deploy generate-meal-options --project-ref jhktlubijlyzswldmncu
 npx supabase functions deploy generate-workout-session --project-ref jhktlubijlyzswldmncu
 ```
 
-- [ ] Verificar en https://supabase.com/dashboard/project/jhktlubijlyzswldmncu/functions ambas funciones con status verde.
-- [ ] Probar /plan: seleccionar comida → Generar → ver 3 opciones reales.
-- [ ] Probar /registrar: Generar mi rutina → ver warmup + bloques + cooldown con tips.
+### Sprint 7.2 (próximo, no arrancar hasta confirmación del usuario)
 
-### Para Fase 3 (auditoría manual pendiente)
-- [ ] Auditoría Lighthouse desde la URL de Vercel → Chrome DevTools Mobile. Anotar scores en PHASE_3_REPORT.md.
-
-### Para arrancar Fase 6 (motor `routine-generator`)
-- [ ] Re-leer [files/reglas-fitness.md](reglas-fitness.md) (reglas de Carlos: RPE, progresión, descansos, ejercicios prohibidos para principiantes).
-- [ ] Re-leer [files/generadores-hibridos.md](generadores-hibridos.md) secciones 5-7 (flujo + prompt + validador de rutinas).
-- [ ] Crear `src/features/routine-generator/` con misma estructura que `meal-generator`: types, session-planner, exercise-pool, exercise-selector, set-rep-calculator, ai-routine-organizer, routine-validator, fallback-templates.
-- [ ] Replicar el patrón de la Edge Function `generate-meal-options` para `generate-workout-session` (orquestador con cascada Groq → Gemini → fallback, rate limit 10/día).
-- [ ] Catálogo seed de ejercicios LATAM con clasificación por patrón y nivel.
-- [ ] Frontend: itfWorkouts + fntWorkouts + useGenerateWorkout + reemplazar placeholder de RegistrarPage o crear PlanWorkoutPage.
+- Reemplazar tap único en MealCard del Home por dialog de 3 opciones (✅ Sí / 🔄 Otra cosa / ❌ Saltada).
+- Búsqueda rápida para "comí otra cosa" (pool + favoritos + recientes).
+- Tablas + UI para agua y peso (registro diario).
 
 ---
 
@@ -131,6 +133,42 @@ Detalle completo (flujos paso a paso, prompts exactos a Groq, reglas del validad
 ---
 
 ## 📜 Bitácora de cambios
+
+### 2026-06-10 — Sprint 7.1 (Home dinámico + estado del día)
+- Migración `meal_logs` con RLS por user_id (status `planned`/`substituted`/`skipped`, plan_id+day_index+meal_type, macros, notes). Hotfix posterior por mismo bug de `IF NOT EXISTS` que ya conocíamos.
+- Motor `features/home-engine/today-state.ts`: `computeTodayState(plan, logs, now)` calcula dayIndex con rotación, meals con estado por meal_type, macros consumidas sumando solo logs no-skipped + helpers `getTimeGreeting(hour)` y `getContextMessage(state)`.
+- API `fntMealLogs` + hooks `useTodayMealLogs`, `useLogMeal`, `useDeleteMealLog`, `useTodayState` (compuesto plan+logs).
+- UI `components/home/`: `WelcomeCard`, `MealsRowCard` (scroll horizontal con MealMiniCard por meal_type), `MacrosProgressCard` (4 barras: kcal/protein/carbs/fats), `MacroBar` reusable.
+- Refactor `HomePage.tsx`: welcome + atajos contextuales según hasPlan + cards reactivas.
+- 13 tests nuevos. Suite: 402/402 verde. Push `5ac9458`. Hotfixes posteriores `9e69789` y `4fa7623`.
+
+### 2026-06-09 — Sprint 4 (español neutro + favoritos en Perfil + reset cuenta)
+- Sweep masivo voseo → tuteo neutro LATAM en 10+ archivos (toasts, InfoTooltip, dialogs, páginas).
+- `FavoritesEditor` en ProfilePage: card "Mis gustos" con chips multi-select de 6 cocinas + 28 ingredientes. Para usuarios que pasaron el onboarding sin esa sección.
+- `ResetAccountDialog` reemplaza el "Eliminar mi cuenta" no funcional. 2 opciones: `fntResetOnboardingOnly` (conserva planes/logs) o `fntResetAllData` (borra meal_plans + workout_logs + preferencias).
+- Push `cf8608d`. Suite 389/389.
+
+### 2026-06-09 — Sprint 3 (log de cargas + progresión)
+- Migración `workout_logs` (RLS por user_id, sets/reps/weight/RPE) — falló más tarde, hotfix en Sprint 7.1.
+- `progression-suggester.ts` implementa double progression light: first_time / progress (+2.5 kg compounds / +1.25 kg accesorios / +1 rep bodyweight) / maintain / deload (-10% si > 14 días). Respeta `isDeloadWeek`.
+- `LogSetDialog` con form (sets+reps+kg step 0.25 + RPE 10 botones + notas). RegistrarPage muestra "Última vez 3×8 @ 22.5 kg" + sugerencia + botón. 11 tests nuevos.
+- Push `53a4fbb`.
+
+### 2026-06-09 — Sprint 2 (sustitución ingrediente + pool ejercicios +12 + videos)
+- 2.1: `componentOverrides` por día en `meal_plans.daily_schedule`. `findIngredientAlternatives` + `rescaleGrams` + `SwapIngredientDialog`. Update SQL directo (sin Edge Function), latencia < 300 ms. Resuelve la queja transversal "no quiero pollo hoy".
+- 2.2: pool ejercicios 21 → 33 (+ sentadilla búlgara, hip thrust, kettlebell swing, face-pull, band pull-apart, dead bug, bird dog, hollow hold, curl, extensión tríceps, calf raise). `videoUrl` en TODOS los 33 (YouTube curados). `findVideoUrlForExercise` con match fuzzy normalizado.
+- Push `066c03e` + `ea91455`.
+
+### 2026-06-09 — Sprint 1 (lista de compras + modo familia + tooltips)
+- 1.1: `shopping-units.ts` (60+ unidades comerciales LATAM), `shopping-list.ts` agrega gramos × días, agrupa por sección de super. `ShoppingListDialog` con familyMultiplier + tap-to-check + Copy/Share. 13 tests.
+- 1.2: migración `family_size` en profiles. ProfilePage muestra card "¿Para cuántas personas cocinas?" (1-4). `InfoTooltip` reusable con glosario de 10 entradas (kcal, macros, RPE, etc.) aplicado en Perfil/Plan/Registrar.
+- Push `8cb3aa7` + `a398dff`.
+
+### 2026-06-09 — Sprint 0 (mejoras post review consolidado)
+- 0.1: `FORBIDDEN_PROCESSED_FOODS` reemplaza la lista que bloqueaba palabras genéricas (queso/mantequilla/jamón) rompiendo cocina LATAM. Pool 45 → 62 ingredientes (+cebolla, pimentón, zanahoria, choclo, ají, vainita, yuca, aceite girasol, queso fresco, ricotta, mantequilla sin sal, jamón cocido low-sodium). Re-tier: tofu/cottage/whey/granola/salmón → `high`; aguacate → `cheap`. Steps 20-250 chars.
+- 0.2: migración `favorite_cuisines` + `favorite_ingredient_ids` en profiles. Step 5 onboarding ampliado con chips. Recetario canónico `seed-canonical-dishes.ts` con 28 platos LATAM firmados por Diego. `selectMultipleComponents` con boost de favoritos.
+- 0.3: fix banner Home spam, HomePage limpio con 3 atajos, TopBar saludo neutro, BottomNav sin Progreso (placeholder).
+- Push `11604ce` + `cad096c` + `aa8b8dc`.
 
 ### 2026-06-08 (noche) — Fase 6 completada (routine-generator + Edge Function workout-session)
 
@@ -398,8 +436,20 @@ Detalle completo (flujos paso a paso, prompts exactos a Groq, reglas del validad
 - **2 warnings `react-refresh/only-export-components`** en `button.tsx` (variantes CVA) y `form.tsx` (hook `useFormField`). Son inocuos: solo afectan HMR de Vite, no la UX final. Patrón estándar de shadcn.
 - **Sesión bash con cambios de directorio:** durante el desarrollo de Fase 2 se ejecutó accidentalmente `pnpm add` desde el root (creó stray `package.json`). Se limpió, pero recordatorio: SIEMPRE verificar `pwd` antes de `pnpm add` desde subagentes/sesiones largas.
 
+### Deuda observada en auditoría 2026-06-10
+
+- **Tablas legacy del schema inicial sin uso activo:** `meal_plan_items`, `workout_plan_items`, `workout_plans`, `daily_logs`. Los planes ahora viven en jsonb dentro de `meal_plans`. Pendiente decidir si limpiar.
+- **Stubs vacíos:** `features/workout-engine/`, `features/rescue-engine/`, `features/review-engine/` solo tienen `index.ts` vacío. Esperando Fases 8/10/11.
+- **Mirror Deno desactualizado:** los espejos `_shared/meal-engine.ts`, `_shared/routine-engine.ts`, `_shared/seed-*` tienen que sincronizarse a mano cuando cambia el frontend. Sin CI que valide.
+- **Bug recurrente de `CREATE TABLE IF NOT EXISTS`:** pasó 3 veces (meal_plans, workout_logs, meal_logs). Documentado en `.claude/skills/pulsefit/SKILL.md` trampa #1.
+
 ### Resueltos
-_(Aún ninguno.)_
+- ✅ Hotfix FunctionsHttpError (`error.context` es la Response directamente).
+- ✅ Hotfix mínimos calóricos `MEAL_MIN_KCAL` aplicado iterativamente en `weekly-distributor`.
+- ✅ Bug "almuerzo 1200 kcal" con MIN_GRAMS_BY_CATEGORY adaptativo.
+- ✅ Validator FORBIDDEN_PROCESSED_FOODS reemplaza lista genérica que rompía cocina LATAM.
+- ✅ Banner Home spam (`needsMealsConfig` ya no aparece para quien eligió 3).
+- ✅ Saludo "Bienvenida" femenino → "Hola 👋" neutro.
 
 ---
 
