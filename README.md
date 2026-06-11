@@ -176,17 +176,19 @@ Ver [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
 | **1** | Setup base | ✅ |
 | **2** | Diseño y componentes base | ✅ |
 | **3** | Auth + Estructura + PWA operativa | ✅ |
-| 4 | Onboarding completo + cálculos nutricionales | Próxima |
-| 5 | Motor de plan de comidas (Open Food Facts) | Pendiente |
-| 6 | Motor de plan de entrenamiento (wger) | Pendiente |
-| 7 | Home dinámico + registro rápido (3 taps) | Pendiente |
-| 8 | Sistema de rescates adaptativos | Pendiente |
-| 9 | Progreso, gráficas, logros | Pendiente |
-| 10 | Revisión semanal + IA Groq | Pendiente |
-| 11 | Detección de patrones | Pendiente |
-| 12 | Beta cerrada (30 usuarios) | Pendiente |
+| **4** | Onboarding completo + cálculos nutricionales | ✅ |
+| **5** | Motor `meal-generator` híbrido + Edge Function | ✅ |
+| **6** | Motor `routine-generator` + Plan Semanal Dinámico | ✅ |
+| **7** | Home dinámico + registro rápido (3 taps) | ✅ |
+| **8** | Sistema de rescates adaptativos | ✅ |
+| **9** | Progreso, gráficas, logros | ✅ |
+| **10** | Revisión semanal + IA Groq | ✅ |
+| **11** | Detección de patrones | ✅ |
+| 12 | Beta cerrada (30 usuarios) | Listo para arrancar |
 
-Ver el plan detallado en [`PHASE_3_REPORT.md`](PHASE_3_REPORT.md).
+🎉 **Las 11 fases automatizables del roadmap están COMPLETAS.**
+
+Ver [`FINAL_REPORT.md`](FINAL_REPORT.md) para el resumen ejecutivo, [`ARCHITECTURE.md`](ARCHITECTURE.md) para el detalle técnico, y [`BETA_GUIDE.md`](BETA_GUIDE.md) para arrancar la beta.
 
 ---
 

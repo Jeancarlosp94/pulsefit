@@ -14,6 +14,7 @@ import {
    ProgresoPage,
    RescatePage,
    WeeklyReviewPage,
+   InsightsPage,
    NotFoundPage
 } from '@/pages'
 import { initAuthSubscription } from '@/store/auth'
@@ -136,6 +137,14 @@ const App = () => {
                element={
                   <AuthRoute>
                      <WeeklyReviewPage />
+                  </AuthRoute>
+               }
+            />
+            <Route
+               path='/insights'
+               element={
+                  <AuthRoute>
+                     <InsightsPage />
                   </AuthRoute>
                }
             />

@@ -14,7 +14,7 @@
 
 ## 🎯 Estado actual
 
-**Fase actual:** **Fases 7, 8, 9, 10 COMPLETAS**. Solo queda Fase 11 (Patrones implícitos + Beta cerrada) del roadmap original.
+**Fase actual:** **TODAS las 11 fases del roadmap original COMPLETAS**. Listo para arrancar Fase 12 (Beta cerrada con 30 testers).
 
 📋 **Para el snapshot completo** ver [PROJECT_STATE.md](PROJECT_STATE.md). El changelog técnico vive en [CHANGELOG.md (raíz)](../CHANGELOG.md).
 
@@ -31,10 +31,12 @@
 - [x] Fase 8 — Sistema de rescates adaptativos ✅ (motor + RescueDialog + tabla rescue_events)
 - [x] Fase 9 — Progreso real con gráficas + logros ✅ (4 tabs + Recharts + 12 achievements)
 - [x] Fase 10 — Revisión semanal + IA Groq ✅ (motor + Edge Function + WeeklyReviewPage)
-- [ ] Fase 11 — Patrones implícitos + Beta cerrada 👈 SIGUIENTE
+- [x] Fase 11 — Patrones implícitos + Beta-ready ✅ (motor pattern-engine + InsightsPage + privacy + docs)
+
+🎉 **Roadmap completo. Próximo paso: Fase 12 (Beta cerrada con 30 testers). Ver `BETA_GUIDE.md`.**
 
 **Última actualización:** 2026-06-10
-**Última tarea trabajada:** Fase 10 (Revisión semanal con IA Groq) cerrada. 10/11 fases del roadmap completas. Solo queda Fase 11. Push próximo.
+**Última tarea trabajada:** Fase 11 cerrada — motor pattern-engine + InsightsPage + privacy policy + ToS + BETA_GUIDE + ARCHITECTURE + FINAL_REPORT. Las 11 fases del roadmap original completas. Push próximo.
 **Verificación final:** ✅ 402/402 tests, ✅ lint 0 errores, ✅ build OK.
 **Producción:** repo en `Jeancarlosp94/pulsefit` (GitHub), Supabase prod `jhktlubijlyzswldmncu`, app en Vercel (auto-deploy en cada push a main). Edge Functions `generate-meal-plan` y `generate-meal-options` deployadas. `generate-workout-session` puede estar desactualizada (espejo Deno con cambios pendientes desde Sprint 2.2).
 
@@ -131,6 +133,15 @@ Detalle completo (flujos paso a paso, prompts exactos a Groq, reglas del validad
 ---
 
 ## 📜 Bitácora de cambios
+
+### 2026-06-10 — Fase 11 (Patrones implícitos + Beta-ready)
+- Motor `features/pattern-engine/` 100% determinístico: types + 9 detectores (frequently_substituted, often_skipped_meal_type, struggles_with_meals, avoids_cooking, low_adherence_day, high_workout_day, mood_better_with_workouts, persistent_low_mood, good_hydration_streak).
+- `recommendation-builder.ts` convierte patrones a mensajes compasivos. `insight-prioritizer.ts` ordena por severity y limita a 6.
+- API `fntGetInsights` con 5 queries paralelas (60 días) + motor completo. Hook `useInsights` (5min stale).
+- `InsightsPage` en `/insights` accesible desde Perfil con banner de transparencia + cards priorizadas + sección de datos crudos.
+- Card "Lo que sabemos sobre ti" en ProfilePage.
+- Privacy policy + ToS publicadas en `public/`. Sección "Privacidad y datos" en Perfil con links.
+- Docs finales: `ARCHITECTURE.md` (diagrama capas + flujos + DB schema), `BETA_GUIDE.md` (protocolo Fase 12), `FINAL_REPORT.md` (resumen ejecutivo), `README.md` con roadmap actualizado.
 
 ### 2026-06-10 — Fase 10 (Revisión Semanal con IA)
 - Motor `features/review-engine/`: analyzer + adjustment-rules + summary-validator + fallback-templates. 100% determinístico salvo el texto narrativo, que viene de IA.

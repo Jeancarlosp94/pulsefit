@@ -1,6 +1,17 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { LogOut, Sun, Moon, Monitor, UtensilsCrossed, Users, RotateCcw } from 'lucide-react'
+import {
+   LogOut,
+   Sun,
+   Moon,
+   Monitor,
+   UtensilsCrossed,
+   Users,
+   RotateCcw,
+   Lightbulb,
+   ChevronRight,
+   FileText
+} from 'lucide-react'
 import { toast } from 'sonner'
 import { MealsPerDayDialog } from '@/components'
 import { InfoTooltip } from '@/components/InfoTooltip'
@@ -210,6 +221,62 @@ const ProfilePage = () => {
             ) : null}
 
             <FavoritesEditor />
+
+            {/* Lo que sabemos sobre ti — Fase 11 */}
+            <Card
+               className='cursor-pointer transition-colors hover:bg-muted/40'
+               onClick={() => navigate('/insights')}
+            >
+               <CardContent className='flex items-center justify-between gap-3 pt-6'>
+                  <div className='flex items-start gap-3'>
+                     <Lightbulb className='mt-0.5 h-5 w-5 shrink-0 text-primary' />
+                     <div className='space-y-0.5'>
+                        <p className='text-sm font-medium'>Lo que sabemos sobre ti</p>
+                        <p className='text-xs text-muted-foreground'>
+                           Patrones detectados a partir de tu actividad. Transparencia total.
+                        </p>
+                     </div>
+                  </div>
+                  <ChevronRight className='h-4 w-4 text-muted-foreground' />
+               </CardContent>
+            </Card>
+
+            {/* Privacidad y datos */}
+            <Card>
+               <CardHeader>
+                  <CardTitle className='text-base'>Privacidad y datos</CardTitle>
+               </CardHeader>
+               <CardContent className='space-y-2 text-sm'>
+                  <a
+                     href='/privacy-policy.md'
+                     target='_blank'
+                     rel='noopener noreferrer'
+                     className='flex items-center justify-between rounded-md border border-border bg-background p-3 transition-colors hover:bg-muted'
+                  >
+                     <span className='flex items-center gap-2'>
+                        <FileText className='h-4 w-4 text-muted-foreground' />
+                        Política de privacidad
+                     </span>
+                     <ChevronRight className='h-4 w-4 text-muted-foreground' />
+                  </a>
+                  <a
+                     href='/terms-of-service.md'
+                     target='_blank'
+                     rel='noopener noreferrer'
+                     className='flex items-center justify-between rounded-md border border-border bg-background p-3 transition-colors hover:bg-muted'
+                  >
+                     <span className='flex items-center gap-2'>
+                        <FileText className='h-4 w-4 text-muted-foreground' />
+                        Términos de servicio
+                     </span>
+                     <ChevronRight className='h-4 w-4 text-muted-foreground' />
+                  </a>
+                  <p className='text-[10px] text-muted-foreground'>
+                     Tus datos son tuyos. La detección de patrones es local y nunca compartimos
+                     información personal con terceros 🌿
+                  </p>
+               </CardContent>
+            </Card>
 
             <Card>
                <CardHeader>

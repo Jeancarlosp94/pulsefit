@@ -19,6 +19,49 @@ La versión sigue el roadmap de fases (no semver tradicional).
 
 ---
 
+## [Fase 11 — Patrones implícitos + Beta-ready] — 2026-06-10
+
+### ✨ Agregado
+- **Motor `features/pattern-engine/`** 100% determinístico con **9 detectores** que aprenden del usuario:
+  - `frequently_substituted` — recetas sustituidas 3+ veces
+  - `often_skipped_meal_type` — meal_type saltado >50% del tiempo con ≥4 logs
+  - `struggles_with_meals` — skips > 40% del total (≥8 logs)
+  - `avoids_cooking` — "no_cooking" como trigger de rescate 3+ veces/mes
+  - `low_adherence_day` — día de la semana con peor adherencia (off >50%)
+  - `high_workout_day` — día con mayor cantidad de entrenamientos
+  - `mood_better_with_workouts` — ánimo ≥0.5 pts mejor los días que entrena
+  - `persistent_low_mood` — mood promedio <2.5 en últimos 3+ registros
+  - `good_hydration_streak` — promedio ≥6 vasos/día últimos 7 días
+- **`recommendation-builder.ts`** convierte cada patrón en mensaje compasivo con tono firmado por Lucía + Valentina + Carlos. Ejemplos:
+  - "Notamos que cambiaste {receta} 3 veces. ¿Quieres que la reemplacemos? 🌱"
+  - "El miércoles te cuesta más. ¿Movemos tu plan ese día? 🤝"
+  - "Tu ánimo sube +0.6 puntos los días que entrenas. Recuérdalo cuando dudes 🌿"
+- **`insight-prioritizer.ts`** ordena por severity (high → medium → low) y limita a 6 insights para no abrumar.
+- **API + hook**: `fntGetInsights` orquesta 5 queries paralelas con 60 días de datos + detectAllPatterns + buildRecommendations + prioritizeInsights. `useInsights` (5min staleTime).
+- **`InsightsPage` en `/insights`** accesible desde Perfil:
+  - Banner de transparencia explicando el periodo analizado.
+  - Cards priorizadas con icon + título + badge severity (Importante/Sugerido/Preferencia) + mensaje compasivo.
+  - Sección "Datos crudos detectados" para transparencia total — el usuario ve los `type` y `data` de cada patrón.
+- **Card "Lo que sabemos sobre ti"** en ProfilePage con descripción "Transparencia total".
+
+### 📜 Privacidad y legales
+- **`client-pulsefit/public/privacy-policy.md`** — política completa: qué datos, cómo se usan, qué se envía a Groq/Gemini, derechos del usuario, retención.
+- **`client-pulsefit/public/terms-of-service.md`** — términos completos: naturaleza del servicio, disclaimers médicos, uso aceptable, limitación de responsabilidad.
+- Sección **"Privacidad y datos"** en ProfilePage con links a ambos docs.
+
+### 📚 Documentación final
+- **`ARCHITECTURE.md`** — diagrama de capas + flujos de datos clave + esquema completo de DB + seguridad + testing.
+- **`BETA_GUIDE.md`** — guía para correr Fase 12 con 30 testers: pre-requisitos, selección, onboarding, métricas a trackear, iteración semanal, cierre.
+- **`FINAL_REPORT.md`** — resumen ejecutivo del proyecto completo, métricas finales, stack, próximos pasos.
+- **`README.md`** — roadmap actualizado: las 11 fases COMPLETAS, próxima = beta cerrada.
+
+### 🎯 Cierra el proyecto
+Con esta fase, **las 11 fases automatizables del roadmap original están COMPLETAS**. El proyecto está listo para arrancar la **Fase 12 (Beta cerrada con 30 usuarios)** siguiendo el protocolo de `BETA_GUIDE.md`.
+
+**Commit:** próximo push
+
+---
+
 ## [Fase 10 — Revisión Semanal con IA] — 2026-06-10
 
 ### ✨ Agregado
