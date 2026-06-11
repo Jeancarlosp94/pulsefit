@@ -14,7 +14,7 @@
 
 ## 🎯 Estado actual
 
-**Fase actual:** **Fases 7, 8, 9 COMPLETAS**. Solo quedan Fase 10 (Revisión semanal IA) y Fase 11 (Beta cerrada) del roadmap original.
+**Fase actual:** **Fases 7, 8, 9, 10 COMPLETAS**. Solo queda Fase 11 (Patrones implícitos + Beta cerrada) del roadmap original.
 
 📋 **Para el snapshot completo** ver [PROJECT_STATE.md](PROJECT_STATE.md). El changelog técnico vive en [CHANGELOG.md (raíz)](../CHANGELOG.md).
 
@@ -30,11 +30,11 @@
 - [x] Fase 7 — Home dinámico + registro rápido ✅ (Sprints 7.1/7.2/7.3/7.4)
 - [x] Fase 8 — Sistema de rescates adaptativos ✅ (motor + RescueDialog + tabla rescue_events)
 - [x] Fase 9 — Progreso real con gráficas + logros ✅ (4 tabs + Recharts + 12 achievements)
-- [ ] Fase 10 — Revisión semanal + IA Groq 👈 SIGUIENTE
-- [ ] Fase 11 — Patrones implícitos + Beta cerrada
+- [x] Fase 10 — Revisión semanal + IA Groq ✅ (motor + Edge Function + WeeklyReviewPage)
+- [ ] Fase 11 — Patrones implícitos + Beta cerrada 👈 SIGUIENTE
 
 **Última actualización:** 2026-06-10
-**Última tarea trabajada:** Fase 8 (Rescates) terminada en cadena automática tras Fase 9 (Progreso real). 11 fases del roadmap completas. Push próximo.
+**Última tarea trabajada:** Fase 10 (Revisión semanal con IA Groq) cerrada. 10/11 fases del roadmap completas. Solo queda Fase 11. Push próximo.
 **Verificación final:** ✅ 402/402 tests, ✅ lint 0 errores, ✅ build OK.
 **Producción:** repo en `Jeancarlosp94/pulsefit` (GitHub), Supabase prod `jhktlubijlyzswldmncu`, app en Vercel (auto-deploy en cada push a main). Edge Functions `generate-meal-plan` y `generate-meal-options` deployadas. `generate-workout-session` puede estar desactualizada (espejo Deno con cambios pendientes desde Sprint 2.2).
 
@@ -49,6 +49,8 @@ En **Supabase SQL Editor**:
 - `supabase/migrations/20260617000000_create_mood_logs.sql` — Sprint 7.4 — tabla mood_logs.
 - `supabase/migrations/20260618000000_seed_achievements.sql` — Fase 9 — inserta 12 logros LATAM.
 - `supabase/migrations/20260619000000_recreate_rescue_events_clean.sql` — Fase 8 — recrea rescue_events con schema simplificado.
+- `supabase/migrations/20260620000000_recreate_reviews_clean.sql` — Fase 10 — recrea reviews con schema simplificado.
+- **Deploy Edge Function `weekly-review`** — Fase 10: `npx supabase functions deploy weekly-review --project-ref jhktlubijlyzswldmncu`.
 
 Las 3 son DROP+CREATE limpio + un INSERT idempotente (la del seed). Cero impacto en datos existentes.
 
@@ -129,6 +131,17 @@ Detalle completo (flujos paso a paso, prompts exactos a Groq, reglas del validad
 ---
 
 ## 📜 Bitácora de cambios
+
+### 2026-06-10 — Fase 10 (Revisión Semanal con IA)
+- Motor `features/review-engine/`: analyzer + adjustment-rules + summary-validator + fallback-templates. 100% determinístico salvo el texto narrativo, que viene de IA.
+- `analyzeWeek` calcula 11 métricas: adherencia comidas, # entrenamientos, RPE promedio, cambio peso, mood (energía + ánimo), rescates, agua promedio, racha.
+- `proposeAdjustments` aplica reglas de Lucía + Carlos: 8 tipos de ajuste con priority high/medium/low.
+- `validateReviewSummary` rechaza output IA con palabras prohibidas o longitudes fuera de rango.
+- Edge Function `weekly-review` con cascada Groq → Gemini → null. System prompt prohíbe inventar números y exige tono compasivo. JSON estricto.
+- Migración `20260620000000_recreate_reviews_clean.sql` con DROP+CREATE. Schema: jsonb (metrics + adjustments + summary) + accepted_adjustment_ids text[] + user_decision.
+- `fntComposeWeeklyReview` orquesta perfil + 7 queries paralelas + analyzer + rules + Edge Function + fallback. `fntApplyReviewAdjustments` ajusta `target_kcal` (solo si kcal_increase/decrease aceptado).
+- `WeeklyReviewPage` en `/revision`: card greeting + summary + chips highlights + grid 2×4 métricas + lista ajustes con toggles y badges priority + botón "Aplicar y empezar nueva semana".
+- Card "Revisar mi semana" en HomePage (border primary, antes de atajo Perfil) navega a /revision.
 
 ### 2026-06-10 — Fase 8 (Sistema de Rescates Adaptativos)
 - Motor `features/rescue-engine/` 100% determinístico con 3 sub-motores (workout/meal/emotional). 13 triggers × 3 alternativas cada uno.

@@ -7,7 +7,8 @@ import {
    Dumbbell,
    ChevronRight,
    Scale,
-   LifeBuoy
+   LifeBuoy,
+   Sparkles
 } from 'lucide-react'
 import { AppShell } from '@/layout'
 import { Card, CardContent } from '@/components/ui/card'
@@ -209,6 +210,27 @@ const HomePage = () => {
                            <p className='text-sm font-medium'>Entrenar hoy</p>
                            <p className='text-xs text-muted-foreground'>
                               Tu rutina ajustada al tiempo y equipo que tengas.
+                           </p>
+                        </div>
+                     </div>
+                     <ChevronRight className='h-4 w-4 text-muted-foreground' />
+                  </CardContent>
+               </Card>
+            </motion.div>
+
+            {/* Revisión semanal */}
+            <motion.div {...fadeIn(next())} {...tapScale}>
+               <Card
+                  className='cursor-pointer border-primary/30 bg-primary/5 transition-colors hover:bg-primary/10'
+                  onClick={() => navigate('/revision')}
+               >
+                  <CardContent className='flex items-center justify-between gap-3 pt-6'>
+                     <div className='flex items-start gap-3'>
+                        <Sparkles className='mt-0.5 h-5 w-5 shrink-0 text-primary' />
+                        <div className='space-y-0.5'>
+                           <p className='text-sm font-medium'>Revisar mi semana</p>
+                           <p className='text-xs text-muted-foreground'>
+                              Tu resumen con IA + ajustes propuestos al plan.
                            </p>
                         </div>
                      </div>

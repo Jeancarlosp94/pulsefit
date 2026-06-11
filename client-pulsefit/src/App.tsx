@@ -13,6 +13,7 @@ import {
    RegistrarPage,
    ProgresoPage,
    RescatePage,
+   WeeklyReviewPage,
    NotFoundPage
 } from '@/pages'
 import { initAuthSubscription } from '@/store/auth'
@@ -127,6 +128,14 @@ const App = () => {
                element={
                   <AuthRoute>
                      <RescatePage />
+                  </AuthRoute>
+               }
+            />
+            <Route
+               path='/revision'
+               element={
+                  <AuthRoute>
+                     <WeeklyReviewPage />
                   </AuthRoute>
                }
             />

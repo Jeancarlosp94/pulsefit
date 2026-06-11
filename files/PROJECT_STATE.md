@@ -1,6 +1,6 @@
 # 📍 Estado actual del proyecto PulseFit
 
-> **Última actualización:** 2026-06-10 — Fases 7, 8, 9 COMPLETAS
+> **Última actualización:** 2026-06-10 — Fases 7, 8, 9, 10 COMPLETAS
 > **Última verificación:** 402/402 tests verdes · 0 lint errors · build OK
 
 ---
@@ -16,7 +16,7 @@
 | **7** | **✅ COMPLETA** | Home dinámico + registro rápido (Sprints 7.1-7.4) |
 | **8** | **✅ COMPLETA** | Sistema de Rescates Adaptativos |
 | **9** | **✅ COMPLETA** | Progreso real con gráficas + 12 logros |
-| 10 | ⏳ Pendiente | Revisión semanal con IA Groq |
+| **10** | **✅ COMPLETA** | Revisión semanal con IA Groq (analyzer + rules + Edge Function + WeeklyReviewPage) |
 | 11 | ⏳ Pendiente | Patrones implícitos + Beta cerrada |
 
 ---
@@ -30,6 +30,12 @@
 | `20260617000000_create_mood_logs.sql` | Sprint 7.4 — mood (energía + ánimo) |
 | `20260618000000_seed_achievements.sql` | Fase 9 — inserta 12 logros |
 | `20260619000000_recreate_rescue_events_clean.sql` | Fase 8 — recrea tabla rescue_events |
+| `20260620000000_recreate_reviews_clean.sql` | Fase 10 — recrea tabla reviews |
+
+Y desplegar la nueva Edge Function `weekly-review`:
+```powershell
+npx supabase functions deploy weekly-review --project-ref jhktlubijlyzswldmncu
+```
 
 Todas son DROP+CREATE limpio o INSERT idempotente. Cero impacto en datos existentes.
 
@@ -40,6 +46,7 @@ Todas son DROP+CREATE limpio o INSERT idempotente. Cero impacto en datos existen
 | `generate-meal-options` | ✅ Deployada |
 | `generate-meal-plan` | ✅ Deployada |
 | `generate-workout-session` | ⚠️ Posiblemente desactualizada |
+| `weekly-review` | ⏳ **Por deployar** (Fase 10) |
 
 ---
 
@@ -52,6 +59,7 @@ Todas son DROP+CREATE limpio o INSERT idempotente. Cero impacto en datos existen
 | `features/home-engine/` | today-state (Sprint 7.1) |
 | `features/achievement-engine/` | checkAchievements + queries de catálogo y user (Fase 9) |
 | `features/rescue-engine/` | workout-rescues + meal-rescues + emotional-rescues + router (Fase 8) |
+| `features/review-engine/` | analyzer + adjustment-rules + summary-validator + fallback-templates (Fase 10) |
 | `components/home/` | WelcomeCard, MealsRowCard, MacrosProgressCard, WaterTrackerCard, MoodCheckCard |
 | `components/workout/` | WorkoutSessionView, RestTimer (Sprint 7.3) |
 | `components/charts/` | WeightChart, WellbeingChart, StrengthChart, AdherenceCard (Fase 9) |
@@ -63,8 +71,8 @@ Todas son DROP+CREATE limpio o INSERT idempotente. Cero impacto en datos existen
 
 | Tipo | Cuántos |
 |---|---|
-| Migraciones SQL | **17** (1 schema inicial + 16 incrementales) |
-| Edge Functions | **3** |
+| Migraciones SQL | **18** (1 schema inicial + 17 incrementales) |
+| Edge Functions | **4** (3 deployadas + 1 nueva `weekly-review` pendiente) |
 | Shared modules | **6** |
 
 ### Tablas en producción (todas con RLS por user_id)
@@ -73,8 +81,9 @@ Todas son DROP+CREATE limpio o INSERT idempotente. Cero impacto en datos existen
 - `profiles`, `meal_plans`, `meal_logs`, `workout_logs`
 - `water_logs`, `weight_logs`, `mood_logs` (Sprint 7.2 + 7.4)
 - `rescue_events` (Fase 8, recreado)
+- `reviews` (Fase 10, recreado)
 - `user_achievements`, `notifications`
-- `pattern_insights`, `daily_logs`, `reviews` (legacy esperando Fase 10/11)
+- `pattern_insights`, `daily_logs` (legacy esperando Fase 11)
 
 **Públicas (RLS SELECT true):**
 - `foods_cache`, `exercises_catalog`, `restaurant_guides`, `achievements` (con 12 logros sembrados)
@@ -92,10 +101,9 @@ Todas son DROP+CREATE limpio o INSERT idempotente. Cero impacto en datos existen
 
 ## 🔮 Próximos pasos sugeridos
 
-Quedan **Fase 10 (Revisión semanal IA)** y **Fase 11 (Patrones implícitos + Beta cerrada)**.
+Solo queda **Fase 11 (Patrones implícitos + Beta cerrada)** del roadmap original.
 
-- **Fase 10** — la app le muestra al usuario un resumen de su semana (qué cumplió, qué no, en qué debería ajustar el plan) generado con IA. Aprovecha TODOS los datos crudos de Fases 7-9.
-- **Fase 11** — detectar patrones implícitos (ej: "comes peor los lunes", "te saltas el entrenamiento los miércoles") + preparar para beta cerrada.
+- **Fase 11** — detectar patrones implícitos (ej: "comes peor los lunes", "te saltas el entrenamiento los miércoles") usando los datos crudos ya capturados + preparar checklist de beta cerrada.
 
 ---
 

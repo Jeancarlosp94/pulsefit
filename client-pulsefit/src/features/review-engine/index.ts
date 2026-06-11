@@ -1,2 +1,5 @@
-/* Motor de revisión semanal. Lógica pura: análisis, detector de patrones. */
-export {}
+export * from './types'
+export * from './weekly-analyzer'
+export * from './adjustment-rules'
+export * from './summary-validator'
+export * from './fallback-templates'

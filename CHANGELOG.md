@@ -19,6 +19,42 @@ La versión sigue el roadmap de fases (no semver tradicional).
 
 ---
 
+## [Fase 10 — Revisión Semanal con IA] — 2026-06-10
+
+### ✨ Agregado
+- **Motor `features/review-engine/`** 100% determinístico:
+  - `types.ts` — ItfWeeklyMetrics, ItfAdjustment (8 tipos), ItfReviewSummary, ItfWeeklyReview.
+  - `weekly-analyzer.ts` — `analyzeWeek(input)` calcula 11 métricas reales de la semana: adherencia comidas, # entrenamientos, RPE promedio, cambio peso, mood (energía + ánimo), rescates usados, agua promedio, racha. Incluye `getWeekRange()` que devuelve lunes-domingo de la semana corriente.
+  - `adjustment-rules.ts` — `proposeAdjustments(metrics, profile)` aplica reglas firmadas por Lucía + Carlos: si bajaste >1% peso → +200 kcal; estancamiento con adherencia >70% → -100 kcal; RPE <6.5 con 3+ entrenos → subir intensidad; RPE >8.5 → semana ligera; agua <5 vasos → focus hidratación; mood promedio <2.5 con 3+ registros → sugerir profesional.
+  - `summary-validator.ts` — rechaza output IA con palabras prohibidas ("fallaste", "deberías haber", "tienes que", "trastorno", "patología"...) o fuera de longitudes razonables (greeting 5-120, summary 50-400).
+  - `fallback-templates.ts` — plantillas determinísticas si IA falla. Selecciona tono según nivel de adherencia (high/medium/low).
+- **Edge Function `weekly-review`** con cascada Groq → Gemini → null:
+  - System prompt: "NUNCA inventas números, SOLO usas los del input, NUNCA das consejos médicos, tono compasivo, JSON exacto".
+  - User prompt incluye TODAS las métricas + lista de ajustes pre-calculados para que la IA solo redacte.
+  - Parser robusto que ignora bloques markdown, valida cleanness antes de devolver.
+  - Si Groq y Gemini fallan → devuelve `{ data: null }` y el cliente arma fallback determinístico con el motor.
+- **API + hooks**:
+  - `fntComposeWeeklyReview`: orquesta perfil + 7 queries paralelas + analyzer + rules + Edge Function + fallback.
+  - `fntSaveReview` + `fntApplyReviewAdjustments`: persiste en `reviews` y aplica `target_kcal` al perfil.
+  - `useComposeWeeklyReview` (useQuery con staleTime 5min) + `useApplyReview` (useMutation que invalida cache de progress + profile).
+- **Migración `20260620000000_recreate_reviews_clean.sql`** con DROP+CREATE limpio. Schema: week_start, week_end, metrics jsonb, adjustments jsonb, summary jsonb, accepted_adjustment_ids text[], applied_at, user_decision ('accepted_all'/'partial'/'rejected'/'pending').
+- **`WeeklyReviewPage`** completa en `/revision`:
+  - Card grande de saludo (greeting de IA) + summary + chips de highlights.
+  - Grid 2×4 con 8 métricas visuales.
+  - Lista de ajustes propuestos con priority badge (Importante/Sugerido/Opcional), toggle individual, "Aceptar todo" / "Mantener plan".
+  - Por default pre-aceptamos los high-priority.
+  - Card de closing message con tono primary.
+  - Botón "Aplicar y empezar nueva semana" → guarda en `reviews` + ajusta `target_kcal` + invalida caches + navega a Home + toast.
+- **Card "Revisar mi semana"** en HomePage (border primary, antes del atajo de Perfil): navega a `/revision`.
+
+### Acciones del usuario
+- Aplicar migración `20260620000000_recreate_reviews_clean.sql` en Supabase SQL Editor.
+- Desplegar Edge Function `weekly-review`: `npx supabase functions deploy weekly-review --project-ref jhktlubijlyzswldmncu`.
+
+**Commit:** próximo push
+
+---
+
 ## [Fase 8 — Sistema de Rescates Adaptativos] — 2026-06-10
 
 ### ✨ Agregado
