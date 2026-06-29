@@ -34,7 +34,7 @@ export const fntComposeWeeklyReview = async (): Promise<ItfWeeklyReview> => {
          .from('profiles')
          .select('name, target_kcal, current_weight_kg, goal, meals_per_day')
          .eq('id', user.id)
-         .single(),
+         .maybeSingle(),
       supabase
          .from('meal_logs')
          .select('logged_at, status')

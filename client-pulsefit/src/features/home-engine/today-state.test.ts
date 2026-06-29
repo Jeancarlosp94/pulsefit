@@ -73,10 +73,13 @@ const makePlan = (overrides: Partial<ItfMealPlan> = {}): ItfMealPlan => ({
    ...overrides
 })
 
+/* Default logged_at MATCHEA con el `now` por default de los tests
+ * (2026-06-10T22:00:00Z). NO uses new Date() — los tests deben ser
+ * reproducibles independiente de la fecha de ejecución. */
 const makeLog = (overrides: Partial<ItfMealLog> = {}): ItfMealLog => ({
    id: 'log-1',
    user_id: 'u',
-   logged_at: new Date().toISOString(),
+   logged_at: '2026-06-10T22:00:00Z',
    plan_id: 'plan-1',
    day_index: 0,
    meal_type: 'breakfast',

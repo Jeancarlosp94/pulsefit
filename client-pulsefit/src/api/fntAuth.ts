@@ -72,15 +72,38 @@ export const fntUpdateProfile = async (
    userId: string,
    patch: Partial<ItfProfile>
 ): Promise<ItfProfile> => {
-   /* `update` con types placeholder se queja por la unión interna de
-    * supabase-js. El cast a TablesUpdate<'profiles'> (alias del propio
-    * placeholder) se resuelve en cuanto regeneramos con `pnpm types:db`. */
-   const { data, error } = await supabase
+   /* Defensive: si el trigger `handle_new_user` falló o se ejecutó parcialmente
+    * (Google OAuth sin raw_user_meta_data, race conditions con RLS, etc.),
+    * la fila profiles puede no existir y un UPDATE puro retorna 0 filas →
+    * `.single()` explota con "Cannot coerce the result to a single JSON object".
+    *
+    * Solución: 1) intentar UPDATE, 2) si retorna null, hacer UPSERT con id+email
+    *  como base. Usamos `.maybeSingle()` para no fallar si no encuentra.
+    */
+   const updateRes = await supabase
       .from('profiles')
       .update(patch as never)
       .eq('id', userId)
       .select('*')
-      .single()
-   if (error) throw error
-   return data as ItfProfile
+      .maybeSingle()
+
+   if (updateRes.error) throw updateRes.error
+   if (updateRes.data) return updateRes.data as ItfProfile
+
+   /* No existe la fila → upsert defensivo. */
+   const { data: auth } = await supabase.auth.getUser()
+   const fallbackEmail = auth.user?.email ?? ''
+   const upsertRes = await supabase
+      .from('profiles')
+      .upsert({ id: userId, email: fallbackEmail, ...patch } as never, {
+         onConflict: 'id'
+      })
+      .select('*')
+      .maybeSingle()
+
+   if (upsertRes.error) throw upsertRes.error
+   if (!upsertRes.data) {
+      throw new Error('No pudimos guardar tu perfil. Vuelve a intentarlo 🌱')
+   }
+   return upsertRes.data as ItfProfile
 }
