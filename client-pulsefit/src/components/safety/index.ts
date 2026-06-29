@@ -1,0 +1,1 @@
+export { ProfessionalResourcesModal } from './ProfessionalResourcesModal'

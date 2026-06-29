@@ -1,6 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
+import { ProfessionalResourcesModal } from '@/components/safety'
+import { useMoodAlert } from '@/hooks/useMoodAlert'
 import {
    UtensilsCrossed,
    CalendarDays,
@@ -42,6 +44,16 @@ const HomePage = () => {
    const [logTarget, setLogTarget] = useState<ItfMealOfToday | null>(null)
    const [weightOpen, setWeightOpen] = useState(false)
    const [rescueOpen, setRescueOpen] = useState(false)
+   const [moodAlertOpen, setMoodAlertOpen] = useState(false)
+   const moodAlert = useMoodAlert()
+
+   /* Si detectamos mood persistente bajo, mostramos el modal una vez al cargar
+    * el Home. Severity=high es de auto-show; medium se ofrece como sugerencia. */
+   useEffect(() => {
+      if (moodAlert.data?.severity === 'high' || moodAlert.data?.severity === 'medium') {
+         setMoodAlertOpen(true)
+      }
+   }, [moodAlert.data?.severity])
    const { state } = useTodayState()
    const planQuery = useMealPlan()
    const plan = planQuery.data ?? null
@@ -266,6 +278,14 @@ const HomePage = () => {
          <MealsPerDayDialog open={dialogOpen} onOpenChange={setDialogOpen} />
          <WeightLogDialog open={weightOpen} onOpenChange={setWeightOpen} />
          <RescueDialog open={rescueOpen} onOpenChange={setRescueOpen} />
+
+         <ProfessionalResourcesModal
+            open={moodAlertOpen}
+            onOpenChange={setMoodAlertOpen}
+            countryCode={(profile?.country_code as string | null) ?? null}
+            reason={moodAlert.data?.reason ?? null}
+            severity={moodAlert.data?.severity ?? null}
+         />
 
          <QuickActionFAB />
 

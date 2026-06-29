@@ -50,6 +50,20 @@ export interface ProfileRow {
    favorite_ingredient_ids: string[]
    /** Cuántas personas comen del plan (1-8). Multiplica gramos y lista de compras. */
    family_size: number
+   /** Sprint 11.5A — columnas de seguridad clínica. */
+   date_of_birth: string | null
+   eating_disorder_history: boolean
+   lifestyle:
+      | 'estudiante'
+      | 'oficinista'
+      | 'mama_papa'
+      | 'freelance'
+      | 'migrante'
+      | 'atleta_amateur'
+      | null
+   alcohol_frequency: 'none' | 'social' | 'weekly' | 'daily' | null
+   tobacco_user: boolean | null
+   country_code: string | null
    created_at: string
    updated_at: string
 }

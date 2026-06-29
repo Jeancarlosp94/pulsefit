@@ -19,6 +19,49 @@ La versión sigue el roadmap de fases (no semver tradicional).
 
 ---
 
+## [Sprint 11.5A — Seguridad clínica pre-beta] — 2026-06-29
+
+> Sprint quirúrgico de los 5 BLOQUEANTES de seguridad clínica detectados en
+> la simulación de 20 testers (informe `files/BETA_SIMULATION_REPORT.md`).
+> Sin esto, la beta real con 30 testers tiene riesgo clínico real.
+
+### ✨ Agregado
+- **Motor `features/safety-guards/`** (100% determinístico, 21 tests):
+  - `age-guard.ts`: `computeAge()` + `checkMinimumAge()`. Rechaza menores de 18 con mensaje compasivo (sin patologizar).
+  - `imc-guard.ts`: `computeImc()` + `categorizeImc()` + `checkImcVsGoal()`. Categoriza en `underweight` / `normal` / `overweight` / `obese_1/2/3`. BLOQUEA si `underweight + goal=lose` u `obese_3 + goal=gain`. ADVIERTE si `normal + lose` u `obese_2-3 + maintain` (mensaje educativo respetuoso, no patologizante).
+  - `professional-resources.ts`: directorio de líneas 24/7 de salud mental por país LATAM (EC, PE, CO, MX, AR, CL, VE, UY, PY, BO + genérico LATAM). Datos públicos verificados.
+  - `mood-monitor.ts`: `checkMoodHealth()`. Si 3 días consecutivos con mood ≤ 2 → severity=high. Si 5+ registros con avg ≤ 2.5 → severity=medium. Si `eating_disorder_history=true` → umbral más estricto (2 días con avg ≤ 2.5 → high).
+
+- **Migración `20260629000000_safety_clinical_columns.sql`** (ALTER ADD COLUMN IF NOT EXISTS — tabla profiles estable):
+  - `date_of_birth date` — fuente de verdad de la edad.
+  - `eating_disorder_history boolean NOT NULL DEFAULT false` — activa modo intuitivo.
+  - `lifestyle text CHECK (estudiante/oficinista/mama_papa/freelance/migrante/atleta_amateur)`.
+  - `alcohol_frequency text CHECK (none/social/weekly/daily)`.
+  - `tobacco_user boolean DEFAULT false`.
+  - `country_code text` — para localizar recursos profesionales.
+
+- **`ProfessionalResourcesModal`** (`components/safety/`): modal con líneas de crisis 24/7 del país del usuario. Severity=high bloquea el cierre (no skippable). Severity=medium se cierra con outline. Disclaimer claro: "PulseFit no reemplaza atención clínica".
+
+- **`useMoodAlert`** hook que se monta en HomePage: consulta últimos 7 días de mood_logs y dispara el modal automáticamente si detecta patrón persistente bajo.
+
+- **Step3 del onboarding rediseñado**:
+  - Campo `date_of_birth` con `<input type="date">` + validación edad ≥ 18.
+  - Checkbox de **"He vivido con trastornos de alimentación"** que activa modo intuitivo (visible y opcional).
+  - Validación IMC vs goal antes de pasar al siguiente paso. Bloqueo con mensaje compasivo + modal de recursos si `underweight`.
+  - Mensaje advisor (no bloqueante) si IMC normal + goal=lose o si IMC alto + goal=maintain.
+
+- **Modo intuitivo en `review-engine`**: si `profile.eating_disorder_history=true`, `proposeAdjustments` salta TODAS las reglas calóricas (`kcal_increase`, `kcal_decrease`, `kcal_keep`). Cero sugerencias de déficit en revisión semanal.
+
+- **Tests**: 21 nuevos en `safety-guards.test.ts` cubriendo age, IMC, mood-monitor y resources. Total 423 tests (vs 402 antes).
+
+### Acciones del usuario
+- Aplicar `20260629000000_safety_clinical_columns.sql` en Supabase SQL Editor.
+- Regenerar tipos: `pnpm types:db` (si hay supabase local) o ya están agregados manualmente en `database.ts`.
+
+**Commit:** próximo push
+
+---
+
 ## [Fase 11 — Patrones implícitos + Beta-ready] — 2026-06-10
 
 ### ✨ Agregado

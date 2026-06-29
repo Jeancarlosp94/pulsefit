@@ -32,7 +32,9 @@ export const fntComposeWeeklyReview = async (): Promise<ItfWeeklyReview> => {
    const [profileRes, meals, workouts, weights, moods, rescues, water] = await Promise.all([
       supabase
          .from('profiles')
-         .select('name, target_kcal, current_weight_kg, goal, meals_per_day')
+         .select(
+            'name, target_kcal, current_weight_kg, goal, meals_per_day, eating_disorder_history'
+         )
          .eq('id', user.id)
          .maybeSingle(),
       supabase
@@ -80,6 +82,7 @@ export const fntComposeWeeklyReview = async (): Promise<ItfWeeklyReview> => {
          current_weight_kg: number | null
          goal: ProfileForReview['goal']
          meals_per_day: number | null
+         eating_disorder_history: boolean | null
       } | null) ?? null
 
    /* === 2. Calcular racha simple: días con cualquier log en los últimos 30 === */
@@ -109,7 +112,8 @@ export const fntComposeWeeklyReview = async (): Promise<ItfWeeklyReview> => {
    const adjustments: ItfAdjustment[] = proposeAdjustments(metrics, {
       target_kcal: profile?.target_kcal ?? null,
       weight_kg: profile?.current_weight_kg ?? null,
-      goal: profile?.goal ?? null
+      goal: profile?.goal ?? null,
+      eating_disorder_history: profile?.eating_disorder_history === true
    })
 
    /* === 5. IA — Edge Function === */

@@ -77,6 +77,8 @@ const Step7Review = () => {
       try {
          await updateProfile({
             age: data.age,
+            date_of_birth: data.dateOfBirth,
+            eating_disorder_history: data.eatingDisorderHistory,
             sex: data.sex,
             height_cm: data.heightCm,
             current_weight_kg: data.currentWeightKg,

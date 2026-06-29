@@ -154,6 +154,15 @@ Detalle completo (flujos paso a paso, prompts exactos a Groq, reglas del validad
 - `WeeklyReviewPage` en `/revision`: card greeting + summary + chips highlights + grid 2×4 métricas + lista ajustes con toggles y badges priority + botón "Aplicar y empezar nueva semana".
 - Card "Revisar mi semana" en HomePage (border primary, antes de atajo Perfil) navega a /revision.
 
+### 2026-06-29 — Sprint 11.5A (Seguridad clínica pre-beta)
+- Motor `features/safety-guards/`: age-guard (edad ≥ 18), imc-guard (categoriza IMC + bloquea contraindicaciones + advisor educativo), professional-resources (líneas 24/7 por país LATAM), mood-monitor (detecta patrón persistente bajo en tiempo real).
+- Migración `20260629000000_safety_clinical_columns.sql`: ALTER ADD profiles.date_of_birth + eating_disorder_history + lifestyle + alcohol_frequency + tobacco_user + country_code.
+- `ProfessionalResourcesModal` con severity high (no skippable) / medium (cerrable).
+- `useMoodAlert` hook en HomePage dispara modal automáticamente si mood persistente bajo.
+- Step3 onboarding pide DOB + checkbox TCA + valida IMC vs goal antes de continuar.
+- Modo intuitivo en review-engine: si `eating_disorder_history=true`, saltea TODAS las reglas calóricas en revisión semanal.
+- 21 tests nuevos. Suite: 423/423. Resuelve 5 de los 7 BLOQUEANTES del informe BETA_SIMULATION_REPORT.md (faltan B-05 fix vegan en fallback + B-06 disclaimer/filtros médicos avanzados).
+
 ### 2026-06-10 — Fase 8 (Sistema de Rescates Adaptativos)
 - Motor `features/rescue-engine/` 100% determinístico con 3 sub-motores (workout/meal/emotional). 13 triggers × 3 alternativas cada uno.
 - Migración `20260619000000_recreate_rescue_events_clean.sql` (DROP+CREATE) reemplaza tabla legacy. Schema simplificado: domain + trigger_type + jsonb alternatives.

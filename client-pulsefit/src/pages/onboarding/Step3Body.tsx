@@ -1,6 +1,8 @@
+import { useState } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { useNavigate } from 'react-router-dom'
+import { AlertTriangle, Heart } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import {
    Form,
@@ -12,13 +14,24 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { OnboardingFooter, OnboardingLayout, OptionCard } from '@/components/onboarding'
+import { ProfessionalResourcesModal } from '@/components/safety'
 import { useOnboardingStore } from '@/store/onboarding'
 import { step3Schema, type Step3Values } from '@/validations'
 import { SEX_OPTIONS, MEDICAL_CONDITIONS } from '@/config'
+import { checkImcVsGoal, checkMinimumAge } from '@/features/safety-guards'
+import { cn } from '@/utils'
 
 const Step3Body = () => {
    const navigate = useNavigate()
    const { data, update, next, back } = useOnboardingStore()
+   const [dob, setDob] = useState(data.dateOfBirth ?? '')
+   const [eatingDisorderHistory, setEatingDisorderHistory] = useState(
+      data.eatingDisorderHistory ?? false
+   )
+   const [resourcesOpen, setResourcesOpen] = useState(false)
+   const [resourcesReason, setResourcesReason] = useState<string | null>(null)
+   const [blockMsg, setBlockMsg] = useState<string | null>(null)
+   const [adviceMsg, setAdviceMsg] = useState<string | null>(null)
 
    const form = useForm<Step3Values>({
       resolver: zodResolver(step3Schema),
@@ -32,12 +45,35 @@ const Step3Body = () => {
    })
 
    const onSubmit = (values: Step3Values) => {
+      /* Validación 1: edad mínima 18. */
+      const ageCheck = checkMinimumAge(dob)
+      if (!ageCheck.ok) {
+         setBlockMsg(ageCheck.message)
+         return
+      }
+
+      /* Validación 2: IMC vs goal. */
+      const imcCheck = checkImcVsGoal(values.currentWeightKg, values.heightCm, data.goal)
+      if (!imcCheck.ok) {
+         setBlockMsg(imcCheck.blockMessage)
+         /* Sugerir recursos profesionales para casos de bajo peso. */
+         if (imcCheck.category === 'underweight') {
+            setResourcesReason(imcCheck.blockMessage)
+            setResourcesOpen(true)
+         }
+         return
+      }
+      setBlockMsg(null)
+      setAdviceMsg(imcCheck.adviceMessage)
+
       update({
-         age: values.age,
+         age: ageCheck.age ?? values.age,
+         dateOfBirth: dob,
          sex: values.sex,
          heightCm: values.heightCm,
          currentWeightKg: values.currentWeightKg,
-         medicalConditions: values.medicalConditions
+         medicalConditions: values.medicalConditions,
+         eatingDisorderHistory
       })
       next()
       navigate('/onboarding/4')
@@ -67,13 +103,29 @@ const Step3Body = () => {
             <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-5'>
                <Card>
                   <CardContent className='space-y-4 pt-6'>
+                     {/* Fecha de nacimiento — fuente de verdad de la edad. */}
+                     <FormItem>
+                        <FormLabel>Fecha de nacimiento</FormLabel>
+                        <FormControl>
+                           <Input
+                              type='date'
+                              value={dob}
+                              max={new Date().toISOString().slice(0, 10)}
+                              onChange={(e) => setDob(e.target.value)}
+                           />
+                        </FormControl>
+                        <p className='text-[10px] text-muted-foreground'>
+                           PulseFit es para personas mayores de 18 años.
+                        </p>
+                     </FormItem>
+
                      <div className='grid grid-cols-2 gap-3'>
                         <FormField
                            control={form.control}
                            name='age'
                            render={({ field }) => (
                               <FormItem>
-                                 <FormLabel>Edad</FormLabel>
+                                 <FormLabel>Edad (auto)</FormLabel>
                                  <FormControl>
                                     <Input
                                        type='number'
@@ -198,6 +250,47 @@ const Step3Body = () => {
                   )}
                />
 
+               {/* Checkbox de historial de TCA — activa modo intuitivo. */}
+               <Card className='border-primary/30 bg-primary/5'>
+                  <CardContent className='space-y-2 pt-6 text-sm'>
+                     <label className='flex cursor-pointer items-start gap-3'>
+                        <input
+                           type='checkbox'
+                           className='mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded border-border accent-primary'
+                           checked={eatingDisorderHistory}
+                           onChange={(e) => setEatingDisorderHistory(e.target.checked)}
+                        />
+                        <span className='space-y-1'>
+                           <span className='flex items-center gap-1.5 font-medium'>
+                              <Heart className='h-3.5 w-3.5 text-primary' />
+                              He vivido con trastornos de alimentación
+                           </span>
+                           <span className='block text-xs text-muted-foreground'>
+                              Si marcas esto, ocultamos métricas calóricas y nunca te sugerimos
+                              déficit. Tu acompañamiento clínico siempre va primero 🌿
+                           </span>
+                        </span>
+                     </label>
+                  </CardContent>
+               </Card>
+
+               {/* Mensajes de bloqueo o advisor. */}
+               {blockMsg ? (
+                  <Card className='border-accent/40 bg-accent/10'>
+                     <CardContent className='flex items-start gap-3 pt-6 text-sm'>
+                        <AlertTriangle className='mt-0.5 h-4 w-4 shrink-0 text-accent' />
+                        <p>{blockMsg}</p>
+                     </CardContent>
+                  </Card>
+               ) : null}
+               {adviceMsg ? (
+                  <Card className='border-secondary/30 bg-secondary/5'>
+                     <CardContent className={cn('pt-6 text-xs text-muted-foreground')}>
+                        {adviceMsg}
+                     </CardContent>
+                  </Card>
+               ) : null}
+
                <OnboardingFooter
                   onBack={() => {
                      back()
@@ -206,6 +299,13 @@ const Step3Body = () => {
                />
             </form>
          </Form>
+
+         <ProfessionalResourcesModal
+            open={resourcesOpen}
+            onOpenChange={setResourcesOpen}
+            reason={resourcesReason}
+            severity='medium'
+         />
       </OnboardingLayout>
    )
 }

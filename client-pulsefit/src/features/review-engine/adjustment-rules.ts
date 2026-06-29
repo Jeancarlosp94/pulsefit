@@ -4,6 +4,8 @@ export interface ProfileForReview {
    target_kcal: number | null
    weight_kg: number | null
    goal: 'lose' | 'gain' | 'maintain' | 'feel_better' | null
+   /** Sprint 11.5A: si true → modo intuitivo, sin sugerencias calóricas. */
+   eating_disorder_history?: boolean
 }
 
 let idCounter = 0
@@ -23,8 +25,11 @@ export const proposeAdjustments = (
    const weight = profile.weight_kg ?? 70
    const targetKcal = profile.target_kcal ?? 2000
 
+   /* === MODO INTUITIVO (TCA history): saltar todas las reglas calóricas. === */
+   const intuitiveMode = profile.eating_disorder_history === true
+
    /* === CALORÍAS === */
-   if (metrics.weight_change_kg !== null) {
+   if (!intuitiveMode && metrics.weight_change_kg !== null) {
       const pctChange = (metrics.weight_change_kg / weight) * 100
       if (pctChange < -1.0 && profile.goal === 'lose') {
          /* Bajaste más del 1% en una semana → restituir 200 kcal (regla Lucía). */

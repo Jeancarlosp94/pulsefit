@@ -22,10 +22,13 @@ export interface OnboardingData {
 
    // Step 3 — cuerpo
    age: number | null
+   dateOfBirth: string | null /* YYYY-MM-DD, fuente de verdad de la edad */
    sex: ItfSex | null
    heightCm: number | null
    currentWeightKg: number | null
    medicalConditions: string[]
+   /** Sprint 11.5A: historial de TCA → activa modo intuitivo. */
+   eatingDisorderHistory: boolean
 
    // Step 4 — actividad
    activityLevel: ItfActivityLevel | null
@@ -59,10 +62,12 @@ const initialData: OnboardingData = {
    targetDate: null,
 
    age: null,
+   dateOfBirth: null,
    sex: null,
    heightCm: null,
    currentWeightKg: null,
    medicalConditions: [],
+   eatingDisorderHistory: false,
 
    activityLevel: null,
    fitnessLevel: null,
