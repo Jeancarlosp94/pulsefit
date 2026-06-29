@@ -154,6 +154,12 @@ Detalle completo (flujos paso a paso, prompts exactos a Groq, reglas del validad
 - `WeeklyReviewPage` en `/revision`: card greeting + summary + chips highlights + grid 2×4 métricas + lista ajustes con toggles y badges priority + botón "Aplicar y empezar nueva semana".
 - Card "Revisar mi semana" en HomePage (border primary, antes de atajo Perfil) navega a /revision.
 
+### 2026-06-29 — Sprint 11.5B (anti-leaks + educación + adherencia)
+- Fix B-05: validador `validateDietaryConsistency` defensivo en `features/meal-generator/dietary-validator.ts`. Detecta palabras animales en `name` + `steps` post-selección. Soporta vegan, vegetarian, pescatarian, gluten_free, lactose_free. 11 tests nuevos.
+- `RealityCheckCard` en Step 7 del onboarding: 3 verdades educativas (0.5-1%/sem, 8-12 sem cambios visibles, pesas no = musculoso). Resuelve P1 de simulación v2 (milagros 9/20).
+- `useAdherenceAlert` + `AdherenceAlertCard`: detecta < 20% adherencia en 14 días con +14d desde signup → banner amistoso con "Sigo así por ahora" / "Ajustar mi plan". Resuelve P6 (abandono silencioso).
+- Suite: 434/434 verde.
+
 ### 2026-06-29 — Sprint 11.5A (Seguridad clínica pre-beta)
 - Motor `features/safety-guards/`: age-guard (edad ≥ 18), imc-guard (categoriza IMC + bloquea contraindicaciones + advisor educativo), professional-resources (líneas 24/7 por país LATAM), mood-monitor (detecta patrón persistente bajo en tiempo real).
 - Migración `20260629000000_safety_clinical_columns.sql`: ALTER ADD profiles.date_of_birth + eating_disorder_history + lifestyle + alcohol_frequency + tobacco_user + country_code.

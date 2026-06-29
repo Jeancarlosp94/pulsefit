@@ -19,6 +19,40 @@ La versión sigue el roadmap de fases (no semver tradicional).
 
 ---
 
+## [Sprint 11.5B — Anti-leaks + educación + adherencia] — 2026-06-29
+
+### 🐛 Fix
+- **B-05 del informe de simulación**: el filtro vegan podía hacer "leak" de
+  ingredientes animales en algunos paths (recetas canónicas con hint que
+  arrastraba huevo/leche aunque pool filtrado). Fix: nuevo
+  **validador post-selección** `validateDietaryConsistency(plate, restrictions)`
+  que detecta palabras animales en `name` y `steps` después de generar y
+  rechaza si encuentra leak. Soporta vegan, vegetarian, pescatarian,
+  gluten_free, lactose_free.
+
+### ✨ Agregado
+- **`RealityCheckCard`** en Step 7 del onboarding (encima de "Tu energía diaria"):
+  3 verdades educativas con tono compasivo:
+  1. Bajar peso saludable = 0.5-1% por semana (no 10 kg/mes).
+  2. Cambios visibles toman 8-12 semanas. La consistencia importa más que la perfección.
+  3. Las pesas no te ponen "musculoso" (mito común con mujeres).
+  Resuelve el problema P1 de la simulación v2 (9 testers querían milagros).
+
+- **`useAdherenceAlert`** hook + **`AdherenceAlertCard`** componente:
+  Detecta si la adherencia a comidas + actividad es < 20% en los últimos 14
+  días (solo si el usuario ya lleva 14+ días desde signup, para no juzgar
+  demasiado pronto). Si crítica, muestra banner amistoso "tu plan te quedó
+  grande" con 2 botones: "Sigo así por ahora" (cierra) / "Ajustar mi plan"
+  (lleva a PlanPage). Resuelve P6 de la simulación v2 (Bryan abandonó día 5,
+  Brandon 5% adherencia).
+
+- **Tests del dietary-validator**: 11 nuevos en `dietary-validator.test.ts`.
+  Total 434 tests (vs 423 antes).
+
+**Commit:** próximo push
+
+---
+
 ## [Sprint 11.5A — Seguridad clínica pre-beta] — 2026-06-29
 
 > Sprint quirúrgico de los 5 BLOQUEANTES de seguridad clínica detectados en

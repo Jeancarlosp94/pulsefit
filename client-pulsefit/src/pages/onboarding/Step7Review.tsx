@@ -5,7 +5,7 @@ import { ArrowLeft, Flame, Droplets, Sparkles, AlertTriangle, Loader2 } from 'lu
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
-import { OnboardingLayout } from '@/components/onboarding'
+import { OnboardingLayout, RealityCheckCard } from '@/components/onboarding'
 import { useOnboardingStore } from '@/store/onboarding'
 import { useAuth } from '@/hooks/useAuth'
 import { useErrorHandling } from '@/hooks/useErrorHandling'
@@ -166,6 +166,9 @@ const Step7Review = () => {
                   </CardContent>
                </Card>
             ) : null}
+
+            {/* Sprint 11.5B: pantalla didáctica pre-plan que normaliza expectativas. */}
+            <RealityCheckCard />
 
             <Card>
                <CardHeader>

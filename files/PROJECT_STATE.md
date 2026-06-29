@@ -1,6 +1,6 @@
 # 📍 Estado actual del proyecto PulseFit
 
-> **Última actualización:** 2026-06-29 — Sprint 11.5A cerrado (seguridad clínica pre-beta)
+> **Última actualización:** 2026-06-29 — Sprint 11.5 COMPLETO (A + B). Listo para mini-beta de 5 testers internos antes de la beta real de 30.
 > **Última verificación:** 402/402 tests verdes · 0 lint errors · build OK
 
 ---

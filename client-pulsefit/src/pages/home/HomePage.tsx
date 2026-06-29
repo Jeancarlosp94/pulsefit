@@ -27,8 +27,10 @@ import {
    MealsRowCard,
    MacrosProgressCard,
    WaterTrackerCard,
-   MoodCheckCard
+   MoodCheckCard,
+   AdherenceAlertCard
 } from '@/components/home'
+import { useAdherenceAlert } from '@/hooks/useAdherenceAlert'
 import { useAuth } from '@/hooks/useAuth'
 import { useTodayState } from '@/hooks/useTodayState'
 import { useMealPlan } from '@/hooks/useMealPlan'
@@ -45,7 +47,9 @@ const HomePage = () => {
    const [weightOpen, setWeightOpen] = useState(false)
    const [rescueOpen, setRescueOpen] = useState(false)
    const [moodAlertOpen, setMoodAlertOpen] = useState(false)
+   const [adherenceDismissed, setAdherenceDismissed] = useState(false)
    const moodAlert = useMoodAlert()
+   const adherenceAlert = useAdherenceAlert()
 
    /* Si detectamos mood persistente bajo, mostramos el modal una vez al cargar
     * el Home. Severity=high es de auto-show; medium se ofrece como sugerencia. */
@@ -104,6 +108,17 @@ const HomePage = () => {
             <motion.div {...fadeIn(next())}>
                <MoodCheckCard />
             </motion.div>
+
+            {/* Alerta de adherencia crítica (< 20% en 14 días). Sin juicio. */}
+            {adherenceAlert.data?.critical && !adherenceDismissed ? (
+               <motion.div {...fadeIn(next())}>
+                  <AdherenceAlertCard
+                     pct={adherenceAlert.data.pct}
+                     message={adherenceAlert.data.suggestion ?? 'Probemos algo más realista 🌿'}
+                     onDismiss={() => setAdherenceDismissed(true)}
+                  />
+               </motion.div>
+            ) : null}
 
             {/* Banner: configurar comidas (solo si nunca configuró) */}
             {needsMealsConfig ? (
