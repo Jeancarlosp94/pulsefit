@@ -87,9 +87,21 @@ export const computeTodayState = ({
    const meals: ItfMealOfToday[] = []
    const consumed: ItfMacrosConsumed = { kcal: 0, proteinG: 0, carbsG: 0, fatsG: 0 }
 
-   const mealEntries = Object.entries(todaySchedule.meals) as Array<
-      [ItfMealType, (typeof todaySchedule.meals)[ItfMealType]]
-   >
+   /* Orden cronológico fijo: el usuario espera ver las comidas en el orden
+    * natural del día (desayuno primero, cena al final). Object.entries() NO
+    * garantiza orden por las llaves del jsonb. */
+   const CHRONOLOGICAL_ORDER: ItfMealType[] = [
+      'breakfast',
+      'snack_am',
+      'lunch',
+      'snack_pm',
+      'dinner'
+   ]
+   const mealEntries: Array<[ItfMealType, (typeof todaySchedule.meals)[ItfMealType]]> =
+      CHRONOLOGICAL_ORDER.filter((mt) => todaySchedule.meals[mt]).map((mt) => [
+         mt,
+         todaySchedule.meals[mt]
+      ])
 
    for (const [mealType, assignment] of mealEntries) {
       if (!assignment) continue

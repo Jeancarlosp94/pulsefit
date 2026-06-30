@@ -668,6 +668,15 @@ const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
 const ingredientName = (s: IngredientServing) =>
    `${s.grams}g de ${s.ingredient.name}`
 
+/* Sprint 11.9 — detección de ingredientes especiales para templates apropiados. */
+const isPowderProtein = (name: string): boolean =>
+   /polvo|whey|caseina|caseína|proteína en/i.test(name)
+const isOatLike = (name: string): boolean => /avena|granola|cereal/i.test(name)
+const isEgg = (name: string): boolean => /huevo|huevos/i.test(name)
+const isYogurt = (name: string): boolean => /yogurt|yogur/i.test(name)
+const isFish = (name: string): boolean =>
+   /pescado|tilapia|atún|salmón|salmon|sardina|merluza|filete de/i.test(name)
+
 export const buildMealFallback = (
    components: MealComponents,
    mealType: MealType
@@ -678,52 +687,431 @@ export const buildMealFallback = (
    const carbName = carb.ingredient.name
    const vegName = hasVeg ? vegetable.ingredient.name : ''
 
+   /* === BREAKFAST === */
+   if (mealType === 'breakfast') {
+      if (isPowderProtein(proteinName)) {
+         return [
+            {
+               name: `Batido casero con ${carbName} y ${proteinName}`,
+               description: 'Desayuno rápido y proteico, listo en 5 minutos.',
+               prep_time_min: 5,
+               difficulty: 'easy',
+               steps: [
+                  `Coloca ${ingredientName(protein)} en una licuadora con 250ml de agua o leche.`,
+                  `Agrega ${ingredientName(carb)} para dar cuerpo y energía sostenida.`,
+                  `Suma ${ingredientName(fat)} (mantequilla de maní, almendra, etc.) para saciedad.`,
+                  `Licúa 30 segundos hasta cremoso.`,
+                  `Sirve frío en un vaso grande, con canela o vainilla al gusto.`
+               ]
+            },
+            {
+               name: `Avena overnight con ${proteinName}`,
+               description: 'Prepárala la noche anterior, lista al despertar.',
+               prep_time_min: 5,
+               difficulty: 'easy',
+               steps: [
+                  `Noche anterior: mezcla ${ingredientName(carb)} con 250ml de leche o agua en frasco.`,
+                  `Agrega ${ingredientName(protein)} disuelto.`,
+                  `Suma ${ingredientName(fat)} y un toque de canela.`,
+                  `Cierra y refrigera mínimo 6 horas.`,
+                  `Al despertar: disfruta frío o tibio. Decora con fruta fresca.`
+               ]
+            },
+            {
+               name: `Bowl proteico con ${carbName}`,
+               description: 'Versión bowl espesa, para comer con cuchara.',
+               prep_time_min: 8,
+               difficulty: 'easy',
+               steps: [
+                  `Cocina ${ingredientName(carb)} con poca agua hasta cremoso.`,
+                  `Retira del fuego y deja templar 1 minuto.`,
+                  `Mezcla ${ingredientName(protein)} bien disuelto (no cocines para no cortar la proteína).`,
+                  `Agrega ${ingredientName(fat)} y mezcla.`,
+                  `Sirve en bowl con canela, cacao o frutos rojos al gusto.`
+               ]
+            }
+         ]
+      }
+
+      if (isEgg(proteinName)) {
+         return [
+            {
+               name: `Tortilla casera de ${proteinName} con ${carbName}`,
+               description: 'Desayuno clásico LATAM, sencillo y nutritivo.',
+               prep_time_min: 15,
+               difficulty: 'easy',
+               steps: [
+                  `Bate ${ingredientName(protein)} con sal y pimienta hasta integrar.`,
+                  `Calienta ${ingredientName(fat)} en sartén antiadherente.`,
+                  `Si tienes ${carbName}, cocínalo aparte primero.`,
+                  hasVeg
+                     ? `Saltea ${ingredientName(vegetable)} brevemente.`
+                     : `Agrega cebolla picada para sabor.`,
+                  `Vierte los huevos y cocina 3-4 min por lado. Sirve con ${carbName}.`
+               ]
+            },
+            {
+               name: `${cap(proteinName)} revueltos con ${carbName} a la plancha`,
+               description: 'Estilo desayuno rápido casero.',
+               prep_time_min: 12,
+               difficulty: 'easy',
+               steps: [
+                  `Calienta una sartén con ${ingredientName(fat)}.`,
+                  `Tuesta ${ingredientName(carb)} aparte.`,
+                  `Vierte ${ingredientName(protein)} y mezcla constantemente.`,
+                  hasVeg
+                     ? `Suma ${ingredientName(vegetable)} picado y mezcla 2 min más.`
+                     : `Sazona con sal, pimienta y cebollín.`,
+                  `Sirve sobre ${carbName} caliente con un toque de palta.`
+               ]
+            },
+            {
+               name: `Bowl matutino con ${proteinName} y ${carbName}`,
+               description: 'Desayuno completo en bowl, balanceado.',
+               prep_time_min: 12,
+               difficulty: 'easy',
+               steps: [
+                  `Cocina ${ingredientName(carb)} hasta su punto.`,
+                  `Hierve o cocina ${ingredientName(protein)} a tu gusto.`,
+                  `Calienta ${ingredientName(fat)} y agrégalo crudo al bowl.`,
+                  hasVeg
+                     ? `Cuece ${ingredientName(vegetable)} al vapor 3 min.`
+                     : `Corta tomate fresco y palta.`,
+                  `Sirve todo en bowl con sal, pimienta y limón.`
+               ]
+            }
+         ]
+      }
+
+      if (isOatLike(carbName)) {
+         return [
+            {
+               name: `Tazón de ${carbName} con ${proteinName}`,
+               description: 'Desayuno calentito, cremoso y rendidor.',
+               prep_time_min: 10,
+               difficulty: 'easy',
+               steps: [
+                  `Cocina ${ingredientName(carb)} con 250ml de leche o agua.`,
+                  `Cuando espese, retira y deja templar.`,
+                  `Mezcla ${ingredientName(protein)} bien integrado.`,
+                  `Agrega ${ingredientName(fat)} por encima.`,
+                  `Termina con canela, miel o frutas. Sirve tibio.`
+               ]
+            },
+            {
+               name: `Bowl frío con ${carbName} y ${proteinName}`,
+               description: 'Versión refrescante para días calurosos.',
+               prep_time_min: 5,
+               difficulty: 'easy',
+               steps: [
+                  `Mezcla ${ingredientName(carb)} con yogurt o leche fría.`,
+                  `Agrega ${ingredientName(protein)} en trocitos o disuelto.`,
+                  `Suma ${ingredientName(fat)} como topping.`,
+                  `Decora con fruta fresca.`,
+                  `Sirve inmediatamente, frío.`
+               ]
+            },
+            {
+               name: `Pancakes caseros con ${carbName}`,
+               description: 'Desayuno especial pero rápido.',
+               prep_time_min: 15,
+               difficulty: 'medium',
+               steps: [
+                  `Bate ${ingredientName(protein)} con leche.`,
+                  `Suma ${ingredientName(carb)} molida y mezcla.`,
+                  `Calienta sartén con ${ingredientName(fat)}.`,
+                  `Cocina cucharones pequeños, da vuelta al burbujear.`,
+                  `Sirve con fruta y miel.`
+               ]
+            }
+         ]
+      }
+
+      /* Default breakfast */
+      return [
+         {
+            name: `Sándwich casero de ${proteinName}`,
+            description: 'Desayuno práctico para empezar el día.',
+            prep_time_min: 10,
+            difficulty: 'easy',
+            steps: [
+               `Tuesta ${ingredientName(carb)} a tu gusto.`,
+               `Cocina ${ingredientName(protein)} a la plancha con ${ingredientName(fat)}.`,
+               hasVeg
+                  ? `Lava y corta ${ingredientName(vegetable)} fresco.`
+                  : `Prepara palta o queso fresco.`,
+               `Arma el sándwich con todo.`,
+               `Sirve con café o jugo natural.`
+            ]
+         },
+         {
+            name: `${cap(proteinName)} al horno con ${carbName}`,
+            description: 'Para mañanas con tiempo.',
+            prep_time_min: 25,
+            difficulty: 'medium',
+            steps: [
+               `Precalienta horno a 180°C.`,
+               `Coloca ${ingredientName(carb)} con ${ingredientName(fat)}.`,
+               `Pon ${ingredientName(protein)} encima con sazón.`,
+               hasVeg
+                  ? `Suma ${ingredientName(vegetable)} alrededor.`
+                  : `Agrega rodajas de tomate.`,
+               `Hornea 20 min. Sirve caliente.`
+            ]
+         },
+         {
+            name: `Bowl matutino balanceado`,
+            description: 'Desayuno completo en bowl.',
+            prep_time_min: 12,
+            difficulty: 'easy',
+            steps: [
+               `Cocina ${ingredientName(carb)}.`,
+               `Prepara ${ingredientName(protein)}.`,
+               hasVeg
+                  ? `Saltea ${ingredientName(vegetable)}.`
+                  : `Lava fruta fresca.`,
+               `Calienta ${ingredientName(fat)}.`,
+               `Sirve en bowl, condimenta a gusto.`
+            ]
+         }
+      ]
+   }
+
+   /* === SNACK === */
+   if (mealType === 'snack_am' || mealType === 'snack_pm') {
+      if (isPowderProtein(proteinName)) {
+         return [
+            {
+               name: `Shake rápido con ${proteinName}`,
+               description: 'Snack proteico en 2 minutos.',
+               prep_time_min: 3,
+               difficulty: 'easy',
+               steps: [
+                  `Mezcla ${ingredientName(protein)} con 200ml de agua o leche fría.`,
+                  `Agrega ${ingredientName(carb)}.`,
+                  `Suma ${ingredientName(fat)}.`,
+                  `Bate 20 segundos.`,
+                  `Sirve frío.`
+               ]
+            },
+            {
+               name: `Smoothie de fruta con ${proteinName}`,
+               description: 'Refrescante y nutritivo, ideal post-entreno.',
+               prep_time_min: 5,
+               difficulty: 'easy',
+               steps: [
+                  `Licúa ${ingredientName(carb)} con ${ingredientName(protein)}.`,
+                  `Agrega 200ml de leche o agua de coco.`,
+                  `Suma ${ingredientName(fat)}.`,
+                  `Licúa hasta cremoso.`,
+                  `Sirve frío con hielo.`
+               ]
+            },
+            {
+               name: `Bowl proteico en 5 min`,
+               description: 'Versión bowl para cuchara.',
+               prep_time_min: 5,
+               difficulty: 'easy',
+               steps: [
+                  `Mezcla ${ingredientName(carb)} con yogurt o leche.`,
+                  `Agrega ${ingredientName(protein)} disuelto.`,
+                  `Suma ${ingredientName(fat)} como topping.`,
+                  `Decora con fruta o cacao.`,
+                  `Sirve frío.`
+               ]
+            }
+         ]
+      }
+
+      if (isYogurt(proteinName)) {
+         return [
+            {
+               name: `Parfait de yogurt con ${carbName}`,
+               description: 'Snack en capas, fresco.',
+               prep_time_min: 5,
+               difficulty: 'easy',
+               steps: [
+                  `En vaso alterna capas de ${ingredientName(protein)}.`,
+                  `Suma ${ingredientName(carb)}.`,
+                  `Agrega ${ingredientName(fat)}.`,
+                  `Decora con fruta fresca.`,
+                  `Sirve frío inmediatamente.`
+               ]
+            },
+            {
+               name: `Bowl frío de yogurt con ${carbName}`,
+               description: 'Snack saludable y rápido.',
+               prep_time_min: 4,
+               difficulty: 'easy',
+               steps: [
+                  `Coloca ${ingredientName(protein)} en bowl.`,
+                  `Mezcla con ${ingredientName(carb)}.`,
+                  `Suma ${ingredientName(fat)}.`,
+                  `Endulza con miel o canela.`,
+                  `Sirve frío.`
+               ]
+            },
+            {
+               name: `Smoothie cremoso`,
+               description: 'Versión líquida para llevar.',
+               prep_time_min: 4,
+               difficulty: 'easy',
+               steps: [
+                  `Licúa ${ingredientName(protein)} con ${ingredientName(carb)}.`,
+                  `Suma fruta fresca o congelada.`,
+                  `Agrega ${ingredientName(fat)}.`,
+                  `Bate hasta cremoso.`,
+                  `Sirve frío.`
+               ]
+            }
+         ]
+      }
+
+      /* Default snack */
+      return [
+         {
+            name: `Mini sándwich casero con ${proteinName}`,
+            description: 'Snack práctico para llevar.',
+            prep_time_min: 8,
+            difficulty: 'easy',
+            steps: [
+               `Tuesta ${ingredientName(carb)} pequeño.`,
+               `Prepara ${ingredientName(protein)} simple.`,
+               `Suma ${ingredientName(fat)}.`,
+               `Arma el snack en formato mini.`,
+               `Disfruta a temperatura ambiente.`
+            ]
+         },
+         {
+            name: `Bowl pequeño con ${proteinName}`,
+            description: 'Versión bowl rápida.',
+            prep_time_min: 6,
+            difficulty: 'easy',
+            steps: [
+               `Prepara ${ingredientName(protein)} simple.`,
+               `Combina con ${ingredientName(carb)}.`,
+               `Suma ${ingredientName(fat)}.`,
+               `Sazona con sal y pimienta.`,
+               `Disfruta tibio o frío.`
+            ]
+         },
+         {
+            name: `Mezcla casera de ${proteinName} y ${carbName}`,
+            description: 'Snack rápido y saciante.',
+            prep_time_min: 5,
+            difficulty: 'easy',
+            steps: [
+               `Combina ${ingredientName(protein)} con ${ingredientName(carb)}.`,
+               `Agrega ${ingredientName(fat)} (semillas, frutos secos).`,
+               `Sazona suave.`,
+               `Mezcla todo.`,
+               `Sirve.`
+            ]
+         }
+      ]
+   }
+
+   /* === LUNCH / DINNER === */
+   if (isFish(proteinName)) {
+      return [
+         {
+            name: `${cap(proteinName)} a la plancha con ${carbName}`,
+            description: `Plato fresco, ideal para ${MEAL_LABEL_FB[mealType]}.`,
+            prep_time_min: 20,
+            difficulty: 'easy',
+            steps: [
+               `Sazona ${ingredientName(protein)} con sal, pimienta, ajo y limón.`,
+               `Cocina ${ingredientName(carb)} aparte.`,
+               `Calienta sartén con ${ingredientName(fat)} y cocina pescado 3-4 min por lado.`,
+               hasVeg
+                  ? `Saltea ${ingredientName(vegetable)} con ajo.`
+                  : `Prepara ensalada simple con limón.`,
+               `Sirve el pescado sobre ${carbName} con limón fresco.`
+            ]
+         },
+         {
+            name: `${cap(proteinName)} al horno con vegetales`,
+            description: 'Versión asada, jugosa y aromática.',
+            prep_time_min: 30,
+            difficulty: 'medium',
+            steps: [
+               `Precalienta horno a 200°C.`,
+               `Coloca ${ingredientName(protein)} en bandeja con ${ingredientName(fat)}.`,
+               `Sazona con limón, hierbas y ajo.`,
+               hasVeg
+                  ? `Suma ${ingredientName(vegetable)} alrededor.`
+                  : `Agrega rodajas de limón.`,
+               `Hornea 15-20 min. Sirve con ${carbName}.`
+            ]
+         },
+         {
+            name: `Bowl marinero con ${proteinName}`,
+            description: 'Versión bowl, completa y fresca.',
+            prep_time_min: 22,
+            difficulty: 'easy',
+            steps: [
+               `Cocina ${ingredientName(carb)}.`,
+               `Sazona ${ingredientName(protein)} con limón.`,
+               `Cocina con ${ingredientName(fat)} 3-4 min por lado.`,
+               hasVeg
+                  ? `Prepara ${ingredientName(vegetable)} al vapor.`
+                  : `Suma palta y tomate.`,
+               `Arma en bowl con limón y cilantro.`
+            ]
+         }
+      ]
+   }
+
+   /* Default lunch/dinner — bowl casero, criollo, rápido. */
+   const adjectives =
+      mealType === 'lunch' ? ['casero', 'criollo', 'al sartén'] : ['rápido', 'casero', 'sazonado']
+
    return [
       {
-         name: `Bowl de ${proteinName} con ${carbName}${hasVeg ? ` y ${vegName}` : ''}`,
-         description: `Plato simple y balanceado, ideal para ${MEAL_LABEL_FB[mealType]}.`,
+         name: `Bowl ${adjectives[0]} de ${proteinName} con ${carbName}`,
+         description: `Plato balanceado para ${MEAL_LABEL_FB[mealType]}, fácil y sabroso.`,
          prep_time_min: 20,
          difficulty: 'easy',
          steps: [
-            `Cocina ${ingredientName(carb)} hasta su punto deseado, con un toque de sal.`,
-            `Sazona ${ingredientName(protein)} con sal, pimienta y ajo al gusto.`,
-            `Cocina ${proteinName} a la plancha con ${ingredientName(fat)} 5 a 7 minutos.`,
+            `Cocina ${ingredientName(carb)} con sal hasta su punto.`,
+            `Sazona ${ingredientName(protein)} con sal, pimienta, ajo y comino.`,
+            `Calienta ${ingredientName(fat)} y cocina la proteína 5-7 min.`,
             hasVeg
-               ? `Saltea o cuece al vapor ${ingredientName(vegetable)} hasta que esté brillante.`
-               : `Prepara unas hierbas frescas y limón para decorar.`,
-            `Sirve todo junto en un bowl, decora con limón o hierbas frescas y disfruta.`
+               ? `Saltea ${ingredientName(vegetable)} hasta tierno-crocante.`
+               : `Prepara hierbas frescas y limón.`,
+            `Sirve todo en bowl con limón fresco.`
          ]
       },
       {
-         name: `${cap(proteinName)} al ajillo con ${carbName}${hasVeg ? ` y ${vegName}` : ''}`,
-         description: `Versión clásica casera, ideal cuando quieres algo familiar.`,
+         name: `${cap(proteinName)} ${adjectives[1]} con ${carbName}${hasVeg ? ` y ${vegName}` : ''}`,
+         description: 'Versión casera y reconfortante.',
          prep_time_min: 25,
          difficulty: 'easy',
          steps: [
-            `Pica un par de dientes de ajo finos y déjalos listos.`,
-            `Cocina ${ingredientName(carb)} con sal hasta su punto.`,
-            `Calienta ${ingredientName(fat)} en sartén y dora el ajo unos segundos.`,
-            `Suma ${ingredientName(protein)} y cocina a fuego medio, dándole vuelta cada par de minutos.`,
+            `Pica ajo y cebolla finos.`,
+            `Cocina ${ingredientName(carb)} hasta su punto.`,
+            `Dora ajo y cebolla con ${ingredientName(fat)}.`,
+            `Suma ${ingredientName(protein)} y cocina 5-7 min.`,
             hasVeg
-               ? `Agrega ${ingredientName(vegetable)} en los últimos 4 minutos para que quede crujiente.`
-               : `Termina con pimienta y unas gotas de limón.`,
-            `Sirve caliente, en un plato dividido, con un toque de limón al final.`
+               ? `Agrega ${ingredientName(vegetable)} en los últimos 4 min.`
+               : `Termina con limón y comino.`,
+            `Sirve en plato dividido con ${carbName}.`
          ]
       },
       {
-         name: `Salteado de ${proteinName}${hasVeg ? ` con ${vegName}` : ''} y ${carbName}`,
-         description: `Estilo wok rápido, todo en una sartén.`,
-         prep_time_min: 15,
+         name: `${cap(proteinName)} ${adjectives[2]} con ${carbName}${hasVeg ? ` y ${vegName}` : ''}`,
+         description: 'Plato rápido para días ocupados.',
+         prep_time_min: 18,
          difficulty: 'easy',
          steps: [
             `Cocina ${ingredientName(carb)} aparte y reserva.`,
-            `Corta ${proteinName} en cubos pequeños para que cocine rápido.`,
-            `Calienta ${ingredientName(fat)} en sartén bien caliente y dora el ${proteinName}.`,
+            `Corta ${proteinName} en cubos o tiras.`,
+            `Calienta ${ingredientName(fat)} bien caliente.`,
+            `Dora ${proteinName} con sal y especias.`,
             hasVeg
-               ? `Suma ${ingredientName(vegetable)} y saltea 2 a 3 minutos manteniendo el color vivo.`
-               : `Agrega ajo y sazón al gusto, salteando todo junto.`,
-            `Incorpora ${carbName} cocido, mezcla con sal, pimienta y unas gotas de limón.`,
-            `Sirve caliente, agrega hierbas frescas si tienes a mano.`
+               ? `Suma ${ingredientName(vegetable)} y saltea 2-3 min.`
+               : `Termina con cebollín y limón.`,
+            `Sirve sobre ${carbName} con hierbas.`
          ]
       }
    ]
