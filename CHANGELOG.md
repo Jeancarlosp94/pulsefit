@@ -19,6 +19,61 @@ La versión sigue el roadmap de fases (no semver tradicional).
 
 ---
 
+## [Sprint 11.7 — Tipo de actividad expandido (deporte/baile/cardio/movimiento)] — 2026-06-29
+
+> Caso **Esteban** (24, Honduras): *"Yo juego fútbol los sábados con mi clica. ¿Eso no cuenta como entrenamiento?"*
+> Caso **Brigitte** (31, Punta Cana): *"Yo bailo bachata cuatro horas. Es mi cardio, mis abdominales y mi alma. La app me dice que no entrené."*
+>
+> Hasta ahora `workout_logs` solo soportaba `strength` (sets/reps/peso/RPE).
+> Esto excluía a quien NO entrena en gym pero sí se mueve. Sprint 11.7 amplía
+> el tipo de actividad a 5 categorías.
+
+### ✨ Agregado
+- **Migración `20260629000002_workout_activity_types.sql`**:
+  - `ADD COLUMN activity_type text DEFAULT 'strength' NOT NULL` (5 valores).
+  - `ADD COLUMN activity_name text` (libre: "Fútbol", "Bachata", "Caminata").
+  - `ADD COLUMN duration_min int CHECK (1-600)`.
+  - `ADD COLUMN intensity int CHECK (1-5)` (sustituye RPE para no-strength).
+  - `ALTER COLUMN ... DROP NOT NULL` en `exercise_id`, `exercise_name`, `sets_completed`, `reps_completed`, `weight_kg` (ahora nullable para no-strength).
+  - Constraint coherencia: strength requiere `exercise_id`, no-strength requiere `activity_name + duration_min`.
+
+- **5 tipos de actividad** soportados:
+  - `strength` (default histórico): sets/reps/peso/RPE.
+  - `cardio`: correr, bici, elíptica, natación.
+  - `sport`: fútbol, vóley, tenis, básquet, pádel.
+  - `dance`: bachata, salsa, zumba, ballet, kpop.
+  - `movement`: caminata, yoga, estiramiento, escaleras.
+
+- **`LogActivityDialog`** componente con flujo de 2 pasos:
+  - Paso 1: selector visual de tipo (4 cards con ícono).
+  - Paso 2: nombre con sugerencias por tipo (chips), duración en minutos, intensidad 1-5 (emoji 🌱 🚶 💪 🔥 ⚡), notas opcionales.
+  - Toast contextual al guardar (`¡A bailar! 💃` / `¡Buen partido! 🏆` / `¡Cardio registrado! 💨` / `Movimiento contado 🌿`).
+
+- **`fntLogActivity` + `useLogActivity`** hook:
+  - Persiste en `workout_logs` con `activity_type` != strength.
+  - Invalida cache de progress + adherence-alert (cuenta como entrenamiento).
+
+- **Integrado en `QuickActionFAB`**: nueva acción "Actividad" entre Entrenar y Peso.
+
+- **`progression-suggester` defensivo**: solo procesa logs `strength` con weight_kg/sets/reps no-nulos. Actividades no-strength NO confunden la sugerencia de carga (ej: el "fútbol" de Esteban no rompe el calculator). `formatLastSession` devuelve formato diferenciado: strength = "3×8 @ 20 kg (RPE 7)", no-strength = "Fútbol 90 min".
+
+- **`fntGetRecentLogsByExercise` defensivo**: ignora rows sin `exercise_id` (las actividades no-strength no se mapean por ejercicio).
+
+### 🛠 Cambiado
+- `database.ts WorkoutLogRow` corregido (era schema obsoleto del inicial — `planned_session_id`, `status`, `exercises_completed jsonb`). Ahora refleja schema real + Sprint 11.7.
+- `ItfWorkoutLog` con campos nullables para soportar ambos tipos sin discriminated union (simple para serializar).
+
+### 🧪 Tests
+- 5 nuevos en `itfWorkouts.test.ts` cubriendo tipos + inputs + structure de strength vs sport.
+- Suite: **443 tests** (vs 438 antes).
+
+### Acciones del usuario
+- Aplicar migración `20260629000002_workout_activity_types.sql` en Supabase.
+
+**Commit:** próximo push
+
+---
+
 ## [Sprint 11.6 — Inclusión cultural + estilos de vida + monotonía] — 2026-06-29
 
 Resuelve 3 items del backlog post-simulación:

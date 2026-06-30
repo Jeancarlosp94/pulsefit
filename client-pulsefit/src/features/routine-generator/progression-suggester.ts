@@ -47,8 +47,24 @@ const DAYS = 24 * 60 * 60 * 1000
 export const suggestNextWeight = (input: SuggestNextInput): ItfProgressionSuggestion => {
    const { recentLogs, targetRpe, isCompound, isBodyweight, prescribedReps, isDeloadWeek } = input
 
-   /* Caso 1: primera vez. */
-   if (recentLogs.length === 0) {
+   /* Sprint 11.7: filtrar logs no-strength (sport/dance/cardio/movement no
+    * tienen weight_kg). Solo logs de strength alimentan progression suggester. */
+   const strengthLogs = recentLogs.filter(
+      (
+         l
+      ): l is ItfWorkoutLog & {
+         weight_kg: number
+         sets_completed: number
+         reps_completed: number
+      } =>
+         l.activity_type === 'strength' &&
+         l.weight_kg !== null &&
+         l.sets_completed !== null &&
+         l.reps_completed !== null
+   )
+
+   /* Caso 1: primera vez (o solo actividades no-strength). */
+   if (strengthLogs.length === 0) {
       return {
          weightKg: 0,
          reps: prescribedReps,
@@ -57,7 +73,7 @@ export const suggestNextWeight = (input: SuggestNextInput): ItfProgressionSugges
       }
    }
 
-   const last = recentLogs[0]
+   const last = strengthLogs[0]
    /* Caso 5: pasaron > 14 días → deload por descondicionamiento. */
    const daysSince = (Date.now() - new Date(last.logged_at).getTime()) / DAYS
    if (daysSince > 14) {
@@ -82,7 +98,7 @@ export const suggestNextWeight = (input: SuggestNextInput): ItfProgressionSugges
 
    /* Caso 3: chequear si las 2 últimas cerraron al RPE objetivo o menor. */
    const lastRpe = last.rpe_actual ?? targetRpe
-   const prev = recentLogs[1]
+   const prev = strengthLogs[1]
    const prevRpe = prev?.rpe_actual ?? targetRpe
 
    const canProgress = lastRpe <= targetRpe && (prev ? prevRpe <= targetRpe : false)
@@ -120,9 +136,16 @@ export const suggestNextWeight = (input: SuggestNextInput): ItfProgressionSugges
    }
 }
 
-/** Formatea una fila "última vez" para mostrar al usuario. */
+/** Formatea una fila "última vez" para mostrar al usuario.
+ *  Sprint 11.7: si el log es no-strength, devuelve un formato diferente. */
 export const formatLastSession = (log: ItfWorkoutLog): string => {
-   const weight = log.weight_kg > 0 ? ` @ ${log.weight_kg} kg` : ''
+   if (log.activity_type !== 'strength') {
+      const name = log.activity_name ?? 'actividad'
+      const dur = log.duration_min ? ` ${log.duration_min} min` : ''
+      return `${name}${dur}`
+   }
+   const weightKg = log.weight_kg ?? 0
+   const weight = weightKg > 0 ? ` @ ${weightKg} kg` : ''
    const rpe = log.rpe_actual ? ` (RPE ${log.rpe_actual})` : ''
-   return `${log.sets_completed}×${log.reps_completed}${weight}${rpe}`
+   return `${log.sets_completed ?? 0}×${log.reps_completed ?? 0}${weight}${rpe}`
 }

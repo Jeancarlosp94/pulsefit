@@ -154,6 +154,17 @@ Detalle completo (flujos paso a paso, prompts exactos a Groq, reglas del validad
 - `WeeklyReviewPage` en `/revision`: card greeting + summary + chips highlights + grid 2×4 métricas + lista ajustes con toggles y badges priority + botón "Aplicar y empezar nueva semana".
 - Card "Revisar mi semana" en HomePage (border primary, antes de atajo Perfil) navega a /revision.
 
+### 2026-06-29 — Sprint 11.7 (tipo workout deporte/baile/cardio/movimiento)
+- Migración `20260629000002_workout_activity_types.sql`: ADD a workout_logs columnas activity_type, activity_name, duration_min, intensity. DROP NOT NULL en exercise_id/sets/reps/weight/exercise_name. Constraint coherencia strength vs no-strength.
+- ItfWorkoutLog ampliado con campos nullables + nuevo ItfLogActivityInput. ItfActivityType = strength/cardio/sport/dance/movement.
+- fntLogActivity + useLogActivity para no-strength. fntLogSet ahora envía activity_type='strength' explícito.
+- LogActivityDialog con 2 pasos (tipo → detalles), sugerencias por tipo, intensidad emoji 1-5, toast contextual.
+- Integrado en QuickActionFAB ("Actividad" entre Entrenar y Peso).
+- progression-suggester defensivo: filtra logs no-strength (caso Esteban fútbol). formatLastSession diferenciado (strength vs activity).
+- fntGetRecentLogsByExercise ignora rows sin exercise_id.
+- database.ts WorkoutLogRow corregido (era schema obsoleto del inicial).
+- 5 tests nuevos en itfWorkouts.test.ts. Resuelve casos Esteban (soccer) y Brigitte (bachata). Suite 443/443.
+
 ### 2026-06-29 — Sprint 11.6 (inclusión cultural + estilos de vida + monotonía consciente)
 - Migración `20260629000001_dietary_lifestyle_extras.sql`: ADD profiles.monotonous_meals_preferred boolean.
 - Seed canonical dishes: +2 cocinas (`caribena`, `paraguaya`) y +11 platos (mofongo, arroz con habichuelas, ropa vieja, mangú, milanesa napolitana, asado argentino, choripán casero, sopa paraguaya, bori-bori, pabellón criollo, arepa). Resuelve queja de Kimberly (PR), Hugo (PY), Vanessa (VE migrante), Tomás (UY).

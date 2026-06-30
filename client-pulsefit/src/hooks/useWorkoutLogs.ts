@@ -1,9 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { fntGetRecentLogs, fntGetRecentLogsByExercise, fntLogSet } from '@/api/fntWorkoutLogs'
+import {
+   fntGetRecentLogs,
+   fntGetRecentLogsByExercise,
+   fntLogActivity,
+   fntLogSet
+} from '@/api/fntWorkoutLogs'
 import { useErrorHandling } from './useErrorHandling'
 import { useAuth } from './useAuth'
-import type { ItfLogSetInput, ItfWorkoutLog } from '@/interface/itfWorkouts'
+import type { ItfLogActivityInput, ItfLogSetInput, ItfWorkoutLog } from '@/interface/itfWorkouts'
 
 const recentLogsKey = (exerciseId: string) => ['workout-logs', exerciseId] as const
 const recentLogsBatchKey = (exerciseIds: string[]) =>
@@ -40,9 +45,36 @@ export const useLogSet = () => {
       mutationFn: fntLogSet,
       onSuccess: (log) => {
          /* Invalidar la query del ejercicio específico y la batch. */
-         queryClient.invalidateQueries({ queryKey: recentLogsKey(log.exercise_id) })
+         if (log.exercise_id) {
+            queryClient.invalidateQueries({ queryKey: recentLogsKey(log.exercise_id) })
+         }
          queryClient.invalidateQueries({ queryKey: ['workout-logs-batch'] })
+         queryClient.invalidateQueries({ queryKey: ['progress'] })
+         queryClient.invalidateQueries({ queryKey: ['adherence-alert'] })
          toast.success('Set guardado 💪')
+      },
+      onError: (e) => handleApiError(e)
+   })
+}
+
+const ACTIVITY_TOAST: Record<ItfLogActivityInput['activity_type'], string> = {
+   cardio: '¡Cardio registrado! 💨',
+   sport: '¡Buen partido! 🏆',
+   dance: '¡A bailar! 💃',
+   movement: 'Movimiento contado 🌿'
+}
+
+/** Sprint 11.7: registrar actividad no-strength (cardio/sport/dance/movement). */
+export const useLogActivity = () => {
+   const queryClient = useQueryClient()
+   const { handleApiError } = useErrorHandling()
+   return useMutation<ItfWorkoutLog, Error, ItfLogActivityInput>({
+      mutationFn: fntLogActivity,
+      onSuccess: (_log, vars) => {
+         queryClient.invalidateQueries({ queryKey: ['workout-logs-batch'] })
+         queryClient.invalidateQueries({ queryKey: ['progress'] })
+         queryClient.invalidateQueries({ queryKey: ['adherence-alert'] })
+         toast.success(ACTIVITY_TOAST[vars.activity_type] ?? 'Actividad registrada 🌱')
       },
       onError: (e) => handleApiError(e)
    })

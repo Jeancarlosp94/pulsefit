@@ -22,17 +22,32 @@ export interface ItfGenerateWorkoutParams {
  *  Sprint 3 — Log de cargas + progresión
  * ============================================================ */
 
-/** Una entrada de log = un ejercicio registrado en una sesión específica. */
+/** Tipos de actividad soportados (Sprint 11.7).
+ *   - strength: ejercicios con sets/reps/peso/RPE (default histórico).
+ *   - cardio: corrida, bici, elíptica → duration + intensity.
+ *   - sport: fútbol, vóley, tenis → duration + intensity + activity_name.
+ *   - dance: bachata, zumba, ballet → duration + intensity + activity_name.
+ *   - movement: caminata, yoga, estiramiento → duration + intensity.
+ */
+export type ItfActivityType = 'strength' | 'cardio' | 'sport' | 'dance' | 'movement'
+
+/** Una entrada de log = un ejercicio o actividad registrada. */
 export interface ItfWorkoutLog {
    id: string
    user_id: string
    logged_at: string
-   exercise_id: string
-   exercise_name: string
-   sets_completed: number
-   reps_completed: number
-   weight_kg: number
+   activity_type: ItfActivityType
+   /* Strength: */
+   exercise_id: string | null
+   exercise_name: string | null
+   sets_completed: number | null
+   reps_completed: number | null
+   weight_kg: number | null
    rpe_actual: number | null
+   /* No-strength: */
+   activity_name: string | null /* "Fútbol", "Bachata", "Caminata" */
+   duration_min: number | null
+   intensity: number | null /* 1-5 */
    notes: string | null
    session_id: string | null
 }
@@ -46,6 +61,15 @@ export interface ItfLogSetInput {
    rpe_actual?: number
    notes?: string
    session_id?: string
+}
+
+/** Sprint 11.7: log de actividad no-strength. */
+export interface ItfLogActivityInput {
+   activity_type: 'cardio' | 'sport' | 'dance' | 'movement'
+   activity_name: string
+   duration_min: number
+   intensity: 1 | 2 | 3 | 4 | 5
+   notes?: string
 }
 
 /** Sugerencia de progresión para la próxima sesión de un ejercicio. */

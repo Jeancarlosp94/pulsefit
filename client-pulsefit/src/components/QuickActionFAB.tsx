@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { Plus, Scale, Droplet, Dumbbell, X } from 'lucide-react'
+import { Plus, Scale, Droplet, Dumbbell, Activity, X } from 'lucide-react'
 import { cn } from '@/utils'
 import { useNavigate } from 'react-router-dom'
 import { WeightLogDialog } from './WeightLogDialog'
+import { LogActivityDialog } from './LogActivityDialog'
 import { useAddWater } from '@/hooks/useWaterLogs'
 
 /**
@@ -21,6 +22,7 @@ export const QuickActionFAB = () => {
    const navigate = useNavigate()
    const [open, setOpen] = useState(false)
    const [weightOpen, setWeightOpen] = useState(false)
+   const [activityOpen, setActivityOpen] = useState(false)
    const addWater = useAddWater()
 
    const handleWater = () => {
@@ -31,6 +33,11 @@ export const QuickActionFAB = () => {
    const handleWeight = () => {
       setOpen(false)
       setWeightOpen(true)
+   }
+
+   const handleActivity = () => {
+      setOpen(false)
+      setActivityOpen(true)
    }
 
    const handleWorkout = () => {
@@ -53,6 +60,7 @@ export const QuickActionFAB = () => {
          {open ? (
             <div className='fixed bottom-28 right-5 z-40 flex flex-col items-end gap-2'>
                <ActionItem icon={Dumbbell} label='Entrenar' onClick={handleWorkout} />
+               <ActionItem icon={Activity} label='Actividad' onClick={handleActivity} />
                <ActionItem icon={Scale} label='Peso' onClick={handleWeight} />
                <ActionItem icon={Droplet} label='+ Agua' onClick={handleWater} />
             </div>
@@ -73,6 +81,7 @@ export const QuickActionFAB = () => {
          </button>
 
          <WeightLogDialog open={weightOpen} onOpenChange={setWeightOpen} />
+         <LogActivityDialog open={activityOpen} onOpenChange={setActivityOpen} />
       </>
    )
 }

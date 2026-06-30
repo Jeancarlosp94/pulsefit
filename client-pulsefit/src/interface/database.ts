@@ -114,24 +114,32 @@ export type MealLogInsert = Partial<Omit<MealLogRow, 'id' | 'created_at'>> & {
 }
 export type MealLogUpdate = Partial<Omit<MealLogRow, 'id' | 'created_at'>>
 
+/** Sprint 3 + Sprint 11.7: schema real de workout_logs después de hotfixes. */
 export interface WorkoutLogRow {
    id: string
    user_id: string
-   log_date: string
-   planned_session_id: string | null
-   status: 'completed' | 'partial' | 'rescued' | 'skipped' | null
+   logged_at: string
+   /** Sprint 11.7 — tipo de actividad. */
+   activity_type: 'strength' | 'cardio' | 'sport' | 'dance' | 'movement'
+   /* Strength (nullable post-11.7): */
+   exercise_id: string | null
+   exercise_name: string | null
+   sets_completed: number | null
+   reps_completed: number | null
+   weight_kg: number | null
+   rpe_actual: number | null
+   /* Sprint 11.7 — no-strength: */
+   activity_name: string | null
    duration_min: number | null
-   exercises_completed: Json | null
-   rpe_average: number | null
-   pain_reported: string[] | null
+   intensity: number | null
    notes: string | null
-   created_at: string
+   session_id: string | null
 }
-export type WorkoutLogInsert = Partial<Omit<WorkoutLogRow, 'id' | 'created_at'>> & {
+export type WorkoutLogInsert = Partial<Omit<WorkoutLogRow, 'id'>> & {
    user_id: string
-   log_date: string
+   activity_type: WorkoutLogRow['activity_type']
 }
-export type WorkoutLogUpdate = Partial<Omit<WorkoutLogRow, 'id' | 'created_at'>>
+export type WorkoutLogUpdate = Partial<Omit<WorkoutLogRow, 'id'>>
 
 export interface RescueEventRow {
    id: string
