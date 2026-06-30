@@ -1,6 +1,6 @@
 # 📍 Estado actual del proyecto PulseFit
 
-> **Última actualización:** 2026-06-30 — Sprint 11.10 cerrado (sistema "Crear mi PulseFit": programas multi-fase con modalidades). 464 tests verde.
+> **Última actualización:** 2026-06-30 — Sprint 11.11 cerrado (motor de rutinas filtra por modalidad de la fase activa). 471 tests verde. 45 ejercicios en seed.
 > **Última verificación:** 402/402 tests verdes · 0 lint errors · build OK
 
 ---

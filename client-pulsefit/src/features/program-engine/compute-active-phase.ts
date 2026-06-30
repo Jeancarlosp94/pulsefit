@@ -1,4 +1,36 @@
-import type { ItfActivePhase, ItfTrainingPhase, ItfTrainingProgram } from '@/interface/itfPrograms'
+import type {
+   ItfActivePhase,
+   ItfModality,
+   ItfTrainingPhase,
+   ItfTrainingProgram
+} from '@/interface/itfPrograms'
+import type { ItfExerciseModality } from '@/features/routine-generator'
+
+/**
+ * Sprint 11.11: bridge entre ItfModality (programa) y ItfExerciseModality
+ * (motor de rutinas). Modalidades de cardio puro (running/cycling/swimming/sport)
+ * NO son ejercicios del motor — se loggean por separado con LogActivityDialog.
+ * Para esos casos devolvemos undefined.
+ */
+export const modalityToExerciseModality = (
+   modality: ItfModality
+): ItfExerciseModality | undefined => {
+   switch (modality) {
+      case 'gym':
+      case 'hiit':
+      case 'calistenia':
+      case 'yoga':
+      case 'barre':
+      case 'pilates':
+      case 'hybrid':
+         return modality
+      case 'running':
+      case 'cycling':
+      case 'swimming':
+      case 'sport':
+         return undefined
+   }
+}
 
 /**
  * Calcula qué fase del programa está activa HOY y cuántas semanas faltan.

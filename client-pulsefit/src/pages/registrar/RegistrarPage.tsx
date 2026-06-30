@@ -19,6 +19,12 @@ import { EmptyState } from '@/components/EmptyState'
 import { InfoTooltip } from '@/components/InfoTooltip'
 import { LogSetDialog } from '@/components/LogSetDialog'
 import { WorkoutSessionView } from '@/components/workout'
+import { useActivePhase } from '@/hooks/usePrograms'
+import {
+   modalityToExerciseModality,
+   MODALITY_EMOJI,
+   MODALITY_LABEL
+} from '@/features/program-engine'
 import {
    findVideoUrlForExercise,
    suggestNextWeight,
@@ -57,8 +63,14 @@ const RegistrarPage = () => {
    } | null>(null)
    const [executing, setExecuting] = useState(false)
    const mutation = useGenerateWorkout()
+   const activePhase = useActivePhase()
 
    const today = useMemo(() => new Date().getDay(), [])
+
+   /* Sprint 11.11: si hay programa activo, derivar modality desde la fase. */
+   const phaseModality = activePhase
+      ? modalityToExerciseModality(activePhase.phase.modality)
+      : undefined
 
    const data = mutation.data
    const session = data?.session
@@ -69,7 +81,11 @@ const RegistrarPage = () => {
    const logsByExercise = recentLogsQuery.data ?? {}
 
    const handleGenerate = () => {
-      mutation.mutate({ day_of_week: today, override_focus: override })
+      mutation.mutate({
+         day_of_week: today,
+         override_focus: override,
+         modality: phaseModality
+      })
    }
 
    if (!onboardingCompleted) {
@@ -107,6 +123,27 @@ const RegistrarPage = () => {
          />
 
          <div className='space-y-4'>
+            {/* Sprint 11.11: badge de fase activa del programa. */}
+            {activePhase ? (
+               <Card className='border-primary/30 bg-primary/5'>
+                  <CardContent className='flex items-start gap-3 pt-6 text-sm'>
+                     <span className='text-2xl' aria-hidden='true'>
+                        {MODALITY_EMOJI[activePhase.phase.modality]}
+                     </span>
+                     <div className='space-y-0.5'>
+                        <p className='font-medium'>Fase actual: {activePhase.phase.phase_name}</p>
+                        <p className='text-xs text-muted-foreground'>
+                           Modalidad <strong>{MODALITY_LABEL[activePhase.phase.modality]}</strong> ·
+                           Semana {activePhase.week_in_phase}/{activePhase.phase.weeks}
+                           {phaseModality
+                              ? ' · La rutina se filtrará por esta modalidad'
+                              : ' · Esta modalidad se loggea como actividad (usa el FAB)'}
+                        </p>
+                     </div>
+                  </CardContent>
+               </Card>
+            ) : null}
+
             {/* Selector de focus override */}
             <Card>
                <CardContent className='pt-6'>

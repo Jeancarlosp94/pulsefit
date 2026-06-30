@@ -1,5 +1,14 @@
-import type { ItfExercise, ItfUserContextForWorkout } from './types'
+import type { ItfExercise, ItfExerciseModality, ItfUserContextForWorkout } from './types'
 import { FOCUS_PATTERNS, type ItfSessionFocus } from './types'
+
+/* Sprint 11.11: modalidad default para ejercicios sin tag.
+ * Los ejercicios "neutros" de gym/calistenia funcionan también en hybrid. */
+const DEFAULT_MODALITIES: ItfExerciseModality[] = ['gym', 'calistenia', 'hybrid']
+
+const exerciseMatchesModality = (exercise: ItfExercise, modality: ItfExerciseModality): boolean => {
+   const supported = exercise.modalities ?? DEFAULT_MODALITIES
+   return supported.includes(modality)
+}
 
 /**
  * Filtra el catálogo de ejercicios según:
@@ -30,6 +39,21 @@ export const filterExercisePool = ({ catalog, ctx, focus }: PoolInput): ItfExerc
    const injured = new Set(ctx.injuredZones.map((z) => z.toLowerCase().trim()))
 
    return catalog.filter((ex) => {
+      /* Sprint 11.11: filtro por modalidad (si la fase activa la define).
+       * Si ctx.modality NO se especifica → comportamiento histórico (sin filtro).
+       * Si se especifica → solo ejercicios compatibles con esa modalidad. */
+      if (ctx.modality) {
+         if (!exerciseMatchesModality(ex, ctx.modality)) return false
+      } else {
+         /* Sin modality declarada: excluir ejercicios EXCLUSIVOS de yoga/barre/
+          * pilates para que el flujo histórico (gym/hybrid) no los traiga.
+          * Un ejercicio exclusivo de yoga (solo modalities=['yoga']) no debería
+          * aparecer en un workout default. */
+         if (ex.modalities && !ex.modalities.some((m) => DEFAULT_MODALITIES.includes(m))) {
+            return false
+         }
+      }
+
       // 1 — focus
       if (!allowedPatterns.has(ex.pattern)) return false
 

@@ -154,6 +154,17 @@ Detalle completo (flujos paso a paso, prompts exactos a Groq, reglas del validad
 - `WeeklyReviewPage` en `/revision`: card greeting + summary + chips highlights + grid 2×4 métricas + lista ajustes con toggles y badges priority + botón "Aplicar y empezar nueva semana".
 - Card "Revisar mi semana" en HomePage (border primary, antes de atajo Perfil) navega a /revision.
 
+### 2026-06-30 — Sprint 11.11 (modalidad de fase integrada al motor de rutinas)
+- Cierra el círculo del sistema "Crear mi PulseFit": el motor RESPETA la modalidad.
+- Nuevo `ItfExerciseModality` con 7 valores (gym/hiit/calistenia/yoga/barre/pilates/hybrid).
+- 12 ejercicios nuevos por modalidad: 4 asanas yoga, 4 HIIT (burpee/mountain climbers/jump squat/high knees), 4 barre/pilates (plié/hundred/pulses/roll-up). Cliente + Deno mirror.
+- filterExercisePool con filtro por modalidad. Si NO hay modality declarada, excluye exclusivos de yoga/barre/pilates para que el flujo default (gym/hybrid) no los traiga.
+- Edge Function generate-workout-session acepta `modality` en body.
+- Bridge modalityToExerciseModality: mapea las modalidades de programa a las del motor. Cardio puro (running/cycling/swimming/sport) → undefined (se loggea con LogActivityDialog).
+- RegistrarPage muestra badge "Fase actual" con emoji + nombre + semana, y auto-pasa la modality al generador.
+- 7 tests nuevos. Suite 471/471.
+- PENDIENTE: redeploy de generate-workout-session para que aplique en producción.
+
 ### 2026-06-30 — Sprint 11.10 (sistema "Crear mi PulseFit")
 - Migración `20260630000000_training_programs.sql`: 2 tablas (training_programs + training_phases) con RLS por user_id (transitiva en phases). DROP+CREATE limpio. 11 modalidades soportadas (hiit/gym/calistenia/yoga/barre/pilates/running/cycling/swimming/sport/hybrid).
 - `features/program-engine/`: presets.ts con 4 templates LATAM (bajar 3-5kg/12sem, ganar músculo/16sem, sentirse mejor/8sem, evento running/10sem). compute-active-phase calcula fase actual + semana en fase + semana en programa.

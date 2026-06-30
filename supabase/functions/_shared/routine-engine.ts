@@ -46,6 +46,8 @@ export interface Exercise {
    alternatives: string[]
    isCompound: boolean
    videoUrl?: string
+   /** Sprint 11.11: modalidades compatibles. Default ['gym','calistenia','hybrid']. */
+   modalities?: ExerciseModality[]
 }
 
 export interface PrescribedExercise {
@@ -74,6 +76,16 @@ export interface OrganizedSession {
    estimated_total_min: number
 }
 
+/** Sprint 11.11: modalidades. Mirror del tipo del cliente. */
+export type ExerciseModality =
+   | 'gym'
+   | 'hiit'
+   | 'calistenia'
+   | 'yoga'
+   | 'barre'
+   | 'pilates'
+   | 'hybrid'
+
 export interface UserContextForWorkout {
    activityLevel: string
    fitnessLevel: FitnessLevel
@@ -81,6 +93,8 @@ export interface UserContextForWorkout {
    injuredZones: string[]
    availableMinutes: number
    weekInBlock: number
+   /** Sprint 11.11: modalidad activa del programa del usuario (opcional). */
+   modality?: ExerciseModality
 }
 
 export type RoutineValidationResult =
@@ -144,6 +158,13 @@ export const planSession = (input: {
 }
 
 // ============================================================ POOL
+/* Sprint 11.11: filtro por modalidad. */
+const DEFAULT_MODALITIES: ExerciseModality[] = ['gym', 'calistenia', 'hybrid']
+const exerciseMatchesModality = (ex: Exercise, modality: ExerciseModality): boolean => {
+   const supported = ex.modalities ?? DEFAULT_MODALITIES
+   return supported.includes(modality)
+}
+
 export const filterExercisePool = (input: {
    catalog: Exercise[]
    ctx: UserContextForWorkout
@@ -157,7 +178,15 @@ export const filterExercisePool = (input: {
       'none'
    ])
    const injured = new Set(input.ctx.injuredZones.map((z) => z.toLowerCase().trim()))
+   const modality = input.ctx.modality
    return input.catalog.filter((ex) => {
+      /* Sprint 11.11: filtro por modalidad. */
+      if (modality) {
+         if (!exerciseMatchesModality(ex, modality)) return false
+      } else if (ex.modalities && !ex.modalities.some((m) => DEFAULT_MODALITIES.includes(m))) {
+         /* Sin modality declarada: excluir exclusivos de yoga/barre/pilates. */
+         return false
+      }
       if (!allowed.has(ex.pattern)) return false
       if (isAB && ex.difficulty === 'forbidden_absolute_beginner') return false
       if (isAB && ex.difficulty === 'advanced') return false

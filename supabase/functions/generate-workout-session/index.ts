@@ -41,6 +41,8 @@ const MAX_GENERATIONS_PER_DAY = 10
 interface RequestBody {
    day_of_week: number
    override_focus?: SessionFocus
+   /** Sprint 11.11: modalidad enviada por el cliente desde activePhase. */
+   modality?: 'gym' | 'hiit' | 'calistenia' | 'yoga' | 'barre' | 'pilates' | 'hybrid'
 }
 
 interface ProfileRow {
@@ -118,7 +120,9 @@ serve(async (req) => {
          injuredZones: p.medical_conditions ?? [],
          availableMinutes: p.available_minutes ?? 30,
          /* weekInBlock: por ahora siempre 1 (Fase 9 calculará bloques reales). */
-         weekInBlock: 1
+         weekInBlock: 1,
+         /* Sprint 11.11: modalidad del cliente (de su activePhase). */
+         modality: body.modality
       }
 
       // 3. Planner

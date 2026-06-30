@@ -19,6 +19,72 @@ La versión sigue el roadmap de fases (no semver tradicional).
 
 ---
 
+## [Sprint 11.11 — Modalidad de fase integrada al motor de rutinas] — 2026-06-30
+
+> Cierra el círculo del sistema "Crear mi PulseFit": ahora el motor de
+> rutinas RESPETA la modalidad de la fase activa. Si el usuario está en
+> fase Yoga, no le sugerimos sentadillas con barra; si está en HIIT, no
+> le sugerimos asanas.
+
+### ✨ Agregado
+- **Nuevo tipo `ItfExerciseModality`** (7 valores): gym/hiit/calistenia/
+  yoga/barre/pilates/hybrid.
+- **Campo `modalities?: ItfExerciseModality[]`** en `ItfExercise`. Si no
+  está definido, default `['gym','calistenia','hybrid']` (comportamiento
+  histórico).
+- **Campo `modality?: ItfExerciseModality`** en `ItfUserContextForWorkout`.
+- **12 ejercicios nuevos** específicos por modalidad (cliente + Deno mirror):
+  - **Yoga** (4): Tadasana (montaña), Adho Mukha (perro boca abajo),
+    Virabhadrasana II (guerrero 2), Balasana (postura del niño).
+  - **HIIT** (4): Burpees, Mountain climbers, Jump squats, High knees.
+  - **Barre/Pilates** (4): Plié squat, The hundred, Glute pulses,
+    Roll up.
+- **Cada ejercicio nuevo con `modalities` específico** + videoUrl curada
+  (Yoga With Adriene, Fitness Blender, Yoga By Candace, AthleanX).
+- **`filterExercisePool` con filtro por modalidad** (cliente + Deno):
+  - Si ctx.modality declarada → solo ejercicios compatibles.
+  - Si NO declarada → excluir exclusivos de yoga/barre/pilates
+    (comportamiento default histórico para gym/hybrid).
+- **Edge Function `generate-workout-session`** ahora acepta `modality` en
+  el body y lo pasa al ctx.
+- **`ItfGenerateWorkoutParams.modality?`** en cliente. `useGenerateWorkout`
+  lo recibe y lo manda al Edge Function.
+- **Bridge `modalityToExerciseModality(programModality)`** en
+  `features/program-engine/`:
+  - 7 modalidades coinciden directamente (gym, hiit, calistenia, yoga,
+    barre, pilates, hybrid).
+  - 4 modalidades de cardio puro (running, cycling, swimming, sport)
+    devuelven `undefined` — esas se loggean con `LogActivityDialog` del
+    FAB Quick Actions, no con el motor de rutinas.
+- **RegistrarPage integra `useActivePhase`**:
+  - Pasa `phaseModality` al `handleGenerate`.
+  - Muestra **badge "Fase actual"** en card primary con emoji modalidad +
+    nombre de fase + semana actual + texto explicativo:
+    · Modalidades soportadas: "La rutina se filtrará por esta modalidad"
+    · Cardio puro: "Esta modalidad se loggea como actividad (usa el FAB)"
+
+### 🧪 Tests
+- 7 nuevos en `modality-filter.test.ts`:
+  - Sin modality → solo default + exclusivos yoga/barre/pilates excluidos.
+  - modality=yoga → solo asanas (excluye burpees y sentadillas).
+  - modality=hiit → solo movimientos HIIT.
+  - modality=pilates → pilates + barre con overlap.
+  - modality=barre → barre + pilates con overlap.
+  - modality=hybrid → comportamiento default.
+  - modality + injured zone → se acumulan correctamente.
+- Suite: **471 tests** (vs 464 antes).
+
+### Acciones del usuario
+- **Redeploy de `generate-workout-session`**:
+  ```powershell
+  cd "C:\Users\jeanc\OneDrive\Escritorio\pulsefit app"
+  .\scripts\deploy-functions.ps1 workout
+  ```
+
+**Commit:** próximo push
+
+---
+
 ## [Sprint 11.10 — Sistema de Programas "Crear mi PulseFit"] — 2026-06-30
 
 Nueva feature visionaria pedida por el usuario: armar programas multi-fase

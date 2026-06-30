@@ -7,6 +7,7 @@ export type {
    ItfExercisePattern,
    ItfExerciseDifficulty,
    ItfExercise,
+   ItfExerciseModality,
    ItfPrescribedExercise,
    ItfWarmup,
    ItfCooldown,

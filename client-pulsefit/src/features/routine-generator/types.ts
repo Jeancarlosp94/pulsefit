@@ -25,6 +25,25 @@ export type ItfExerciseDifficulty =
    /** ejercicios extra prohibidos para principiantes absolutos. */
    | 'forbidden_absolute_beginner'
 
+/**
+ * Sprint 11.11: modalidades compatibles con un ejercicio.
+ * Un ejercicio puede pertenecer a varias modalidades:
+ *   - Sentadilla: ['gym', 'hiit', 'calistenia']
+ *   - Plancha: ['gym', 'hiit', 'calistenia', 'yoga', 'pilates']
+ *   - Perro boca abajo: ['yoga']
+ *
+ * Cuando el usuario tiene una fase activa (ej: yoga), el motor filtra el
+ * pool de ejercicios por modalidad antes de seleccionar.
+ */
+export type ItfExerciseModality =
+   | 'gym'
+   | 'hiit'
+   | 'calistenia'
+   | 'yoga'
+   | 'barre'
+   | 'pilates'
+   | 'hybrid'
+
 export interface ItfExercise {
    id: string
    name: string
@@ -41,6 +60,9 @@ export interface ItfExercise {
    /** YouTube URL curada por Carlos. Demuestra la técnica correcta.
     * Canales preferidos: FitnessFAQs, Jeff Nippard, AthleanX, Squat University. */
    videoUrl?: string
+   /** Sprint 11.11: modalidades para las que este ejercicio es apropiado.
+    * Si no se especifica, default ['gym', 'calistenia', 'hybrid']. */
+   modalities?: ItfExerciseModality[]
 }
 
 export interface ItfPrescribedExercise {
@@ -116,6 +138,10 @@ export interface ItfUserContextForWorkout {
    availableMinutes: number
    /** Día del programa: usado para descarga forzada cada 5 semanas. */
    weekInBlock: number
+   /** Sprint 11.11: modalidad activa desde el programa del usuario.
+    *  Si presente, filtra el pool por modalidad antes de seleccionar.
+    *  Si null/undefined, usa pool completo (comportamiento histórico). */
+   modality?: ItfExerciseModality
 }
 
 /**

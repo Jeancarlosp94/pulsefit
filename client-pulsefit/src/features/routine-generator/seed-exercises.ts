@@ -499,5 +499,199 @@ export const SEED_EXERCISES: ItfExercise[] = [
       alternatives: [],
       isCompound: false,
       videoUrl: 'https://www.youtube.com/watch?v=YMmgqO8Jo-k'
+   },
+
+   /* ============================================================
+    *  SPRINT 11.11 — Ejercicios específicos por modalidad
+    *  Yoga (asanas), HIIT (movimientos compuestos rápidos),
+    *  Barre/Pilates (isométricos + core).
+    * ============================================================ */
+
+   /* === YOGA (asanas básicas) === */
+   {
+      id: 'yoga-mountain',
+      name: 'Postura de la montaña (Tadasana)',
+      pattern: 'core',
+      muscleGroups: ['core', 'postura'],
+      equipmentRequired: ['none', 'bodyweight'],
+      difficulty: 'beginner',
+      affectedZones: [],
+      description: 'De pie, pies paralelos, brazos al costado o arriba. Respiración profunda.',
+      formTips: ['Coxis hacia el suelo', 'Hombros relajados', 'Mirada al frente'],
+      alternatives: [],
+      isCompound: false,
+      modalities: ['yoga'],
+      videoUrl: 'https://www.youtube.com/watch?v=W_OUMtNcrM4'
+   },
+   {
+      id: 'yoga-downdog',
+      name: 'Perro boca abajo (Adho Mukha)',
+      pattern: 'push_vertical',
+      muscleGroups: ['hombros', 'isquios', 'pantorrillas'],
+      equipmentRequired: ['none', 'bodyweight'],
+      difficulty: 'beginner',
+      affectedZones: ['hombro'],
+      description: 'Forma de V invertida, manos firmes, caderas arriba, talones buscando el suelo.',
+      formTips: ['Manos al ancho de hombros', 'Espalda recta', 'Respira profundo'],
+      alternatives: ['yoga-childpose'],
+      isCompound: true,
+      modalities: ['yoga'],
+      videoUrl: 'https://www.youtube.com/watch?v=YqOqM79McYY'
+   },
+   {
+      id: 'yoga-warrior2',
+      name: 'Guerrero 2 (Virabhadrasana II)',
+      pattern: 'lunge',
+      muscleGroups: ['cuádriceps', 'glúteos', 'core'],
+      equipmentRequired: ['none', 'bodyweight'],
+      difficulty: 'beginner',
+      affectedZones: ['rodilla'],
+      description:
+         'Pierna delantera flexionada 90°, brazos extendidos a los lados, mirada al frente.',
+      formTips: ['Rodilla sobre tobillo', 'Cadera abierta', 'Pelvis neutra'],
+      alternatives: [],
+      isCompound: true,
+      modalities: ['yoga'],
+      videoUrl: 'https://www.youtube.com/watch?v=Mn6RSIRCV3w'
+   },
+   {
+      id: 'yoga-childpose',
+      name: 'Postura del niño (Balasana)',
+      pattern: 'core',
+      muscleGroups: ['espalda baja', 'caderas'],
+      equipmentRequired: ['none', 'bodyweight'],
+      difficulty: 'beginner',
+      affectedZones: [],
+      description: 'Rodillas separadas, frente al suelo, brazos al frente. Postura de descanso.',
+      formTips: ['Glúteos a los talones', 'Frente apoyada', 'Respiración lenta'],
+      alternatives: [],
+      isCompound: false,
+      modalities: ['yoga'],
+      videoUrl: 'https://www.youtube.com/watch?v=2MJGg-dUKh0'
+   },
+
+   /* === HIIT (movimientos compuestos rápidos) === */
+   {
+      id: 'hiit-burpee',
+      name: 'Burpees',
+      pattern: 'push_horizontal',
+      muscleGroups: ['cuerpo completo', 'cardio'],
+      equipmentRequired: ['none', 'bodyweight'],
+      difficulty: 'intermediate',
+      affectedZones: ['rodilla', 'muñeca'],
+      description: 'Sentadilla → plancha → flexión → salto. Movimiento explosivo full body.',
+      formTips: ['Tronco firme', 'Aterriza suave', 'Mantén ritmo constante'],
+      alternatives: ['hiit-mountain-climber'],
+      isCompound: true,
+      modalities: ['hiit'],
+      videoUrl: 'https://www.youtube.com/watch?v=auBLPXO8Fww'
+   },
+   {
+      id: 'hiit-mountain-climber',
+      name: 'Mountain climbers',
+      pattern: 'core',
+      muscleGroups: ['core', 'hombros', 'cardio'],
+      equipmentRequired: ['none', 'bodyweight'],
+      difficulty: 'beginner',
+      affectedZones: [],
+      description:
+         'En plancha alta, alterna rodillas al pecho rápido. Cardio explosivo de bajo impacto.',
+      formTips: ['Cadera baja', 'Núcleo apretado', 'Ritmo constante'],
+      alternatives: ['hiit-burpee'],
+      isCompound: true,
+      modalities: ['hiit'],
+      videoUrl: 'https://www.youtube.com/watch?v=cnyTQDSE884'
+   },
+   {
+      id: 'hiit-jump-squat',
+      name: 'Jump squats',
+      pattern: 'squat',
+      muscleGroups: ['cuádriceps', 'glúteos', 'cardio'],
+      equipmentRequired: ['none', 'bodyweight'],
+      difficulty: 'intermediate',
+      affectedZones: ['rodilla'],
+      description: 'Sentadilla → salto vertical → aterrizaje suave → repite.',
+      formTips: ['Aterriza con rodillas suaves', 'Pecho arriba', 'Salto vertical'],
+      alternatives: ['bw-squat'],
+      isCompound: true,
+      modalities: ['hiit'],
+      videoUrl: 'https://www.youtube.com/watch?v=A-cFYWvaHr0'
+   },
+   {
+      id: 'hiit-high-knees',
+      name: 'High knees (rodillas altas)',
+      pattern: 'core',
+      muscleGroups: ['cardio', 'core', 'flexores cadera'],
+      equipmentRequired: ['none', 'bodyweight'],
+      difficulty: 'beginner',
+      affectedZones: [],
+      description: 'Corre en el lugar elevando rodillas al pecho. Cardio explosivo.',
+      formTips: ['Postura erguida', 'Brazos coordinados', 'Aterriza en mediopié'],
+      alternatives: ['hiit-mountain-climber'],
+      isCompound: true,
+      modalities: ['hiit'],
+      videoUrl: 'https://www.youtube.com/watch?v=oDdkytliOqE'
+   },
+
+   /* === BARRE / PILATES (isométricos + core) === */
+   {
+      id: 'barre-plie',
+      name: 'Plié squat',
+      pattern: 'squat',
+      muscleGroups: ['cuádriceps', 'aductores', 'glúteos'],
+      equipmentRequired: ['none', 'bodyweight'],
+      difficulty: 'beginner',
+      affectedZones: ['rodilla'],
+      description: 'Pies muy abiertos, puntas afuera, baja con espalda recta. Estilo ballet.',
+      formTips: ['Espalda recta', 'Rodillas en línea con dedos', 'Talones apoyados'],
+      alternatives: ['bw-squat'],
+      isCompound: true,
+      modalities: ['barre', 'pilates'],
+      videoUrl: 'https://www.youtube.com/watch?v=mUF6UJ0oxxg'
+   },
+   {
+      id: 'pilates-hundred',
+      name: 'The hundred',
+      pattern: 'core',
+      muscleGroups: ['abdominales', 'core'],
+      equipmentRequired: ['none', 'bodyweight'],
+      difficulty: 'beginner',
+      affectedZones: [],
+      description: 'Acostada, piernas a 45°, eleva cabeza y hombros, brazos pulsan a los lados.',
+      formTips: ['Abs apretados', 'Cuello relajado', 'Respiración rítmica'],
+      alternatives: [],
+      isCompound: false,
+      modalities: ['pilates'],
+      videoUrl: 'https://www.youtube.com/watch?v=Z6lJWj18mtQ'
+   },
+   {
+      id: 'barre-pulse',
+      name: 'Glute pulses (mini pulses)',
+      pattern: 'hinge',
+      muscleGroups: ['glúteos'],
+      equipmentRequired: ['none', 'bodyweight'],
+      difficulty: 'beginner',
+      affectedZones: [],
+      description: 'En cuadrupedia, eleva pierna y haz pulsaciones cortas hacia arriba.',
+      formTips: ['Core firme', 'Pulsaciones pequeñas', 'Glúteo aprieta arriba'],
+      alternatives: [],
+      isCompound: false,
+      modalities: ['barre', 'pilates'],
+      videoUrl: 'https://www.youtube.com/watch?v=8KAemEzeQQc'
+   },
+   {
+      id: 'pilates-roll-up',
+      name: 'Roll up',
+      pattern: 'core',
+      muscleGroups: ['abdominales', 'core', 'flexibilidad'],
+      equipmentRequired: ['none', 'bodyweight'],
+      difficulty: 'beginner',
+      affectedZones: ['lumbar'],
+      description: 'Acostada, brazos arriba, sube despacio vértebra por vértebra hasta sentarse.',
+      formTips: ['Movimiento lento', 'Cabeza primero', 'Abs siempre activos'],
+      alternatives: ['pilates-hundred'],
+      isCompound: false,
+      modalities: ['pilates'],
+      videoUrl: 'https://www.youtube.com/watch?v=H-S2-vWqgK0'
    }
 ]

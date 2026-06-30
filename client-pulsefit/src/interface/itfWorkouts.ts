@@ -1,4 +1,5 @@
 import type {
+   ItfExerciseModality,
    ItfOrganizedSession,
    ItfPrescribedExercise,
    ItfSessionFocus
@@ -16,6 +17,8 @@ export interface ItfWorkoutGenerationResponse {
 export interface ItfGenerateWorkoutParams {
    day_of_week: number
    override_focus?: ItfSessionFocus
+   /** Sprint 11.11: modalidad activa desde el programa del usuario. */
+   modality?: ItfExerciseModality
 }
 
 /* ============================================================
