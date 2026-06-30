@@ -106,7 +106,7 @@ serve(async (req) => {
       const { data: profile, error: profileError } = await supabase
          .from('profiles')
          .select(
-            'id, region, goal, target_kcal, target_protein_g, target_carbs_g, target_fats_g, dietary_restrictions, allergies, disliked_foods, budget_level, cooks_at_home, meals_per_day, favorite_cuisines, favorite_ingredient_ids, onboarding_completed'
+            'id, region, goal, target_kcal, target_protein_g, target_carbs_g, target_fats_g, dietary_restrictions, allergies, disliked_foods, budget_level, cooks_at_home, meals_per_day, favorite_cuisines, favorite_ingredient_ids, medical_conditions, onboarding_completed'
          )
          .eq('id', user.id)
          .single()
@@ -159,7 +159,8 @@ serve(async (req) => {
          dislikedFoods: p.disliked_foods ?? [],
          budgetLevel: p.budget_level ?? 'medium',
          cooksAtHome: p.cooks_at_home ?? 'sometimes',
-         mealsPerDay
+         mealsPerDay,
+         medicalConditions: p.medical_conditions ?? []
       }
 
       const activeMealTypes = getActiveMealTypes(mealsPerDay)

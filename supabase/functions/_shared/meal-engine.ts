@@ -78,6 +78,8 @@ export interface UserContextForMeal {
    budgetLevel: 'low' | 'medium' | 'high'
    cooksAtHome: 'yes' | 'sometimes' | 'rarely'
    mealsPerDay: 2 | 3 | 4 | 5
+   /** Sprint 11.8A: condiciones médicas → filtran simple_carb/high_sodium/high_sugar. */
+   medicalConditions?: string[]
 }
 
 export type MealsPerDay = 2 | 3 | 4 | 5
@@ -167,6 +169,15 @@ const RESTRICTION_TO_FORBIDDEN_TAGS: Record<string, string[]> = {
    kosher: ['pork', 'shellfish'],
    halal: ['pork', 'alcohol']
 }
+
+/* Sprint 11.8A: mirror del filtro de condiciones médicas del cliente. */
+const MEDICAL_CONDITION_TO_FORBIDDEN_TAGS: Record<string, string[]> = {
+   hipertension: ['high_sodium'],
+   hypertension: ['high_sodium'],
+   diabetes: ['simple_carb', 'high_sugar'],
+   diabetes_type_2: ['simple_carb', 'high_sugar'],
+   prediabetes: ['simple_carb', 'high_sugar']
+}
 const BUDGET_ALLOWED: Record<
    'low' | 'medium' | 'high',
    (tag: string | undefined) => boolean
@@ -190,6 +201,13 @@ export const filterIngredientPool = (
    const forbiddenTags = new Set<string>()
    ctx.dietaryRestrictions.forEach((r) => {
       RESTRICTION_TO_FORBIDDEN_TAGS[r]?.forEach((tag) => forbiddenTags.add(tag))
+   })
+   /* Sprint 11.8A: aplicar filtro por condiciones médicas. */
+   ;(ctx.medicalConditions ?? []).forEach((c) => {
+      const normalized = c.toLowerCase().trim()
+      MEDICAL_CONDITION_TO_FORBIDDEN_TAGS[normalized]?.forEach((tag) =>
+         forbiddenTags.add(tag)
+      )
    })
    const disliked = new Set(
       ctx.dislikedFoods.map((d) => d.toLowerCase().trim()).filter(Boolean)

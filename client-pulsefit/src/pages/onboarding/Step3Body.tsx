@@ -250,6 +250,36 @@ const Step3Body = () => {
                   )}
                />
 
+               {/* Sprint 11.8A — disclaimer médico específico para diabetes/hipertensión */}
+               {selectedConditions.includes('diabetes') ||
+               selectedConditions.includes('hypertension') ? (
+                  <Card className='border-accent/30 bg-accent/5'>
+                     <CardContent className='flex items-start gap-3 pt-6 text-sm'>
+                        <AlertTriangle className='mt-0.5 h-4 w-4 shrink-0 text-accent' />
+                        <div className='space-y-1.5'>
+                           <p className='font-medium'>Importante: tu plan se ajustará</p>
+                           {selectedConditions.includes('hypertension') ? (
+                              <p className='text-xs text-muted-foreground'>
+                                 🩺 <strong>Hipertensión:</strong> filtramos ingredientes altos en
+                                 sodio (atún en lata, embutidos). Aun así, consulta con tu médico
+                                 antes de cambios importantes en la dieta.
+                              </p>
+                           ) : null}
+                           {selectedConditions.includes('diabetes') ? (
+                              <p className='text-xs text-muted-foreground'>
+                                 🩺 <strong>Diabetes:</strong> priorizamos carbohidratos complejos
+                                 (camote, lentejas, avena) y evitamos índice glucémico alto. NO
+                                 sustituye a tu endocrinólogo ni a tu plan personalizado.
+                              </p>
+                           ) : null}
+                           <p className='text-[10px] italic text-muted-foreground'>
+                              PulseFit no reemplaza atención médica profesional 🌿
+                           </p>
+                        </div>
+                     </CardContent>
+                  </Card>
+               ) : null}
+
                {/* Checkbox de historial de TCA — activa modo intuitivo. */}
                <Card className='border-primary/30 bg-primary/5'>
                   <CardContent className='space-y-2 pt-6 text-sm'>

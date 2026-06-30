@@ -16,6 +16,27 @@ const RESTRICTION_TO_FORBIDDEN_TAGS: Record<string, string[]> = {
 }
 
 /**
+ * Sprint 11.8A: Mapeo de condiciones médicas a tags prohibidos.
+ *
+ * Reglas firmadas por Lucía (nutricionista):
+ *   - Hipertensión → excluir `high_sodium` (atún en lata, embutidos, snacks salados).
+ *   - Diabetes → excluir `simple_carb` (arroz blanco, papa cocida, pan blanco) y
+ *     `high_sugar` (frutas muy maduras, azúcares libres). Prioriza carbos
+ *     complejos de bajo índice glucémico.
+ *
+ * IMPORTANTE: esto es un filtro asistido, NO sustituye recomendaciones médicas
+ * específicas. La app muestra disclaimer claro cuando el usuario declara estas
+ * condiciones (ver Step3Body).
+ */
+const MEDICAL_CONDITION_TO_FORBIDDEN_TAGS: Record<string, string[]> = {
+   hipertension: ['high_sodium'],
+   hypertension: ['high_sodium'],
+   diabetes: ['simple_carb', 'high_sugar'],
+   diabetes_type_2: ['simple_carb', 'high_sugar'],
+   prediabetes: ['simple_carb', 'high_sugar']
+}
+
+/**
  * Tags de presupuesto. Si budget=low, solo dejamos ingredientes con tag 'cheap'
  * o sin tag de precio (asumimos neutro). Si budget=medium aceptamos 'cheap' y
  * 'mid'. Si budget=high aceptamos todos.
@@ -54,6 +75,12 @@ export const filterIngredientPool = (
    const forbiddenTags = new Set<string>()
    ctx.dietaryRestrictions.forEach((r) => {
       RESTRICTION_TO_FORBIDDEN_TAGS[r]?.forEach((tag) => forbiddenTags.add(tag))
+   })
+
+   /* Sprint 11.8A: aplicar también filtro por condiciones médicas. */
+   ;(ctx.medicalConditions ?? []).forEach((c) => {
+      const normalized = c.toLowerCase().trim()
+      MEDICAL_CONDITION_TO_FORBIDDEN_TAGS[normalized]?.forEach((tag) => forbiddenTags.add(tag))
    })
 
    const disliked = new Set(ctx.dislikedFoods.map((d) => d.toLowerCase().trim()).filter(Boolean))

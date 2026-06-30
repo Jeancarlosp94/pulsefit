@@ -100,6 +100,9 @@ export interface ItfUserContextForMeal {
    cooksAtHome: 'yes' | 'sometimes' | 'rarely'
    /** Cuántas comidas por día hace el usuario (2-5). Default 3. */
    mealsPerDay: 2 | 3 | 4 | 5
+   /** Sprint 11.8A: condiciones médicas declaradas (diabetes, hipertensión, etc.).
+    *  Si presente, filtra simple_carb/high_sodium/high_sugar del pool. */
+   medicalConditions?: string[]
 }
 
 export type ItfMealsPerDay = 2 | 3 | 4 | 5

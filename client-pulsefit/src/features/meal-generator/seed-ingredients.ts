@@ -6,6 +6,10 @@ import type { ItfIngredient } from './types'
  *   - tipo (animal/dieta): 'meat' | 'fish' | 'egg' | 'dairy' | 'vegan' | 'vegetarian' | 'pescatarian'
  *   - gluten: 'gluten' | 'gluten_free'
  *   - región preferida: 'LATAM'
+ *   - médicos (Sprint 11.8A): 'high_sodium' | 'simple_carb' | 'high_sugar'
+ *     · high_sodium: filtrado si hipertensión declarada
+ *     · simple_carb: filtrado si diabetes declarada (pico glucémico)
+ *     · high_sugar: filtrado si diabetes declarada (azúcares libres)
  *
  * Pool firmado por Lucía (nutricionista) + Diego (chef). Cambios requieren
  * revisión de ambos.
@@ -46,7 +50,8 @@ export const SEED_INGREDIENTS: ItfIngredient[] = [
       proteinPer100g: 26,
       carbsPer100g: 0,
       fatsPer100g: 1,
-      tags: ['LATAM', 'fish', 'cheap', 'pescatarian'],
+      /* Sprint 11.8A: atún en lata tiene sal añadida → high_sodium. */
+      tags: ['LATAM', 'fish', 'cheap', 'pescatarian', 'high_sodium'],
       source: 'manual',
       appropriateMealTypes: ['lunch', 'dinner', 'snack_am', 'snack_pm']
    },
@@ -252,7 +257,8 @@ export const SEED_INGREDIENTS: ItfIngredient[] = [
       proteinPer100g: 2.7,
       carbsPer100g: 28,
       fatsPer100g: 0.3,
-      tags: ['LATAM', 'cheap', 'vegan', 'gluten_free'],
+      /* Sprint 11.8A: arroz blanco tiene IG alto → simple_carb. */
+      tags: ['LATAM', 'cheap', 'vegan', 'gluten_free', 'simple_carb'],
       source: 'manual',
       appropriateMealTypes: ['lunch', 'dinner']
    },
@@ -276,7 +282,8 @@ export const SEED_INGREDIENTS: ItfIngredient[] = [
       proteinPer100g: 1.3,
       carbsPer100g: 32,
       fatsPer100g: 0.4,
-      tags: ['LATAM', 'cheap', 'vegan', 'gluten_free'],
+      /* Sprint 11.8A: plátano maduro tiene alto azúcar natural → high_sugar. */
+      tags: ['LATAM', 'cheap', 'vegan', 'gluten_free', 'simple_carb', 'high_sugar'],
       source: 'manual',
       appropriateMealTypes: ['breakfast', 'lunch', 'dinner', 'snack_am', 'snack_pm']
    },
@@ -324,7 +331,8 @@ export const SEED_INGREDIENTS: ItfIngredient[] = [
       proteinPer100g: 2,
       carbsPer100g: 17,
       fatsPer100g: 0.1,
-      tags: ['LATAM', 'cheap', 'vegan', 'gluten_free'],
+      /* Sprint 11.8A: papa cocida tiene IG alto → simple_carb. */
+      tags: ['LATAM', 'cheap', 'vegan', 'gluten_free', 'simple_carb'],
       source: 'manual',
       appropriateMealTypes: ['lunch', 'dinner']
    },
@@ -640,7 +648,8 @@ export const SEED_INGREDIENTS: ItfIngredient[] = [
       proteinPer100g: 1.1,
       carbsPer100g: 23,
       fatsPer100g: 0.3,
-      tags: ['LATAM', 'cheap', 'vegan', 'gluten_free'],
+      /* Sprint 11.8A: banana madura alta en fructosa → high_sugar. */
+      tags: ['LATAM', 'cheap', 'vegan', 'gluten_free', 'high_sugar'],
       source: 'manual',
       appropriateMealTypes: ['breakfast', 'snack_am', 'snack_pm']
    },
