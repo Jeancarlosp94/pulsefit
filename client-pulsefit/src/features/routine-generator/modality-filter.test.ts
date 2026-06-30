@@ -99,6 +99,36 @@ describe('filterExercisePool — Sprint 11.11 modalidades', () => {
       expect(ids).not.toContain('hiit-burpee')
    })
 
+   it('modality=crossfit → trae ejercicios CrossFit (thruster, wall ball, box jump)', () => {
+      const pool = filterExercisePool({
+         catalog: SEED_EXERCISES,
+         ctx: baseCtx({ modality: 'crossfit', equipment: ['dumbbells', 'kettlebell', 'box'] }),
+         focus: 'full_body'
+      })
+      const ids = pool.map((e) => e.id)
+      expect(ids).toContain('crossfit-thruster')
+      expect(ids).toContain('crossfit-wall-ball')
+      expect(ids).toContain('crossfit-box-jump')
+      /* Asanas yoga NO deben aparecer. */
+      expect(ids).not.toContain('yoga-mountain')
+      expect(ids).not.toContain('pilates-hundred')
+   })
+
+   it('SIN modality → exclusivos CrossFit (toes-to-bar, wall-ball) NO aparecen', () => {
+      const pool = filterExercisePool({
+         catalog: SEED_EXERCISES,
+         ctx: baseCtx({ equipment: ['pull_up_bar', 'med_ball', 'dumbbells'] }),
+         focus: 'full_body'
+      })
+      const ids = pool.map((e) => e.id)
+      /* toes-to-bar es exclusivo (['crossfit']) → NO en default. */
+      expect(ids).not.toContain('crossfit-toes-to-bar')
+      /* wall-ball es ['crossfit', 'hiit'] → NO en default (sin gym/calistenia/hybrid). */
+      expect(ids).not.toContain('crossfit-wall-ball')
+      /* Pero thruster ['crossfit', 'hiit', 'hybrid'] SÍ pasa (tiene 'hybrid'). */
+      expect(ids).toContain('crossfit-thruster')
+   })
+
    it('modality + injured zone se acumulan', () => {
       const pool = filterExercisePool({
          catalog: SEED_EXERCISES,

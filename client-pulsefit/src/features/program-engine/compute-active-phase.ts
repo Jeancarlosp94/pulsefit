@@ -22,6 +22,7 @@ export const modalityToExerciseModality = (
       case 'yoga':
       case 'barre':
       case 'pilates':
+      case 'crossfit':
       case 'hybrid':
          return modality
       case 'running':

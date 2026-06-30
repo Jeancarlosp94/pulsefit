@@ -84,6 +84,7 @@ export type ExerciseModality =
    | 'yoga'
    | 'barre'
    | 'pilates'
+   | 'crossfit'
    | 'hybrid'
 
 export interface UserContextForWorkout {

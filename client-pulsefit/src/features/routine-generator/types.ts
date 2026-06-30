@@ -42,6 +42,7 @@ export type ItfExerciseModality =
    | 'yoga'
    | 'barre'
    | 'pilates'
+   | 'crossfit'
    | 'hybrid'
 
 export interface ItfExercise {

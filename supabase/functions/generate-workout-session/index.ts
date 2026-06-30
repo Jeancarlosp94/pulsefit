@@ -42,7 +42,7 @@ interface RequestBody {
    day_of_week: number
    override_focus?: SessionFocus
    /** Sprint 11.11: modalidad enviada por el cliente desde activePhase. */
-   modality?: 'gym' | 'hiit' | 'calistenia' | 'yoga' | 'barre' | 'pilates' | 'hybrid'
+   modality?: 'gym' | 'hiit' | 'calistenia' | 'yoga' | 'barre' | 'pilates' | 'crossfit' | 'hybrid'
 }
 
 interface ProfileRow {

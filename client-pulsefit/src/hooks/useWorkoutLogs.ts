@@ -4,11 +4,17 @@ import {
    fntGetRecentLogs,
    fntGetRecentLogsByExercise,
    fntLogActivity,
+   fntLogCustomRoutine,
    fntLogSet
 } from '@/api/fntWorkoutLogs'
 import { useErrorHandling } from './useErrorHandling'
 import { useAuth } from './useAuth'
-import type { ItfLogActivityInput, ItfLogSetInput, ItfWorkoutLog } from '@/interface/itfWorkouts'
+import type {
+   ItfLogActivityInput,
+   ItfLogCustomRoutineInput,
+   ItfLogSetInput,
+   ItfWorkoutLog
+} from '@/interface/itfWorkouts'
 
 const recentLogsKey = (exerciseId: string) => ['workout-logs', exerciseId] as const
 const recentLogsBatchKey = (exerciseIds: string[]) =>
@@ -75,6 +81,23 @@ export const useLogActivity = () => {
          queryClient.invalidateQueries({ queryKey: ['progress'] })
          queryClient.invalidateQueries({ queryKey: ['adherence-alert'] })
          toast.success(ACTIVITY_TOAST[vars.activity_type] ?? 'Actividad registrada 🌱')
+      },
+      onError: (e) => handleApiError(e)
+   })
+}
+
+/** Sprint 11.12: registrar rutina custom con calorías auto-calculadas. */
+export const useLogCustomRoutine = () => {
+   const queryClient = useQueryClient()
+   const { handleApiError } = useErrorHandling()
+   return useMutation<ItfWorkoutLog, Error, ItfLogCustomRoutineInput>({
+      mutationFn: fntLogCustomRoutine,
+      onSuccess: (log) => {
+         queryClient.invalidateQueries({ queryKey: ['workout-logs-batch'] })
+         queryClient.invalidateQueries({ queryKey: ['progress'] })
+         queryClient.invalidateQueries({ queryKey: ['adherence-alert'] })
+         const kcal = log.calories_burned ?? 0
+         toast.success(`Rutina guardada · ${kcal} kcal estimadas 💪`)
       },
       onError: (e) => handleApiError(e)
    })

@@ -18,6 +18,7 @@ export type ItfModality =
    | 'yoga'
    | 'barre'
    | 'pilates'
+   | 'crossfit'
    | 'running'
    | 'cycling'
    | 'swimming'

@@ -693,5 +693,109 @@ export const SEED_EXERCISES: ItfExercise[] = [
       isCompound: false,
       modalities: ['pilates'],
       videoUrl: 'https://www.youtube.com/watch?v=H-S2-vWqgK0'
+   },
+
+   // === CROSSFIT (Sprint 11.12) ===
+   {
+      id: 'crossfit-thruster',
+      name: 'Thruster con mancuernas',
+      pattern: 'squat',
+      muscleGroups: ['cuádriceps', 'glúteos', 'hombros'],
+      equipmentRequired: ['dumbbells', 'kettlebell'],
+      difficulty: 'intermediate',
+      affectedZones: ['hombro', 'rodilla'],
+      description:
+         'Sentadilla frontal seguida de press sobre cabeza en un solo movimiento explosivo.',
+      formTips: [
+         'Codos altos en front rack',
+         'Empuja desde los talones',
+         'Press solo al ponerte de pie'
+      ],
+      alternatives: ['goblet-squat', 'crossfit-wall-ball'],
+      isCompound: true,
+      modalities: ['crossfit', 'hiit', 'hybrid'],
+      videoUrl: 'https://www.youtube.com/watch?v=L219ltL15zk'
+   },
+   {
+      id: 'crossfit-wall-ball',
+      name: 'Wall ball shot',
+      pattern: 'squat',
+      muscleGroups: ['cuádriceps', 'glúteos', 'hombros', 'core'],
+      equipmentRequired: ['med_ball', 'kettlebell'],
+      difficulty: 'intermediate',
+      affectedZones: ['hombro', 'rodilla'],
+      description:
+         'Sentadilla con balón medicinal frente al pecho y lanzamiento a un punto en la pared.',
+      formTips: ['Bajada profunda', 'Usa piernas, no brazos', 'Recibe el balón en pecho'],
+      alternatives: ['crossfit-thruster', 'goblet-squat'],
+      isCompound: true,
+      modalities: ['crossfit', 'hiit'],
+      videoUrl: 'https://www.youtube.com/watch?v=fM5_S3rVBI4'
+   },
+   {
+      id: 'crossfit-box-jump',
+      name: 'Box jump',
+      pattern: 'squat',
+      muscleGroups: ['cuádriceps', 'glúteos', 'pantorrillas'],
+      equipmentRequired: ['box', 'bench', 'plyo_box'],
+      difficulty: 'intermediate',
+      affectedZones: ['rodilla', 'tobillo'],
+      description: 'Salto explosivo sobre cajón o banco firme, recibiendo en cuclillas.',
+      formTips: ['Aterriza suave', 'Rodillas alineadas', 'Step down (no jump) para bajar'],
+      alternatives: ['hiit-jump-squat', 'bw-squat'],
+      isCompound: true,
+      modalities: ['crossfit', 'hiit'],
+      videoUrl: 'https://www.youtube.com/watch?v=NBY9-kTuHEk'
+   },
+   {
+      id: 'crossfit-kb-snatch',
+      name: 'Kettlebell snatch',
+      pattern: 'hinge',
+      muscleGroups: ['glúteos', 'isquios', 'hombros', 'core'],
+      equipmentRequired: ['kettlebell'],
+      difficulty: 'advanced',
+      affectedZones: ['lumbar', 'hombro'],
+      description: 'Swing con kettlebell hasta llevarla sobre la cabeza en un solo arco explosivo.',
+      formTips: ['Cadera empuja, no brazo', 'Muñeca neutra arriba', 'Empieza con peso liviano'],
+      alternatives: ['kb-swing', 'crossfit-thruster'],
+      isCompound: true,
+      modalities: ['crossfit', 'hybrid'],
+      videoUrl: 'https://www.youtube.com/watch?v=9AnVPMpKEMQ'
+   },
+   {
+      id: 'crossfit-double-under',
+      name: 'Double under (saltar la cuerda doble)',
+      pattern: 'core',
+      muscleGroups: ['pantorrillas', 'cuádriceps', 'core'],
+      equipmentRequired: ['jump_rope', 'none'],
+      difficulty: 'intermediate',
+      affectedZones: ['tobillo', 'rodilla'],
+      description:
+         'La cuerda pasa dos veces bajo los pies en un solo salto. Cardio explosivo total.',
+      formTips: [
+         'Salta más alto que con singles',
+         'Muñeca hace el trabajo, no el brazo',
+         'Aterriza en mediopié'
+      ],
+      alternatives: ['hiit-high-knees', 'hiit-mountain-climber'],
+      isCompound: true,
+      modalities: ['crossfit', 'hiit'],
+      videoUrl: 'https://www.youtube.com/watch?v=82jNjDS19lg'
+   },
+   {
+      id: 'crossfit-toes-to-bar',
+      name: 'Toes to bar',
+      pattern: 'core',
+      muscleGroups: ['abdominales', 'flexores cadera', 'dorsales'],
+      equipmentRequired: ['pull_up_bar'],
+      difficulty: 'advanced',
+      affectedZones: ['lumbar', 'hombro'],
+      description:
+         'Colgada de la barra, lleva los pies a tocar la barra usando core e impulso de cadera.',
+      formTips: ['Comienza con knee raises si no logras', 'Kipping controlado', 'Hombros activos'],
+      alternatives: ['hanging-knee-raise', 'pilates-hundred'],
+      isCompound: true,
+      modalities: ['crossfit'],
+      videoUrl: 'https://www.youtube.com/watch?v=_03pCKOv4l4'
    }
 ]

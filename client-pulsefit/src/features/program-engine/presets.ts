@@ -140,6 +140,50 @@ export const PROGRAM_PRESETS: ProgramPreset[] = [
       })
    },
    {
+      id: 'crossfit_12w',
+      label: 'CrossFit progresivo en 12 semanas',
+      description: 'Calistenia → HIIT → CrossFit completo. Onramp seguro.',
+      emoji: '🪨',
+      build: (opts) => ({
+         name: 'Mi PulseFit CrossFit',
+         goal_type: 'gain_muscle',
+         target_weight_kg: opts?.target_weight_kg ?? null,
+         total_weeks: 12,
+         phases: [
+            {
+               phase_order: 1,
+               phase_name: 'Onramp — patrones básicos',
+               modality: 'calistenia',
+               weeks: 4,
+               sessions_per_week: 3,
+               intensity_target: 'moderate',
+               focus: 'full_body',
+               description: 'Squat, hinge, push, pull. Cero kettlebells todavía.'
+            },
+            {
+               phase_order: 2,
+               phase_name: 'Metcon corto',
+               modality: 'hiit',
+               weeks: 4,
+               sessions_per_week: 4,
+               intensity_target: 'moderate',
+               focus: 'full_body',
+               description: 'EMOMs y AMRAPs cortos. Empezás a moverte rápido.'
+            },
+            {
+               phase_order: 3,
+               phase_name: 'CrossFit pleno',
+               modality: 'crossfit',
+               weeks: 4,
+               sessions_per_week: 4,
+               intensity_target: 'intense',
+               focus: 'full_body',
+               description: 'WODs estándar con thrusters, wall balls, box jumps, snatch.'
+            }
+         ]
+      })
+   },
+   {
       id: 'event_10w',
       label: 'Preparar un evento (10K, carrera)',
       description: 'Running + fuerza accesoria. Ajustada a tu fecha.',
@@ -197,6 +241,7 @@ export const MODALITY_LABEL: Record<ItfModality, string> = {
    yoga: 'Yoga',
    barre: 'Barre',
    pilates: 'Pilates',
+   crossfit: 'CrossFit',
    running: 'Running',
    cycling: 'Bici',
    swimming: 'Natación',
@@ -211,6 +256,7 @@ export const MODALITY_EMOJI: Record<ItfModality, string> = {
    yoga: '🧘',
    barre: '🩰',
    pilates: '🌀',
+   crossfit: '🪨',
    running: '🏃',
    cycling: '🚴',
    swimming: '🏊',

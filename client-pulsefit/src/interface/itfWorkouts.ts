@@ -53,6 +53,10 @@ export interface ItfWorkoutLog {
    intensity: number | null /* 1-5 */
    notes: string | null
    session_id: string | null
+   /* Sprint 11.12 — rutina custom registrada por el usuario: */
+   calories_burned: number | null
+   workout_subtype: string | null
+   perceived_effort: string | null
 }
 
 export interface ItfLogSetInput {
@@ -72,6 +76,39 @@ export interface ItfLogActivityInput {
    activity_name: string
    duration_min: number
    intensity: 1 | 2 | 3 | 4 | 5
+   notes?: string
+}
+
+/**
+ * Sprint 11.12: log de rutina custom (cuando el usuario ya tiene SU propia
+ * rutina y la registra para que la app calcule el impacto).
+ *
+ * Diferencia con ItfLogActivityInput:
+ *   - workout_subtype categoriza la rutina (gym/hiit/yoga/etc) para MET correcto.
+ *   - calories_burned se calcula en cliente con met-table + peso actual.
+ *   - activity_type siempre 'movement' (rutinas custom no encajan en cardio/sport/dance).
+ */
+export interface ItfLogCustomRoutineInput {
+   activity_name: string /* "Mi rutina del lunes", "Sesión rápida" */
+   workout_subtype:
+      | 'strength'
+      | 'calistenia'
+      | 'hiit'
+      | 'yoga'
+      | 'pilates'
+      | 'barre'
+      | 'crossfit'
+      | 'cardio'
+      | 'running'
+      | 'cycling'
+      | 'swimming'
+      | 'dance'
+      | 'sport'
+      | 'mixed'
+   duration_min: number /* 1-300 */
+   intensity: 1 | 2 | 3 | 4 | 5
+   calories_burned: number /* Calculado por cliente con met-table. */
+   perceived_effort?: string /* "Tranquila", "Justa", "Intensa". Cualitativo. */
    notes?: string
 }
 

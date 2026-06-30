@@ -1,5 +1,10 @@
 import { supabase } from './supabaseConf'
-import type { ItfLogActivityInput, ItfLogSetInput, ItfWorkoutLog } from '@/interface/itfWorkouts'
+import type {
+   ItfLogActivityInput,
+   ItfLogCustomRoutineInput,
+   ItfLogSetInput,
+   ItfWorkoutLog
+} from '@/interface/itfWorkouts'
 
 /**
  * Inserta una entrada de log para un ejercicio terminado en una sesión.
@@ -69,6 +74,50 @@ export const fntLogActivity = async (input: ItfLogActivityInput): Promise<ItfWor
 
    if (error) {
       throw new Error(`No pudimos guardar la actividad: ${error.message.slice(0, 100)} 🌿`)
+   }
+   return data as ItfWorkoutLog
+}
+
+/**
+ * Sprint 11.12: log de RUTINA CUSTOM. El usuario hizo su propia rutina
+ * (no la del motor) y la app calcula calorías quemadas + impacta racha.
+ *
+ * activity_type='movement' para reuso del CHECK constraint existente.
+ * El detalle real va en workout_subtype (gym/hiit/yoga/crossfit/...) que
+ * permite mostrar emoji + label correcto en historial.
+ */
+export const fntLogCustomRoutine = async (
+   input: ItfLogCustomRoutineInput
+): Promise<ItfWorkoutLog> => {
+   const { data: auth } = await supabase.auth.getUser()
+   const userId = auth.user?.id
+   if (!userId) throw new Error('Sesión inválida, vuelve a entrar 🌱')
+
+   const { data, error } = await supabase
+      .from('workout_logs')
+      .insert({
+         user_id: userId,
+         activity_type: 'movement',
+         activity_name: input.activity_name,
+         workout_subtype: input.workout_subtype,
+         duration_min: input.duration_min,
+         intensity: input.intensity,
+         calories_burned: input.calories_burned,
+         perceived_effort: input.perceived_effort ?? null,
+         notes: input.notes ?? null,
+         exercise_id: null,
+         exercise_name: null,
+         sets_completed: null,
+         reps_completed: null,
+         weight_kg: null,
+         rpe_actual: null,
+         session_id: null
+      } as never)
+      .select('*')
+      .single()
+
+   if (error) {
+      throw new Error(`No pudimos guardar tu rutina: ${error.message.slice(0, 100)} 🌿`)
    }
    return data as ItfWorkoutLog
 }

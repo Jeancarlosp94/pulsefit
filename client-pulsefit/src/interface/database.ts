@@ -134,6 +134,10 @@ export interface WorkoutLogRow {
    intensity: number | null
    notes: string | null
    session_id: string | null
+   /* Sprint 11.12 — rutina custom: */
+   calories_burned: number | null
+   workout_subtype: string | null
+   perceived_effort: string | null
 }
 export type WorkoutLogInsert = Partial<Omit<WorkoutLogRow, 'id'>> & {
    user_id: string

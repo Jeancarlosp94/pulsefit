@@ -1,9 +1,10 @@
 import { useState } from 'react'
-import { Plus, Scale, Droplet, Dumbbell, Activity, X } from 'lucide-react'
+import { Plus, Scale, Droplet, Dumbbell, Activity, Flame, X } from 'lucide-react'
 import { cn } from '@/utils'
 import { useNavigate } from 'react-router-dom'
 import { WeightLogDialog } from './WeightLogDialog'
 import { LogActivityDialog } from './LogActivityDialog'
+import { LogCustomRoutineDialog } from './LogCustomRoutineDialog'
 import { useAddWater } from '@/hooks/useWaterLogs'
 
 /**
@@ -23,6 +24,7 @@ export const QuickActionFAB = () => {
    const [open, setOpen] = useState(false)
    const [weightOpen, setWeightOpen] = useState(false)
    const [activityOpen, setActivityOpen] = useState(false)
+   const [customOpen, setCustomOpen] = useState(false)
    const addWater = useAddWater()
 
    const handleWater = () => {
@@ -38,6 +40,11 @@ export const QuickActionFAB = () => {
    const handleActivity = () => {
       setOpen(false)
       setActivityOpen(true)
+   }
+
+   const handleCustomRoutine = () => {
+      setOpen(false)
+      setCustomOpen(true)
    }
 
    const handleWorkout = () => {
@@ -60,6 +67,7 @@ export const QuickActionFAB = () => {
          {open ? (
             <div className='fixed bottom-28 right-5 z-40 flex flex-col items-end gap-2'>
                <ActionItem icon={Dumbbell} label='Entrenar' onClick={handleWorkout} />
+               <ActionItem icon={Flame} label='Mi rutina' onClick={handleCustomRoutine} />
                <ActionItem icon={Activity} label='Actividad' onClick={handleActivity} />
                <ActionItem icon={Scale} label='Peso' onClick={handleWeight} />
                <ActionItem icon={Droplet} label='+ Agua' onClick={handleWater} />
@@ -82,6 +90,7 @@ export const QuickActionFAB = () => {
 
          <WeightLogDialog open={weightOpen} onOpenChange={setWeightOpen} />
          <LogActivityDialog open={activityOpen} onOpenChange={setActivityOpen} />
+         <LogCustomRoutineDialog open={customOpen} onOpenChange={setCustomOpen} />
       </>
    )
 }
