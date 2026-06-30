@@ -154,6 +154,21 @@ Detalle completo (flujos paso a paso, prompts exactos a Groq, reglas del validad
 - `WeeklyReviewPage` en `/revision`: card greeting + summary + chips highlights + grid 2×4 métricas + lista ajustes con toggles y badges priority + botón "Aplicar y empezar nueva semana".
 - Card "Revisar mi semana" en HomePage (border primary, antes de atajo Perfil) navega a /revision.
 
+### 2026-06-29 — Sprint 11.8B (onboarding modo rápido)
+- FAST_TRACK_DEFAULTS en `store/onboarding-fast-track.ts`: activityLevel=sedentary, fitnessLevel=beginner, cooksAtHome=sometimes, mealsPerDay=3, budgetLevel=medium, availableDays=L-V, availableMinutes=30, equipment=[].
+- Step1Welcome con selector visual de modo: "Completa (7 pasos)" / "Rápida (3 pasos) ⚡". Flag `fastTrack` persiste en store.
+- Step3Body: si fastTrack=true → aplica defaults + skip directo a /onboarding/7 (4 next() consecutivos).
+- Step7Review: banner "Modo rápido activado ⚡" + handleBack navega de vuelta al Step 3 directo. Invitación compasiva a personalizar más tarde desde Perfil.
+- Resuelve caso Camila (mamá 3 hijos abandonó por "demasiado largo").
+
+### 2026-06-29 — Sprint 11.8A (filtros médicos diabetes + hipertensión)
+- Tags médicos en seed-ingredients (cliente + Deno mirror): high_sodium (atún en lata), simple_carb (arroz blanco, papa cocida), high_sugar (banana, plátano maduro).
+- MEDICAL_CONDITION_TO_FORBIDDEN_TAGS en ingredient-pool: hipertension→high_sodium, diabetes→simple_carb+high_sugar. Alias normalizados: hypertension, diabetes_type_2, prediabetes.
+- ItfUserContextForMeal + UserContextForMeal (Deno mirror) ahora aceptan `medicalConditions`.
+- Edge Functions generate-meal-plan + generate-meal-options: SELECT incluye medical_conditions, se pasa al ctx.
+- Disclaimer accent en Step3Body cuando declara diabetes o hipertensión con explicación específica + recomendación profesional + "no reemplaza atención médica".
+- 10 tests nuevos en medical-filter.test.ts cubren: filtros, acumulación, alias, condición desconocida, alternativas saludables. Resuelve B-06 del informe v1 (Diego diabético, Doña Carmen hipertensa).
+
 ### 2026-06-29 — Sprint 11.7 (tipo workout deporte/baile/cardio/movimiento)
 - Migración `20260629000002_workout_activity_types.sql`: ADD a workout_logs columnas activity_type, activity_name, duration_min, intensity. DROP NOT NULL en exercise_id/sets/reps/weight/exercise_name. Constraint coherencia strength vs no-strength.
 - ItfWorkoutLog ampliado con campos nullables + nuevo ItfLogActivityInput. ItfActivityType = strength/cardio/sport/dance/movement.

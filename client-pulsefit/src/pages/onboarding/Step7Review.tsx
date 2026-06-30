@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { ArrowLeft, Flame, Droplets, Sparkles, AlertTriangle, Loader2 } from 'lucide-react'
+import { ArrowLeft, Flame, Droplets, Sparkles, AlertTriangle, Loader2, Zap } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
@@ -66,6 +66,15 @@ const Step7Review = () => {
    const hasMedical = data.medicalConditions.length > 0 && !data.medicalConditions.includes('none')
 
    const handleBack = () => {
+      /* Sprint 11.8B: en modo rápido vinimos directo del Step 3, no del 6. */
+      if (data.fastTrack) {
+         back() /* 7 → 6 */
+         back() /* 6 → 5 */
+         back() /* 5 → 4 */
+         back() /* 4 → 3 */
+         navigate('/onboarding/3')
+         return
+      }
       back()
       navigate('/onboarding/6')
    }
@@ -148,6 +157,23 @@ const Step7Review = () => {
          subtitle='Estos números son tu punto de partida. Los ajustaremos cada semana.'
       >
          <div className='space-y-4'>
+            {/* Sprint 11.8B: indicador modo rápido + invitación a personalizar */}
+            {data.fastTrack ? (
+               <Card className='border-primary/30 bg-primary/5'>
+                  <CardContent className='flex items-start gap-3 pt-6 text-sm'>
+                     <Zap className='mt-0.5 h-4 w-4 shrink-0 text-primary' />
+                     <div className='space-y-1'>
+                        <p className='font-medium'>Modo rápido activado ⚡</p>
+                        <p className='text-xs text-muted-foreground'>
+                           Saltamos los pasos opcionales con defaults sensatos: 3 comidas/día,
+                           presupuesto medio, sin equipo, lunes a viernes. Después puedes
+                           personalizar todo desde Perfil sin perder tu progreso 🌱
+                        </p>
+                     </div>
+                  </CardContent>
+               </Card>
+            ) : null}
+
             {fail ? (
                <Card className='border-accent/40 bg-accent/5'>
                   <CardContent className='flex items-start gap-3 pt-6 text-sm'>

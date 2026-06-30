@@ -14,6 +14,10 @@ export interface OnboardingData {
    // Step 1 — consent
    acceptedTerms: boolean
    acceptedPrivacy: boolean
+   /** Sprint 11.8B: modo rápido — salta Steps 4, 5, 6 con defaults sensatos.
+    * Pensado para usuarios sin tiempo (caso Camila, 3 hijos). El usuario
+    * puede personalizar más tarde desde Perfil. */
+   fastTrack: boolean
 
    // Step 2 — objetivo
    goal: ItfGoal | null
@@ -67,6 +71,7 @@ export interface OnboardingData {
 const initialData: OnboardingData = {
    acceptedTerms: false,
    acceptedPrivacy: false,
+   fastTrack: false,
 
    goal: null,
    targetWeightKg: null,

@@ -19,6 +19,7 @@ import { useOnboardingStore } from '@/store/onboarding'
 import { step3Schema, type Step3Values } from '@/validations'
 import { SEX_OPTIONS, MEDICAL_CONDITIONS } from '@/config'
 import { checkImcVsGoal, checkMinimumAge } from '@/features/safety-guards'
+import { FAST_TRACK_DEFAULTS } from '@/store/onboarding-fast-track'
 import { cn } from '@/utils'
 
 const Step3Body = () => {
@@ -66,7 +67,7 @@ const Step3Body = () => {
       setBlockMsg(null)
       setAdviceMsg(imcCheck.adviceMessage)
 
-      update({
+      const basePatch = {
          age: ageCheck.age ?? values.age,
          dateOfBirth: dob,
          sex: values.sex,
@@ -74,7 +75,22 @@ const Step3Body = () => {
          currentWeightKg: values.currentWeightKg,
          medicalConditions: values.medicalConditions,
          eatingDisorderHistory
-      })
+      }
+
+      /* Sprint 11.8B: en modo rápido aplicamos defaults inteligentes y
+       * saltamos directo al Step 7 (revisión). */
+      if (data.fastTrack) {
+         update({ ...basePatch, ...FAST_TRACK_DEFAULTS })
+         /* Saltar de step 3 a 7 directamente. */
+         next() /* 4 */
+         next() /* 5 */
+         next() /* 6 */
+         next() /* 7 */
+         navigate('/onboarding/7')
+         return
+      }
+
+      update(basePatch)
       next()
       navigate('/onboarding/4')
    }

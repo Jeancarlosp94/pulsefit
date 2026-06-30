@@ -19,6 +19,64 @@ La versión sigue el roadmap de fases (no semver tradicional).
 
 ---
 
+## [Sprint 11.8 — Filtros médicos + onboarding modo rápido] — 2026-06-29
+
+Dos features del backlog post-simulación que cierran B-06 (Diego diabético,
+Doña Carmen hipertensa) y resuelven el caso Camila (mamá soltera con 3
+hijos que abandonó el onboarding por "demasiado largo").
+
+### Sprint 11.8A — Filtros médicos (push 9aa0653)
+
+**TAGS MÉDICOS** en `seed-ingredients` (cliente + Deno mirror):
+- `high_sodium`: atún en lata
+- `simple_carb`: arroz blanco, papa cocida, plátano maduro
+- `high_sugar`: banana madura, plátano maduro
+
+**FILTRO en `ingredient-pool`**:
+- `hipertension` / `hypertension` → excluye `high_sodium`
+- `diabetes` / `diabetes_type_2` / `prediabetes` → excluye `simple_carb` + `high_sugar`
+- `ItfUserContextForMeal` con campo opcional `medicalConditions`
+
+**Edge Functions** (`generate-meal-plan` + `generate-meal-options`):
+- SELECT incluye `medical_conditions` del perfil.
+- Se pasa al ctx para que el motor lo aplique.
+
+**Disclaimer en Step3Body** cuando declara diabetes o hipertensión:
+- Hipertensión: explicación filtro sodio + recomendación médica.
+- Diabetes: explicación filtro IG + recomendación endocrinólogo.
+- "PulseFit no reemplaza atención médica profesional 🌿"
+
+**10 tests nuevos** en `medical-filter.test.ts`.
+
+### Sprint 11.8B — Onboarding modo rápido
+
+**Selector de modo en Step1Welcome**:
+- "Configuración completa (7 pasos)" — flow tradicional.
+- "Configuración rápida (3 pasos) ⚡" — Steps 1, 2, 3, 7 solamente.
+
+**Defaults inteligentes** (`FAST_TRACK_DEFAULTS`) firmados por Lucía + Carlos:
+- activityLevel: 'sedentary' (conservador)
+- fitnessLevel: 'beginner' (seguro)
+- cooksAtHome: 'sometimes' (promedio)
+- budgetLevel: 'medium', mealsPerDay: 3
+- availableDays: lunes-viernes, availableMinutes: 30, equipment: []
+- dietaryRestrictions/dislikedFoods/favoriteCuisines: vacíos
+
+**Skip Steps 4/5/6** en `Step3Body`:
+- Si `fastTrack=true`, después de validar IMC + edad aplica los defaults y navega directo a `/onboarding/7`.
+- `handleBack` de Step7 navega de vuelta al Step 3 saltando 6/5/4.
+
+**Banner "Modo rápido activado ⚡"** en Step7Review con invitación a personalizar más tarde en Perfil. Tono compasivo:
+> *"Después puedes personalizar todo desde Perfil sin perder tu progreso 🌱"*
+
+### Acciones del usuario
+- No requiere migración SQL nueva. Las columnas ya estaban desde 11.5A.
+- Redeploy de Edge Functions `generate-meal-plan` y `generate-meal-options` para que el filtro médico aplique en producción.
+
+**Commit:** próximo push (11.8B). 11.8A ya en push `9aa0653`.
+
+---
+
 ## [Sprint 11.7 — Tipo de actividad expandido (deporte/baile/cardio/movimiento)] — 2026-06-29
 
 > Caso **Esteban** (24, Honduras): *"Yo juego fútbol los sábados con mi clica. ¿Eso no cuenta como entrenamiento?"*
