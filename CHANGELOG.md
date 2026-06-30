@@ -19,6 +19,102 @@ La versión sigue el roadmap de fases (no semver tradicional).
 
 ---
 
+## [Sprint 11.10 — Sistema de Programas "Crear mi PulseFit"] — 2026-06-30
+
+Nueva feature visionaria pedida por el usuario: armar programas multi-fase
+con meta clara, donde cada fase tiene su modalidad (HIIT, yoga, gym,
+barre, etc.) y la app va acompañando con contexto.
+
+Ejemplo del caso de uso del usuario:
+> "Quiero que en el primer mes haga HIIT, luego yoga, luego gym. Y que
+> la app me recalcule o aprenda de ello."
+
+### ✨ Agregado
+- **Migración `20260630000000_training_programs.sql`** con DROP+CREATE limpio:
+  - `training_programs`: name, goal_type (5 valores), target_weight_kg,
+    target_date, total_weeks (1-52), start_date, status (active/completed/
+    paused/cancelled), notes.
+  - `training_phases`: program_id (FK CASCADE), phase_order (1-12),
+    phase_name, modality (11 valores: hiit/gym/calistenia/yoga/barre/
+    pilates/running/cycling/swimming/sport/hybrid), weeks (1-26),
+    sessions_per_week (1-7), intensity_target (light/moderate/intense),
+    focus (full_body/upper/lower/core/cardio), description.
+  - RLS por user_id + RLS transitiva en phases (vía program_id).
+
+- **Motor `features/program-engine/`**:
+  - `presets.ts` con 4 programas LATAM-friendly firmados por Carlos:
+    · 🌱 Bajar 3-5 kg en 12 semanas (HIIT → Mixto → Gym)
+    · 💪 Ganar músculo en 16 semanas (Calistenia → Gym → Hipertrofia)
+    · 🌿 Sentirme mejor en 8 semanas (Yoga → Pilates)
+    · 🏃 Preparar evento en 10 semanas (Running base → velocidad → tapering)
+  - `compute-active-phase.ts`: dado un programa y la fecha actual,
+    calcula la fase activa, semana_en_fase, semana_en_programa y
+    semanas restantes. Maneja casos: futuro (upcoming), activo, terminado.
+  - `validate-phases`: garantiza que las fases sumen exactamente
+    total_weeks y que haya 1-6 fases.
+  - 14 tests cubriendo cálculos temporales + validaciones + presets.
+
+- **API + hooks**: `fntPrograms.ts` (create, getActive, cancel) +
+  `usePrograms.ts` con `useActiveProgram`, `useActivePhase`,
+  `useCreateProgram`, `useCancelActiveProgram`. Marcar programas anteriores
+  como `paused` al crear uno nuevo (no permite múltiples activos).
+
+- **UI**:
+  - `ProgramPage` (`/programa`): muestra programa activo con resumen,
+    fase actual destacada (border-2 primary), timeline de fases con
+    badge "Hoy" en la actual. Botón cancelar.
+  - `CreateProgramPage` (`/programa/crear`): wizard de 2 pasos:
+    1. Selección de preset (4 cards visuales con emoji)
+    2. Personalizar: nombre + peso objetivo + preview del timeline
+  - Card "Mi PulseFit" en HomePage: si hay programa activo muestra
+    fase actual con emoji modality + semana. Si no hay → card con
+    border dashed "Crear mi PulseFit ⚡".
+
+### 🧪 Tests
+- 11 nuevos en `program-engine.test.ts`. Suite: **464 tests** (vs 453 antes).
+
+### Acciones del usuario
+- Aplicar `20260630000000_training_programs.sql` en Supabase SQL Editor.
+
+### Próximo paso (queda pendiente)
+- Integrar la `activePhase.modality` al `routine-generator`: cuando el
+  usuario tap'ea "Generar mi rutina", el motor debe respetar la modalidad
+  (yoga → asanas, HIIT → circuitos, gym → compound, etc.). Hoy
+  `generate-workout-session` solo usa `focus`, no `modality`. Eso es el
+  próximo iteration que hace este sistema realmente "inteligente".
+
+**Commit:** próximo push
+
+---
+
+## [Sprint 11.9.1 — Hotfix UX] — 2026-06-30
+
+Tres mejoras juntas para resolver feedback del usuario:
+
+### 🐛 Fix
+- **Workout no genera nunca**: `useGenerateWorkout` ahora loguea el error
+  completo a consola Y muestra mensaje específico según el código:
+  · 404 → "La función de entrenamiento no está disponible" + hint de
+    deploy.
+  · 429 → rate limit (10/día).
+  · 422 → pool vacío (verificar equipo en Perfil).
+- **Progreso vacío sin claridad**: `ProgresoPage` con 3 estados:
+  · Loading: "Cargando tu historial…"
+  · Empty: "Aún no registraste tu peso. Tap el botón ⚖️ del Home".
+  · Error: banner con "Puede ser que falte aplicar alguna migración SQL".
+
+### ✨ Mejorado
+- **System prompt apetitoso** en `compose-prompt.ts` (cliente + Deno mirror):
+  - REGLAS DE NOMBRES con instrucciones explícitas: adjetivos LATAM
+    ("casero", "criollo", "al horno"), nombres por ingrediente
+    (pescado → "a la plancha", polvo → "batido"), nombres por meal_type.
+  - EVITAR "Salteado de X" como default robótico.
+  - INSPIRARSE en cocinas LATAM: ceviche, lomo, encebollado, chilaquiles.
+
+**Commit:** push `4e77939`
+
+---
+
 ## [Sprint 11.8 — Filtros médicos + onboarding modo rápido] — 2026-06-29
 
 Dos features del backlog post-simulación que cierran B-06 (Diego diabético,

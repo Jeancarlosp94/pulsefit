@@ -15,6 +15,8 @@ import {
    RescatePage,
    WeeklyReviewPage,
    InsightsPage,
+   ProgramPage,
+   CreateProgramPage,
    NotFoundPage
 } from '@/pages'
 import { initAuthSubscription } from '@/store/auth'
@@ -145,6 +147,22 @@ const App = () => {
                element={
                   <AuthRoute>
                      <InsightsPage />
+                  </AuthRoute>
+               }
+            />
+            <Route
+               path='/programa'
+               element={
+                  <AuthRoute>
+                     <ProgramPage />
+                  </AuthRoute>
+               }
+            />
+            <Route
+               path='/programa/crear'
+               element={
+                  <AuthRoute>
+                     <CreateProgramPage />
                   </AuthRoute>
                }
             />

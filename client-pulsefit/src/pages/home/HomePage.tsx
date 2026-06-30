@@ -10,8 +10,11 @@ import {
    ChevronRight,
    Scale,
    LifeBuoy,
-   Sparkles
+   Sparkles,
+   Target
 } from 'lucide-react'
+import { useActiveProgram, useActivePhase } from '@/hooks/usePrograms'
+import { MODALITY_EMOJI, MODALITY_LABEL } from '@/features/program-engine'
 import { AppShell } from '@/layout'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -50,6 +53,8 @@ const HomePage = () => {
    const [adherenceDismissed, setAdherenceDismissed] = useState(false)
    const moodAlert = useMoodAlert()
    const adherenceAlert = useAdherenceAlert()
+   const activeProgram = useActiveProgram()
+   const activePhase = useActivePhase()
 
    /* Si detectamos mood persistente bajo, mostramos el modal una vez al cargar
     * el Home. Severity=high es de auto-show; medium se ofrece como sugerencia. */
@@ -107,6 +112,62 @@ const HomePage = () => {
             {/* Mood check-in del día (aparece solo si no respondió hoy) */}
             <motion.div {...fadeIn(next())}>
                <MoodCheckCard />
+            </motion.div>
+
+            {/* Sprint 11.10: card de programa activo o CTA "Crear mi PulseFit" */}
+            <motion.div {...fadeIn(next())} {...tapScale}>
+               {activeProgram.data && activePhase ? (
+                  <Card
+                     className='cursor-pointer border-primary/40 bg-primary/5 transition-colors hover:bg-primary/10'
+                     onClick={() => navigate('/programa')}
+                  >
+                     <CardContent className='space-y-2 pt-6'>
+                        <div className='flex items-center justify-between gap-3'>
+                           <div className='flex items-start gap-3'>
+                              <Target className='mt-0.5 h-5 w-5 shrink-0 text-primary' />
+                              <div className='space-y-0.5'>
+                                 <p className='text-sm font-medium'>{activeProgram.data.name}</p>
+                                 <p className='text-xs text-muted-foreground'>
+                                    Semana {activePhase.week_in_program}/
+                                    {activeProgram.data.total_weeks} · Fase{' '}
+                                    {activePhase.phase.phase_order}
+                                 </p>
+                              </div>
+                           </div>
+                           <ChevronRight className='h-4 w-4 text-muted-foreground' />
+                        </div>
+                        <div className='flex items-center gap-2 rounded-md border border-primary/20 bg-background p-2 text-xs'>
+                           <span aria-hidden='true' className='text-base'>
+                              {MODALITY_EMOJI[activePhase.phase.modality]}
+                           </span>
+                           <span>
+                              <strong>{activePhase.phase.phase_name}</strong> ·{' '}
+                              {MODALITY_LABEL[activePhase.phase.modality]} ·{' '}
+                              {activePhase.phase.sessions_per_week} sesiones/sem
+                           </span>
+                        </div>
+                     </CardContent>
+                  </Card>
+               ) : !activeProgram.isLoading ? (
+                  <Card
+                     className='cursor-pointer border-2 border-dashed border-primary/40 bg-background transition-colors hover:bg-primary/5'
+                     onClick={() => navigate('/programa/crear')}
+                  >
+                     <CardContent className='flex items-center justify-between gap-3 pt-6'>
+                        <div className='flex items-start gap-3'>
+                           <Sparkles className='mt-0.5 h-5 w-5 shrink-0 text-primary' />
+                           <div className='space-y-0.5'>
+                              <p className='text-sm font-medium'>Crear mi PulseFit ⚡</p>
+                              <p className='text-xs text-muted-foreground'>
+                                 Arma tu programa con fases (HIIT → Yoga → Gym). La app te acompaña
+                                 paso a paso.
+                              </p>
+                           </div>
+                        </div>
+                        <ChevronRight className='h-4 w-4 text-muted-foreground' />
+                     </CardContent>
+                  </Card>
+               ) : null}
             </motion.div>
 
             {/* Alerta de adherencia crítica (< 20% en 14 días). Sin juicio. */}

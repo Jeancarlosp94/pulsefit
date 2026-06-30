@@ -154,6 +154,21 @@ Detalle completo (flujos paso a paso, prompts exactos a Groq, reglas del validad
 - `WeeklyReviewPage` en `/revision`: card greeting + summary + chips highlights + grid 2×4 métricas + lista ajustes con toggles y badges priority + botón "Aplicar y empezar nueva semana".
 - Card "Revisar mi semana" en HomePage (border primary, antes de atajo Perfil) navega a /revision.
 
+### 2026-06-30 — Sprint 11.10 (sistema "Crear mi PulseFit")
+- Migración `20260630000000_training_programs.sql`: 2 tablas (training_programs + training_phases) con RLS por user_id (transitiva en phases). DROP+CREATE limpio. 11 modalidades soportadas (hiit/gym/calistenia/yoga/barre/pilates/running/cycling/swimming/sport/hybrid).
+- `features/program-engine/`: presets.ts con 4 templates LATAM (bajar 3-5kg/12sem, ganar músculo/16sem, sentirse mejor/8sem, evento running/10sem). compute-active-phase calcula fase actual + semana en fase + semana en programa.
+- API `fntPrograms` (create/getActive/cancel) + hooks `useActiveProgram` / `useActivePhase` / `useCreateProgram`. Crear nuevo pausa el anterior (1 activo por usuario).
+- UI: `ProgramPage` /programa con timeline visual y badge "Hoy" en fase actual. `CreateProgramPage` /programa/crear con wizard 2 pasos (preset + customize).
+- HomePage: card "Mi PulseFit" con info de fase actual O CTA dashed "Crear mi PulseFit ⚡".
+- 11 tests nuevos en program-engine. Suite 464/464.
+- PENDIENTE: integrar `activePhase.modality` al routine-generator para que respete modalidad.
+
+### 2026-06-30 — Hotfix 11.9.1 (workout error feedback + progress empty + system prompt)
+- useGenerateWorkout con códigos específicos (404/429/422) + console.error.
+- ProgresoPage con loading + empty + error states reales (banner si query.isError).
+- SYSTEM_PROMPT con REGLAS DE NOMBRES apetitosos: adjetivos LATAM, nombres por ingrediente (no "salteado" para polvo proteico), inspirado en cocina LATAM.
+- Aplicado también al mirror Deno meal-engine.ts.
+
 ### 2026-06-29 — Sprint 11.8B (onboarding modo rápido)
 - FAST_TRACK_DEFAULTS en `store/onboarding-fast-track.ts`: activityLevel=sedentary, fitnessLevel=beginner, cooksAtHome=sometimes, mealsPerDay=3, budgetLevel=medium, availableDays=L-V, availableMinutes=30, equipment=[].
 - Step1Welcome con selector visual de modo: "Completa (7 pasos)" / "Rápida (3 pasos) ⚡". Flag `fastTrack` persiste en store.

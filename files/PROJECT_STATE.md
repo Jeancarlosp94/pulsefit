@@ -1,6 +1,6 @@
 # 📍 Estado actual del proyecto PulseFit
 
-> **Última actualización:** 2026-06-29 — Sprint 11.8 cerrado (A: filtros médicos diabetes/hipertensión + B: onboarding modo rápido). 453 tests verde.
+> **Última actualización:** 2026-06-30 — Sprint 11.10 cerrado (sistema "Crear mi PulseFit": programas multi-fase con modalidades). 464 tests verde.
 > **Última verificación:** 402/402 tests verdes · 0 lint errors · build OK
 
 ---
