@@ -59,8 +59,28 @@ const ProgresoPage = () => {
       <AppShell userName={profile?.name ?? null}>
          <TitleUI title='Tu progreso' subtitle='Cada paso cuenta, también los que cuestan.' />
 
+         {/* Banner de diagnóstico si la query falla (migración no aplicada, etc.) */}
+         {adherenceQuery.isError ||
+         weightQuery.isError ||
+         wellbeingQuery.isError ||
+         strengthQuery.isError ? (
+            <Card className='mb-4 border-accent/30 bg-accent/5'>
+               <CardContent className='pt-6 text-sm'>
+                  <p className='font-medium'>No pudimos cargar todo tu progreso 🌿</p>
+                  <p className='mt-1 text-xs text-muted-foreground'>
+                     Puede ser que falte aplicar alguna migración SQL en Supabase. Revisa la consola
+                     del navegador para más detalles.
+                  </p>
+               </CardContent>
+            </Card>
+         ) : null}
+
          {/* Adherencia siempre visible arriba */}
-         {adherenceQuery.data ? (
+         {adherenceQuery.isLoading ? (
+            <p className='mb-4 text-center text-xs text-muted-foreground'>
+               Cargando tu adherencia…
+            </p>
+         ) : adherenceQuery.data ? (
             <div className='mb-4'>
                <AdherenceCard data={adherenceQuery.data} />
             </div>
@@ -94,10 +114,22 @@ const ProgresoPage = () => {
                      <CardTitle className='text-base'>Tu peso (90 días)</CardTitle>
                   </CardHeader>
                   <CardContent>
-                     <WeightChart data={weightQuery.data ?? []} />
-                     {(weightQuery.data?.length ?? 0) >= 2 ? (
-                        <WeightComparison data={weightQuery.data!} />
-                     ) : null}
+                     {weightQuery.isLoading ? (
+                        <p className='py-6 text-center text-xs text-muted-foreground'>
+                           Cargando tu historial…
+                        </p>
+                     ) : (weightQuery.data?.length ?? 0) === 0 ? (
+                        <div className='py-6 text-center text-xs text-muted-foreground'>
+                           <p>Aún no registraste tu peso. Tap el botón ⚖️ del Home para empezar.</p>
+                        </div>
+                     ) : (
+                        <>
+                           <WeightChart data={weightQuery.data ?? []} />
+                           {(weightQuery.data?.length ?? 0) >= 2 ? (
+                              <WeightComparison data={weightQuery.data!} />
+                           ) : null}
+                        </>
+                     )}
                   </CardContent>
                </Card>
             ) : null}
@@ -108,7 +140,18 @@ const ProgresoPage = () => {
                      <CardTitle className='text-base'>Energía y ánimo (30 días)</CardTitle>
                   </CardHeader>
                   <CardContent>
-                     <WellbeingChart data={wellbeingQuery.data ?? []} />
+                     {wellbeingQuery.isLoading ? (
+                        <p className='py-6 text-center text-xs text-muted-foreground'>
+                           Cargando tu bienestar…
+                        </p>
+                     ) : (wellbeingQuery.data?.length ?? 0) === 0 ? (
+                        <p className='py-6 text-center text-xs text-muted-foreground'>
+                           Aún no registraste tu ánimo. Aparece en el Home cada día — solo te lo
+                           preguntamos una vez 🌿
+                        </p>
+                     ) : (
+                        <WellbeingChart data={wellbeingQuery.data ?? []} />
+                     )}
                   </CardContent>
                </Card>
             ) : null}
