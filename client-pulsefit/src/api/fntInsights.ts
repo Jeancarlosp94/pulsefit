@@ -21,7 +21,7 @@ export const fntGetInsights = async (): Promise<{
 
    const since60 = new Date(Date.now() - 60 * 86400000).toISOString().slice(0, 10)
 
-   const [meals, workouts, moods, water, rescues] = await Promise.all([
+   const [meals, workouts, moods, water, rescues, profileRes] = await Promise.all([
       supabase
          .from('meal_logs')
          .select('logged_at, status, meal_type, recipe_name')
@@ -46,8 +46,13 @@ export const fntGetInsights = async (): Promise<{
          .from('rescue_events')
          .select('event_date, trigger_type')
          .eq('user_id', userId)
-         .gte('event_date', since60)
+         .gte('event_date', since60),
+      supabase.from('profiles').select('monotonous_meals_preferred').eq('id', userId).maybeSingle()
    ])
+
+   const monotone =
+      ((profileRes.data as { monotonous_meals_preferred: boolean | null } | null) ?? null)
+         ?.monotonous_meals_preferred === true
 
    const patterns = detectAllPatterns({
       meals:
@@ -65,7 +70,8 @@ export const fntGetInsights = async (): Promise<{
             mood_level: number
          }> | null) ?? [],
       water: (water.data as Array<{ logged_at: string; delta_glasses: number }> | null) ?? [],
-      rescues: (rescues.data as Array<{ event_date: string; trigger_type: string }> | null) ?? []
+      rescues: (rescues.data as Array<{ event_date: string; trigger_type: string }> | null) ?? [],
+      monotonous_meals_preferred: monotone
    })
 
    const recommendations = prioritizeInsights(buildRecommendations(patterns), 6)

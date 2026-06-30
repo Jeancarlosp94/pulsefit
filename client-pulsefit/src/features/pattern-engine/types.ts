@@ -56,4 +56,7 @@ export interface PatternEngineInput {
    moods: Array<{ log_date: string; energy_level: number; mood_level: number }>
    water: Array<{ logged_at: string; delta_glasses: number }>
    rescues: Array<{ event_date: string; trigger_type: string }>
+   /** Sprint 11.6: si true, omitimos detección de "frequently_substituted" y
+    * "struggles_with_meals" (el usuario eligió la monotonía consciente). */
+   monotonous_meals_preferred?: boolean
 }

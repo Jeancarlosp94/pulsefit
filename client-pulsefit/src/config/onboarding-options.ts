@@ -222,6 +222,58 @@ export const CUISINE_OPTIONS: OnboardingOption<string>[] = [
       label: 'Mediterránea',
       description: 'Pastas, ensaladas, salmón, frittata.',
       emoji: '🌊'
+   },
+   {
+      value: 'caribena',
+      label: 'Caribeña',
+      description: 'PR, Cuba, RD: mofongo, arroz con habichuelas, ropa vieja, mangú.',
+      emoji: '🏝️'
+   },
+   {
+      value: 'paraguaya',
+      label: 'Paraguaya',
+      description: 'Sopa paraguaya, bori-bori, mbeju.',
+      emoji: '🇵🇾'
+   }
+]
+
+/** Sprint 11.6: estilo de vida — preconfigura defaults sensatos del motor. */
+export const LIFESTYLE_OPTIONS: OnboardingOption<string>[] = [
+   {
+      value: 'estudiante',
+      label: 'Estudiante con vida social',
+      description: 'Vida nocturna ocasional, presupuesto ajustado, tiempo flexible.',
+      emoji: '🎒'
+   },
+   {
+      value: 'oficinista',
+      label: 'Oficinista sedentario',
+      description: 'Trabajo de escritorio, almuerzos rápidos, cero gym en casa.',
+      emoji: '💼'
+   },
+   {
+      value: 'mama_papa',
+      label: 'Mamá / papá con tiempo cero',
+      description: 'Cocina familiar, 10-15 min al día, rutinas relámpago.',
+      emoji: '👨‍👩‍👧'
+   },
+   {
+      value: 'freelance',
+      label: 'Freelance flexible',
+      description: 'Horarios variables, control sobre cocina y entrenamiento.',
+      emoji: '💻'
+   },
+   {
+      value: 'migrante',
+      label: 'Migrante (vivo fuera de mi país)',
+      description: 'Ingredientes distintos, presupuesto cuidado, extraño tu comida.',
+      emoji: '🌍'
+   },
+   {
+      value: 'atleta_amateur',
+      label: 'Atleta amateur',
+      description: 'Entreno 4+ días/semana, planificas comidas, energía alta.',
+      emoji: '💪'
    }
 ]
 

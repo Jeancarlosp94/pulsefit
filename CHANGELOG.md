@@ -19,6 +19,47 @@ La versión sigue el roadmap de fases (no semver tradicional).
 
 ---
 
+## [Sprint 11.6 — Inclusión cultural + estilos de vida + monotonía] — 2026-06-29
+
+Resuelve 3 items del backlog post-simulación:
+- Pool caribeño/rioplatense/paraguayo faltante (Kimberly, Hugo, Vanessa).
+- Estilos de vida no contemplados (6 testers de simulación v2).
+- Modo monotonía consciente (Renzo "solo pollo y arroz").
+
+### ✨ Agregado
+- **Migración `20260629000001_dietary_lifestyle_extras.sql`**: ALTER ADD `profiles.monotonous_meals_preferred boolean NOT NULL DEFAULT false`.
+
+- **2 cocinas nuevas + 11 platos canónicos** en `seed-canonical-dishes.ts`:
+  - **Caribeña** 🏝️ (PR, Cuba, RD): mofongo con pollo, arroz con habichuelas, ropa vieja con plátano, mangú dominicano.
+  - **Rioplatense** (dentro de `cono_sur`): milanesa napolitana al horno, asado argentino con ensalada criolla, choripán con chimichurri casero.
+  - **Paraguaya** 🇵🇾 (nueva cocina): sopa paraguaya horneada, bori-bori con bolitas de maíz.
+  - **Venezolana** (dentro de `andina`): pabellón criollo, arepa rellena de pollo y palta.
+  - `ItfCuisine` se expande con `'caribena'` y `'paraguaya'`.
+  - `CUISINE_OPTIONS` en onboarding-options.ts ahora tiene 8 cocinas.
+
+- **Estilo de vida** en Step 5 del onboarding:
+  - Nuevo `LIFESTYLE_OPTIONS` con 6 perfiles: estudiante con vida social, oficinista sedentario, mamá/papá con tiempo cero, freelance flexible, migrante, atleta amateur.
+  - Selección opcional (single-select). Si se elige, configura defaults sensatos del motor.
+  - Persistido en `profiles.lifestyle` (la columna ya existía desde 11.5A).
+
+- **Modo monotonía consciente** (`monotonous_meals_preferred`):
+  - Checkbox en Step 5 con copy "Prefiero pocos platos repetidos" + descripción explicativa.
+  - Cuando `true`, el pattern-engine **NO** marca:
+    - `frequently_substituted`: el usuario eligió la monotonía, no es problema.
+    - `struggles_with_meals`: aunque skip rate sea alto, lo eligió.
+  - Otros patrones (mood, hidratación, día de adherencia) siguen activos.
+
+### 🧪 Tests
+- 4 nuevos tests en `monotonous.test.ts` cubriendo el flag.
+- Total: **438 tests** (vs 434 antes).
+
+### Acciones del usuario
+- Aplicar migración `20260629000001_dietary_lifestyle_extras.sql` en Supabase.
+
+**Commit:** próximo push
+
+---
+
 ## [Sprint 11.5B — Anti-leaks + educación + adherencia] — 2026-06-29
 
 ### 🐛 Fix

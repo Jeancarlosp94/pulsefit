@@ -219,10 +219,13 @@ const detectGoodHydrationStreak = (input: PatternEngineInput): ItfPattern[] => {
  * ============================================================ */
 
 export const detectAllPatterns = (input: PatternEngineInput): ItfPattern[] => {
+   const monotone = input.monotonous_meals_preferred === true
    return [
-      ...detectFrequentlySubstituted(input),
+      /* Si el usuario eligió monotonía consciente, NO marcamos estos como
+       * problema (Renzo "solo pollo y arroz" no es un patrón problemático). */
+      ...(monotone ? [] : detectFrequentlySubstituted(input)),
       ...detectOftenSkippedMealType(input),
-      ...detectStrugglesWithMeals(input),
+      ...(monotone ? [] : detectStrugglesWithMeals(input)),
       ...detectAvoidsCooking(input),
       ...detectLowAdherenceDay(input),
       ...detectHighWorkoutDay(input),

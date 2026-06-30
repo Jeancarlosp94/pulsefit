@@ -64,6 +64,8 @@ export interface ProfileRow {
    alcohol_frequency: 'none' | 'social' | 'weekly' | 'daily' | null
    tobacco_user: boolean | null
    country_code: string | null
+   /** Sprint 11.6: si true, el pattern-engine no marca patrones de "varía más". */
+   monotonous_meals_preferred: boolean
    created_at: string
    updated_at: string
 }

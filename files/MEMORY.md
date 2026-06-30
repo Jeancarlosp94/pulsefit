@@ -154,6 +154,15 @@ Detalle completo (flujos paso a paso, prompts exactos a Groq, reglas del validad
 - `WeeklyReviewPage` en `/revision`: card greeting + summary + chips highlights + grid 2×4 métricas + lista ajustes con toggles y badges priority + botón "Aplicar y empezar nueva semana".
 - Card "Revisar mi semana" en HomePage (border primary, antes de atajo Perfil) navega a /revision.
 
+### 2026-06-29 — Sprint 11.6 (inclusión cultural + estilos de vida + monotonía consciente)
+- Migración `20260629000001_dietary_lifestyle_extras.sql`: ADD profiles.monotonous_meals_preferred boolean.
+- Seed canonical dishes: +2 cocinas (`caribena`, `paraguaya`) y +11 platos (mofongo, arroz con habichuelas, ropa vieja, mangú, milanesa napolitana, asado argentino, choripán casero, sopa paraguaya, bori-bori, pabellón criollo, arepa). Resuelve queja de Kimberly (PR), Hugo (PY), Vanessa (VE migrante), Tomás (UY).
+- CUISINE_OPTIONS expandido a 8 cocinas en config/onboarding-options.ts.
+- LIFESTIYLE_OPTIONS (6 perfiles): estudiante, oficinista, mama_papa, freelance, migrante, atleta_amateur. Selección opcional en Step5Diet. Persistido en `profiles.lifestyle` (columna ya existía desde 11.5A).
+- Modo monotonía: checkbox en Step5 ("Prefiero pocos platos repetidos"). Si true, `pattern-engine` NO marca `frequently_substituted` ni `struggles_with_meals`. Otros patrones siguen activos. Caso Renzo "solo pollo y arroz".
+- `fntInsights` lee el flag desde profiles y lo pasa a `detectAllPatterns`.
+- 4 tests nuevos. Suite: 438/438 verde.
+
 ### 2026-06-29 — Sprint 11.5B (anti-leaks + educación + adherencia)
 - Fix B-05: validador `validateDietaryConsistency` defensivo en `features/meal-generator/dietary-validator.ts`. Detecta palabras animales en `name` + `steps` post-selección. Soporta vegan, vegetarian, pescatarian, gluten_free, lactose_free. 11 tests nuevos.
 - `RealityCheckCard` en Step 7 del onboarding: 3 verdades educativas (0.5-1%/sem, 8-12 sem cambios visibles, pesas no = musculoso). Resuelve P1 de simulación v2 (milagros 9/20).

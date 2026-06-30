@@ -46,6 +46,17 @@ export interface OnboardingData {
    favoriteCuisines: string[]
    /** IDs de ingredientes que le gustan (boost en el selector). */
    favoriteIngredientIds: string[]
+   /** Sprint 11.6: estilo de vida — preconfigura defaults sensatos. */
+   lifestyle:
+      | 'estudiante'
+      | 'oficinista'
+      | 'mama_papa'
+      | 'freelance'
+      | 'migrante'
+      | 'atleta_amateur'
+      | null
+   /** Sprint 11.6: si true, el pattern-engine no marca "varía más" como problema. */
+   monotonousMealsPreferred: boolean
 
    // Step 6 — horario
    availableDays: number[]
@@ -80,6 +91,8 @@ const initialData: OnboardingData = {
    mealsPerDay: 3,
    favoriteCuisines: [],
    favoriteIngredientIds: [],
+   lifestyle: null,
+   monotonousMealsPreferred: false,
 
    availableDays: [],
    availableMinutes: null,

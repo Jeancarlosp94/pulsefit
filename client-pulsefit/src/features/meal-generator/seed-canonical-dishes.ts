@@ -15,10 +15,12 @@ import type { ItfMealType } from './types'
 export type ItfCuisine =
    | 'andina' /* Peru, Ecuador, Bolivia, Colombia, Venezuela */
    | 'mexicana' /* México y Centroamérica */
-   | 'cono_sur' /* Argentina, Chile, Uruguay */
+   | 'cono_sur' /* Argentina, Chile, Uruguay (rioplatense) */
    | 'brasilena'
    | 'asiatica' /* fusión liviana popular en LATAM */
    | 'mediterranea' /* base saludable universal */
+   | 'caribena' /* PR, Cuba, RD — Sprint 11.6 */
+   | 'paraguaya' /* PY — Sprint 11.6 */
 
 export interface ItfCanonicalDish {
    id: string
@@ -478,6 +480,198 @@ export const CANONICAL_DISHES: ItfCanonicalDish[] = [
       difficulty: 'easy',
       prepTimeMin: 20,
       hint: 'Tortilla italiana de huevo con espinaca y papa, terminada al horno.'
+   },
+
+   /* ============================
+    *  🇵🇷 / 🇨🇺 / 🇩🇴 — CARIBEÑA (Sprint 11.6)
+    * ============================ */
+   {
+      id: 'mofongo-con-pollo',
+      name: 'Mofongo con pollo',
+      cuisine: 'caribena',
+      baseIngredients: {
+         protein: 'chicken-breast',
+         carb: 'plantain',
+         fat: 'olive-oil',
+         vegetable: 'garlic'
+      },
+      mealTypes: ['lunch', 'dinner'],
+      technique: 'guiso',
+      difficulty: 'medium',
+      prepTimeMin: 35,
+      hint: 'Plátano verde majado con ajo, servido con pollo guisado boricua.'
+   },
+   {
+      id: 'arroz-con-habichuelas',
+      name: 'Arroz con habichuelas guisadas',
+      cuisine: 'caribena',
+      baseIngredients: {
+         protein: 'beans-red',
+         carb: 'rice-white',
+         fat: 'olive-oil',
+         vegetable: 'onion'
+      },
+      mealTypes: ['lunch', 'dinner'],
+      technique: 'guiso',
+      difficulty: 'easy',
+      prepTimeMin: 25,
+      hint: 'Combo clásico boricua-dominicano: arroz blanco con habichuelas guisadas con sofrito.'
+   },
+   {
+      id: 'ropa-vieja-platano',
+      name: 'Ropa vieja con plátano maduro',
+      cuisine: 'caribena',
+      baseIngredients: {
+         protein: 'beef-lean',
+         carb: 'plantain',
+         fat: 'olive-oil',
+         vegetable: 'red-pepper'
+      },
+      mealTypes: ['lunch', 'dinner'],
+      technique: 'guiso',
+      difficulty: 'medium',
+      prepTimeMin: 40,
+      hint: 'Falda deshebrada en sofrito cubano, acompañada de plátano maduro al sartén.'
+   },
+   {
+      id: 'mangu-dominicano',
+      name: 'Mangú dominicano con huevo',
+      cuisine: 'caribena',
+      baseIngredients: {
+         protein: 'eggs',
+         carb: 'plantain',
+         fat: 'olive-oil',
+         vegetable: 'onion'
+      },
+      mealTypes: ['breakfast', 'lunch'],
+      technique: 'hervido',
+      difficulty: 'easy',
+      prepTimeMin: 20,
+      hint: 'Puré de plátano verde hervido, cebolla encurtida y huevo frito. Desayuno DR clásico.'
+   },
+
+   /* ============================
+    *  🇦🇷 / 🇺🇾 — RIOPLATENSE (Sprint 11.6, dentro de cono_sur)
+    * ============================ */
+   {
+      id: 'milanesa-napolitana-horno',
+      name: 'Milanesa napolitana al horno',
+      cuisine: 'cono_sur',
+      baseIngredients: {
+         protein: 'chicken-breast',
+         carb: 'potato',
+         fat: 'olive-oil',
+         vegetable: 'tomato'
+      },
+      mealTypes: ['lunch', 'dinner'],
+      technique: 'horno',
+      difficulty: 'medium',
+      prepTimeMin: 35,
+      hint: 'Milanesa empanada al horno con salsa de tomate y queso, papas al horno como guarnición.'
+   },
+   {
+      id: 'asado-con-ensalada',
+      name: 'Asado argentino con ensalada criolla',
+      cuisine: 'cono_sur',
+      baseIngredients: {
+         protein: 'beef-lean',
+         carb: 'rice-white',
+         fat: 'olive-oil',
+         vegetable: 'tomato'
+      },
+      mealTypes: ['lunch', 'dinner'],
+      technique: 'plancha',
+      difficulty: 'easy',
+      prepTimeMin: 30,
+      hint: 'Corte magro a la plancha + ensalada de tomate, cebolla y pimentón con vinagreta.'
+   },
+   {
+      id: 'choripan-casero',
+      name: 'Choripán casero con chimichurri',
+      cuisine: 'cono_sur',
+      baseIngredients: {
+         protein: 'chicken-breast',
+         carb: 'bread-whole-grain',
+         fat: 'olive-oil',
+         vegetable: 'parsley'
+      },
+      mealTypes: ['lunch', 'snack_pm'],
+      technique: 'plancha',
+      difficulty: 'easy',
+      prepTimeMin: 15,
+      hint: 'Pan integral con proteína a la plancha y chimichurri casero (perejil, ajo, aceite, vinagre).'
+   },
+
+   /* ============================
+    *  🇵🇾 — PARAGUAYA (Sprint 11.6)
+    * ============================ */
+   {
+      id: 'sopa-paraguaya',
+      name: 'Sopa paraguaya horneada',
+      cuisine: 'paraguaya',
+      baseIngredients: {
+         protein: 'eggs',
+         carb: 'corn-flour',
+         fat: 'olive-oil',
+         vegetable: 'onion'
+      },
+      mealTypes: ['lunch', 'dinner', 'snack_pm'],
+      technique: 'horno',
+      difficulty: 'medium',
+      prepTimeMin: 45,
+      hint: 'Pastel salado paraguayo de harina de maíz, queso y cebolla. Sí, es sólido. Tradición pura.'
+   },
+   {
+      id: 'bori-bori',
+      name: 'Bori-bori (sopa con bolitas de maíz)',
+      cuisine: 'paraguaya',
+      baseIngredients: {
+         protein: 'chicken-breast',
+         carb: 'corn-flour',
+         fat: 'olive-oil',
+         vegetable: 'carrot'
+      },
+      mealTypes: ['lunch', 'dinner'],
+      technique: 'hervido',
+      difficulty: 'medium',
+      prepTimeMin: 40,
+      hint: 'Sopa paraguaya con pollo, vegetales y bolitas de harina de maíz con queso. Reconfortante.'
+   },
+
+   /* ============================
+    *  🇻🇪 — VENEZOLANO (extiende andina, Sprint 11.6)
+    * ============================ */
+   {
+      id: 'pabellon-criollo',
+      name: 'Pabellón criollo con plátano',
+      cuisine: 'andina',
+      baseIngredients: {
+         protein: 'beef-lean',
+         carb: 'rice-white',
+         fat: 'olive-oil',
+         vegetable: 'beans-black'
+      },
+      mealTypes: ['lunch', 'dinner'],
+      technique: 'guiso',
+      difficulty: 'medium',
+      prepTimeMin: 40,
+      hint: 'Plato nacional venezolano: carne mechada, arroz blanco, caraotas negras y plátano maduro.'
+   },
+   {
+      id: 'arepa-rellena',
+      name: 'Arepa rellena de pollo y palta',
+      cuisine: 'andina',
+      baseIngredients: {
+         protein: 'chicken-breast',
+         carb: 'corn-flour',
+         fat: 'avocado',
+         vegetable: 'tomato'
+      },
+      mealTypes: ['breakfast', 'lunch', 'dinner'],
+      technique: 'plancha',
+      difficulty: 'easy',
+      prepTimeMin: 20,
+      hint: 'Arepa de maíz blanco a la plancha rellena con pollo desmechado y palta en cubitos.'
    }
 ]
 

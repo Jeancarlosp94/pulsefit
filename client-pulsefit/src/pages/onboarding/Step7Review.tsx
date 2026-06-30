@@ -79,6 +79,8 @@ const Step7Review = () => {
             age: data.age,
             date_of_birth: data.dateOfBirth,
             eating_disorder_history: data.eatingDisorderHistory,
+            lifestyle: data.lifestyle,
+            monotonous_meals_preferred: data.monotonousMealsPreferred,
             sex: data.sex,
             height_cm: data.heightCm,
             current_weight_kg: data.currentWeightKg,

@@ -1,6 +1,8 @@
+import { useState } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { useNavigate } from 'react-router-dom'
+import { Repeat } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import {
    Form,
@@ -20,6 +22,7 @@ import {
    CUISINE_OPTIONS,
    DIETARY_RESTRICTIONS,
    FAVORITE_INGREDIENT_SUGGESTIONS,
+   LIFESTYLE_OPTIONS,
    MEALS_PER_DAY_OPTIONS
 } from '@/config'
 import { cn } from '@/utils'
@@ -28,6 +31,8 @@ import type { ItfMealsPerDay } from '@/features/meal-generator'
 const Step5Diet = () => {
    const navigate = useNavigate()
    const { data, update, next, back } = useOnboardingStore()
+   const [lifestyle, setLifestyle] = useState<typeof data.lifestyle>(data.lifestyle ?? null)
+   const [monotonous, setMonotonous] = useState(data.monotonousMealsPreferred ?? false)
 
    const form = useForm<Step5Values>({
       resolver: zodResolver(step5Schema),
@@ -52,7 +57,9 @@ const Step5Diet = () => {
          budgetLevel: values.budgetLevel,
          mealsPerDay: values.mealsPerDay as ItfMealsPerDay,
          favoriteCuisines: values.favoriteCuisines ?? [],
-         favoriteIngredientIds: values.favoriteIngredientIds ?? []
+         favoriteIngredientIds: values.favoriteIngredientIds ?? [],
+         lifestyle,
+         monotonousMealsPreferred: monotonous
       })
       next()
       navigate('/onboarding/6')
@@ -266,6 +273,55 @@ const Step5Diet = () => {
                      </FormItem>
                   )}
                />
+
+               {/* Sprint 11.6 — estilo de vida */}
+               <FormItem className='space-y-3'>
+                  <FormLabel>¿Cómo es tu vida ahora? (opcional)</FormLabel>
+                  <div className='grid grid-cols-2 gap-2'>
+                     {LIFESTYLE_OPTIONS.map((opt) => (
+                        <OptionCard
+                           key={opt.value}
+                           selected={lifestyle === opt.value}
+                           onSelect={() =>
+                              setLifestyle(
+                                 lifestyle === opt.value ? null : (opt.value as typeof lifestyle)
+                              )
+                           }
+                           label={opt.label}
+                           description={opt.description}
+                           emoji={opt.emoji}
+                           compact
+                        />
+                     ))}
+                  </div>
+                  <p className='text-[10px] text-muted-foreground'>
+                     Esto nos ayuda a configurar tu plan con defaults realistas a tu día.
+                  </p>
+               </FormItem>
+
+               {/* Sprint 11.6 — preferencia de monotonía consciente */}
+               <Card className='border-secondary/30 bg-secondary/5'>
+                  <CardContent className='pt-6'>
+                     <label className='flex cursor-pointer items-start gap-3 text-sm'>
+                        <input
+                           type='checkbox'
+                           className='mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded border-border accent-primary'
+                           checked={monotonous}
+                           onChange={(e) => setMonotonous(e.target.checked)}
+                        />
+                        <span className='space-y-1'>
+                           <span className='flex items-center gap-1.5 font-medium'>
+                              <Repeat className='h-3.5 w-3.5 text-primary' />
+                              Prefiero pocos platos repetidos
+                           </span>
+                           <span className='block text-xs text-muted-foreground'>
+                              Si comes "pollo con arroz" todos los días por elección y eso te
+                              funciona, marca esto. Dejaremos de sugerir variar 🌿
+                           </span>
+                        </span>
+                     </label>
+                  </CardContent>
+               </Card>
 
                <OnboardingFooter
                   onBack={() => {
