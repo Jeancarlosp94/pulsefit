@@ -70,13 +70,15 @@ export interface ItfLogSetInput {
    session_id?: string
 }
 
-/** Sprint 11.7: log de actividad no-strength. */
+/** Sprint 11.7: log de actividad no-strength. Sprint 11.13: +calories_burned opcional. */
 export interface ItfLogActivityInput {
    activity_type: 'cardio' | 'sport' | 'dance' | 'movement'
    activity_name: string
    duration_min: number
    intensity: 1 | 2 | 3 | 4 | 5
    notes?: string
+   /** Sprint 11.13: kcal estimadas por cliente con met-table. Opcional. */
+   calories_burned?: number
 }
 
 /**

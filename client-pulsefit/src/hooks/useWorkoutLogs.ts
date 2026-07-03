@@ -3,6 +3,7 @@ import { toast } from 'sonner'
 import {
    fntGetRecentLogs,
    fntGetRecentLogsByExercise,
+   fntGetTodayCaloriesBurned,
    fntLogActivity,
    fntLogCustomRoutine,
    fntLogSet
@@ -28,6 +29,17 @@ export const useRecentLogs = (exerciseId: string, limit = 5) => {
       queryFn: () => fntGetRecentLogs(exerciseId, limit),
       enabled: !!user && onboardingCompleted && !!exerciseId,
       staleTime: 60 * 1000 /* 1 min */
+   })
+}
+
+/** Sprint 11.13: total de kcal quemadas HOY (suma de todos los logs con calories_burned). */
+export const useTodayCaloriesBurned = () => {
+   const { user, onboardingCompleted } = useAuth()
+   return useQuery<number>({
+      queryKey: ['workout-logs', 'today-calories'],
+      queryFn: fntGetTodayCaloriesBurned,
+      enabled: !!user && onboardingCompleted,
+      staleTime: 30 * 1000
    })
 }
 
@@ -57,6 +69,7 @@ export const useLogSet = () => {
          queryClient.invalidateQueries({ queryKey: ['workout-logs-batch'] })
          queryClient.invalidateQueries({ queryKey: ['progress'] })
          queryClient.invalidateQueries({ queryKey: ['adherence-alert'] })
+         queryClient.invalidateQueries({ queryKey: ['workout-logs', 'today-calories'] })
          toast.success('Set guardado 💪')
       },
       onError: (e) => handleApiError(e)
@@ -80,6 +93,7 @@ export const useLogActivity = () => {
          queryClient.invalidateQueries({ queryKey: ['workout-logs-batch'] })
          queryClient.invalidateQueries({ queryKey: ['progress'] })
          queryClient.invalidateQueries({ queryKey: ['adherence-alert'] })
+         queryClient.invalidateQueries({ queryKey: ['workout-logs', 'today-calories'] })
          toast.success(ACTIVITY_TOAST[vars.activity_type] ?? 'Actividad registrada 🌱')
       },
       onError: (e) => handleApiError(e)
@@ -96,6 +110,7 @@ export const useLogCustomRoutine = () => {
          queryClient.invalidateQueries({ queryKey: ['workout-logs-batch'] })
          queryClient.invalidateQueries({ queryKey: ['progress'] })
          queryClient.invalidateQueries({ queryKey: ['adherence-alert'] })
+         queryClient.invalidateQueries({ queryKey: ['workout-logs', 'today-calories'] })
          const kcal = log.calories_burned ?? 0
          toast.success(`Rutina guardada · ${kcal} kcal estimadas 💪`)
       },

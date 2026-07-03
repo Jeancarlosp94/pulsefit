@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Loader2, Activity, Trophy, Music, Footprints } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { Loader2, Activity, Trophy, Music, Footprints, Flame } from 'lucide-react'
 import {
    Dialog,
    DialogContent,
@@ -11,8 +11,18 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useLogActivity } from '@/hooks/useWorkoutLogs'
+import { useAuth } from '@/hooks/useAuth'
+import { estimateKcal, type ItfWorkoutSubtype } from '@/features/calorie-estimator'
 import type { ItfLogActivityInput } from '@/interface/itfWorkouts'
 import { cn } from '@/utils'
+
+/** Fallback de mapeo activity_type → subtype para tabla MET (Sprint 11.13). */
+const ACTIVITY_TYPE_TO_SUBTYPE: Record<ItfLogActivityInput['activity_type'], ItfWorkoutSubtype> = {
+   cardio: 'cardio',
+   sport: 'sport',
+   dance: 'dance',
+   movement: 'mixed'
+}
 
 interface LogActivityDialogProps {
    open: boolean
@@ -70,11 +80,26 @@ const INTENSITIES: Array<{
 
 export const LogActivityDialog = ({ open, onOpenChange }: LogActivityDialogProps) => {
    const logActivity = useLogActivity()
+   const { profile } = useAuth()
+   const weightKg = (profile?.current_weight_kg as number | null) ?? null
+
    const [type, setType] = useState<ItfLogActivityInput['activity_type'] | null>(null)
    const [name, setName] = useState('')
    const [duration, setDuration] = useState('')
    const [intensity, setIntensity] = useState<1 | 2 | 3 | 4 | 5>(3)
    const [notes, setNotes] = useState('')
+
+   const estimatedKcal = useMemo(() => {
+      if (!type) return 0
+      const min = Number(duration)
+      if (!Number.isFinite(min) || min <= 0) return 0
+      return estimateKcal({
+         subtype: ACTIVITY_TYPE_TO_SUBTYPE[type],
+         durationMin: min,
+         intensity,
+         weightKg
+      })
+   }, [type, duration, intensity, weightKg])
 
    const close = (v: boolean) => {
       if (!v) {
@@ -98,7 +123,8 @@ export const LogActivityDialog = ({ open, onOpenChange }: LogActivityDialogProps
             activity_name: name.trim(),
             duration_min: Number(duration),
             intensity,
-            notes: notes.trim() || undefined
+            notes: notes.trim() || undefined,
+            calories_burned: estimatedKcal > 0 ? estimatedKcal : undefined
          },
          {
             onSuccess: () => close(false)
@@ -217,6 +243,14 @@ export const LogActivityDialog = ({ open, onOpenChange }: LogActivityDialogProps
                         ))}
                      </div>
                   </div>
+
+                  {/* Preview de kcal (Sprint 11.13) */}
+                  {estimatedKcal > 0 ? (
+                     <div className='flex items-center gap-2 rounded-md border border-primary/30 bg-primary/5 p-2.5'>
+                        <Flame className='h-4 w-4 text-primary' />
+                        <span className='text-sm font-medium'>~{estimatedKcal} kcal estimadas</span>
+                     </div>
+                  ) : null}
 
                   {/* Notas */}
                   <div className='space-y-1.5'>

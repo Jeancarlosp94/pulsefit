@@ -31,7 +31,8 @@ import {
    MacrosProgressCard,
    WaterTrackerCard,
    MoodCheckCard,
-   AdherenceAlertCard
+   AdherenceAlertCard,
+   KcalBurnedCard
 } from '@/components/home'
 import { useAdherenceAlert } from '@/hooks/useAdherenceAlert'
 import { useAuth } from '@/hooks/useAuth'
@@ -236,6 +237,11 @@ const HomePage = () => {
             {/* Progreso de macros del día */}
             <motion.div {...fadeIn(next())}>
                <MacrosProgressCard state={state} />
+            </motion.div>
+
+            {/* Sprint 11.13: kcal quemadas hoy (se auto-oculta si es 0). */}
+            <motion.div {...fadeIn(next())}>
+               <KcalBurnedCard consumedKcal={state.consumed.kcal} targetKcal={state.targetKcal} />
             </motion.div>
 
             {/* "Hoy no puedo" — abre el flujo de rescates adaptativos */}

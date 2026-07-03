@@ -60,6 +60,8 @@ export const fntLogActivity = async (input: ItfLogActivityInput): Promise<ItfWor
          duration_min: input.duration_min,
          intensity: input.intensity,
          notes: input.notes ?? null,
+         /* Sprint 11.13: kcal estimadas por cliente si vienen. */
+         calories_burned: input.calories_burned ?? null,
          /* Strength fields NULL para actividades no-strength. */
          exercise_id: null,
          exercise_name: null,
@@ -141,6 +143,36 @@ export const fntGetRecentLogs = async (exerciseId: string, limit = 5): Promise<I
 
    if (error) throw new Error(error.message)
    return (data as ItfWorkoutLog[] | null) ?? []
+}
+
+/**
+ * Sprint 11.13: suma de calorías quemadas HOY para el usuario actual.
+ * Rango: [inicio del día local, inicio del día siguiente).
+ * Devuelve 0 si no hay logs. Ignora logs cuyo calories_burned sea NULL.
+ */
+export const fntGetTodayCaloriesBurned = async (): Promise<number> => {
+   const { data: auth } = await supabase.auth.getUser()
+   const userId = auth.user?.id
+   if (!userId) return 0
+
+   const startOfDay = new Date()
+   startOfDay.setHours(0, 0, 0, 0)
+   const endOfDay = new Date(startOfDay)
+   endOfDay.setDate(endOfDay.getDate() + 1)
+
+   const { data, error } = await supabase
+      .from('workout_logs')
+      .select('calories_burned')
+      .eq('user_id', userId)
+      .gte('logged_at', startOfDay.toISOString())
+      .lt('logged_at', endOfDay.toISOString())
+
+   if (error) throw new Error(error.message)
+   let total = 0
+   for (const row of (data as Array<{ calories_burned: number | null }> | null) ?? []) {
+      if (typeof row.calories_burned === 'number') total += row.calories_burned
+   }
+   return total
 }
 
 /**
