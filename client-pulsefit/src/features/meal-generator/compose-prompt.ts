@@ -61,7 +61,39 @@ REGLAS DE PASOS:
 - Empieza con verbo en infinitivo o imperativo (cocina, calienta, sazona).
 - Sin usar palabras "saludable", "fit", "limpio" — solo describir técnica.
 
-Tu única tarea es COMBINAR creativamente los ingredientes dados en UN plato con nombre cálido (en español, sin emojis) y pasos claros. Un Chef revisará tu propuesta y rechazará platos absurdos.`
+EJEMPLOS ENTRENADORES (Sprint 11.18):
+
+❌ PLATO MALO — proteína inventada:
+Ingredientes reales: pechuga de pollo 195g + yuca cocida 91g + palta 76g + tomate 121g.
+Nombre: "Tofu al ajillo criollo".
+Pasos: "Cocina el tofu con un chorrito de aceite..."
+POR QUÉ ESTÁ MAL: el nombre y los pasos mencionan tofu, pero NO hay tofu en la lista real. El LLM alucinó. El plato SIEMPRE debe llamarse por lo que HAY en la lista.
+
+✅ VERSIÓN CORRECTA:
+Nombre: "Pechuga al ajillo con yuca y palta".
+Pasos: "Sazona la pechuga de pollo con ajo y pimienta." / "Cocina el pollo en sartén con aceite hasta dorar." / "Sirve con yuca tibia y palta en cubos, con tomate fresco al costado."
+
+❌ PLATO MALO — combo incompatible:
+Ingredientes reales: yogurt griego 162g + pan integral 36g + palta 30g.
+Nombre: "Bowl frío de yogurt con pan integral".
+Pasos: "Mezcla el yogurt con el pan integral."
+POR QUÉ ESTÁ MAL: el pan en yogurt queda GOMOSO. Yogurt solo combina con granola/avena/cereal seco. Si te dan yogurt + pan, sepáralos: yogurt en un bowl y pan tostado con palta al costado, NO mezclados.
+
+✅ VERSIÓN CORRECTA:
+Nombre: "Yogurt fresco con tostada de palta".
+Pasos: "Sirve el yogurt frío en un bowl pequeño." / "Tuesta el pan integral y unta la palta encima con una pizca de sal." / "Come el yogurt con cuchara aparte y la tostada con la mano."
+
+❌ PLATO MALO — salado + dulce seco:
+Ingredientes: jamón cocido + granola sin azúcar + semillas.
+POR QUÉ ESTÁ MAL: jamón (salado) + granola (cereal dulce) no es comida real. Nadie mezcla eso.
+✅ VERSIÓN CORRECTA: no armes ese plato. Los ingredientes que te llegan no siempre son compatibles — cuando notás incompatibilidad, hacé "dos elementos separados": jamón enrollado + granola aparte con nueces.
+
+REGLAS DERIVADAS DE ESOS EJEMPLOS:
+- El NOMBRE del plato DEBE contener solo ingredientes que están en la lista real.
+- Los PASOS DEBEN referirse a los ingredientes exactos de la lista, nunca a proteínas/carbs ausentes.
+- Cuando dos ingredientes de la lista son culinariamente incompatibles (yogurt+pan, jamón+granola), armá "dos elementos separados", NO los mezcles en un bowl.
+
+Tu única tarea es COMBINAR creativamente los ingredientes dados en UN plato con nombre cálido (en español, sin emojis) y pasos claros. Un Chef revisará tu propuesta y rechazará platos absurdos, y si rechaza tres veces caemos a una plantilla genérica — por favor no dejes que llegue a eso.`
 
 interface BuildUserPromptInput {
    components: ItfMealComponents
@@ -182,6 +214,9 @@ export const buildSinglePlatePrompt = ({
    return `Genera UN plato para ${mealLabel} usando SOLO estos ingredientes:
 
 ${ingredientLines}
+
+⚠️ CONTROL DE INGREDIENTES (Sprint 11.18):
+El nombre del plato y CADA paso deben referirse ÚNICAMENTE a los ingredientes de la lista de arriba. Si la proteína es "pechuga de pollo", NUNCA menciones "tofu", "atún", "res" ni ninguna otra proteína inventada. Los pasos usan los nombres exactos de esa lista.
 
 Restricciones:
 - Tiempo de preparación: ENTRE 5 y ${Math.min(maxPrepTime, 55)} minutos (estricto)

@@ -5,6 +5,7 @@ import type {
    ItfMealComponents,
    ItfMealType
 } from './types'
+import { filterCarbsForProtein } from './pairing-rules'
 
 interface SelectorInput {
    pool: ItfIngredient[]
@@ -123,7 +124,12 @@ const buildCombination = (
    }
 
    const protein = pickByIndex(proteins, seed)
-   const carb = pickByIndex(carbs, seed + 1)
+   /* Sprint 11.18: filtrar carbs INCOMPATIBLES con esta proteína ANTES de elegir.
+    * Evita que el LLM reciba combos absurdos tipo "yogurt + pan integral" o
+    * "jamón + granola". El Chef Diego actúa como red de seguridad después,
+    * pero es mejor prevenir en el motor que rechazar con Chef. */
+   const compatibleCarbs = filterCarbsForProtein(protein, carbs)
+   const carb = pickByIndex(compatibleCarbs, seed + 1)
    const fat = pickByIndex(fats, seed + 2)
    const vegetable = veg.length > 0 ? pickByIndex(veg, seed + 3) : null
 

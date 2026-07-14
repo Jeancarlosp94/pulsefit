@@ -250,6 +250,30 @@ serve(async (req) => {
       const globalSource: 'ai' | 'ai_retry' | 'fallback' | 'mixed' =
          usedAi === 3 ? 'ai' : usedAi === 0 ? 'fallback' : 'mixed'
 
+      /* Sprint 11.18: guardar rechazos del Chef Diego a chef_rejections.
+       * Sirve para saber qué reglas se disparan más y priorizar mejoras. */
+      const allRejections = optionResults.flatMap((r) => {
+         const rj = (r as { rejections?: Array<{ rule?: string; reason: string; provider: string; attempt: number }> }).rejections ?? []
+         return rj.map((rej) => ({
+            rule_name: rej.rule ?? 'unknown',
+            reason: rej.reason,
+            plate_name: r.option?.name ?? null,
+            ingredients: [
+               r.components?.protein.ingredient.name,
+               r.components?.carb.ingredient.name,
+               r.components?.fat.ingredient.name,
+               r.components?.vegetable.ingredient.name
+            ].filter(Boolean),
+            meal_type: body.meal_type,
+            region: ctx.region,
+            provider: rej.provider,
+            attempt: rej.attempt
+         }))
+      })
+      if (allRejections.length > 0) {
+         void supabase.from('chef_rejections').insert(allRejections as never)
+      }
+
       // Log no bloqueante
       void supabase.from('pattern_insights').insert({
          user_id: user.id,
@@ -319,11 +343,26 @@ const generateOption = async (input: {
    const groq = input.providers.find((p) => p.name === 'groq')
    const gemini = input.providers.find((p) => p.name === 'gemini')
 
+   /* Sprint 11.18: acumular rechazos para telemetría. */
+   const rejections: Array<{ rule?: string; reason: string; provider: string; attempt: number }> = []
+   const collectReason = (r: { reason: string }, provider: string, attempt: number) => {
+      /* validation:forbidden_words — Chef Diego rechazó — <regla>:<detalle>
+       * o network:<msg> */
+      const chefMatch = r.reason.match(/Chef Diego rechazó — (\w+)/)
+      rejections.push({
+         rule: chefMatch?.[1],
+         reason: r.reason.slice(0, 300),
+         provider,
+         attempt
+      })
+   }
+
    if (groq) {
       const r1 = await tryOnce(groq, SYSTEM_PROMPT, userPrompt, allowedIngredients)
       if (r1.ok) {
-         return { option: r1.option, components: input.components, source: 'ai' }
+         return { option: r1.option, components: input.components, source: 'ai', rejections }
       }
+      collectReason(r1, 'groq', 1)
       const r2 = await tryOnce(
          groq,
          SYSTEM_PROMPT + `\n\nATENCIÓN: en el intento anterior fallaste por "${r1.reason}". No repitas ese error.`,
@@ -331,14 +370,16 @@ const generateOption = async (input: {
          allowedIngredients
       )
       if (r2.ok) {
-         return { option: r2.option, components: input.components, source: 'ai_retry' }
+         return { option: r2.option, components: input.components, source: 'ai_retry', rejections }
       }
+      collectReason(r2, 'groq', 2)
    }
    if (gemini) {
       const r3 = await tryOnce(gemini, SYSTEM_PROMPT, userPrompt, allowedIngredients)
       if (r3.ok) {
-         return { option: r3.option, components: input.components, source: 'ai_retry' }
+         return { option: r3.option, components: input.components, source: 'ai_retry', rejections }
       }
+      collectReason(r3, 'gemini', 3)
    }
 
    // Fallback determinístico: usa una de las 3 plantillas
@@ -347,7 +388,8 @@ const generateOption = async (input: {
    return {
       option: fb[Math.max(0, styleIdx) % fb.length],
       components: input.components,
-      source: 'fallback'
+      source: 'fallback',
+      rejections
    }
 }
 
@@ -364,7 +406,11 @@ const tryOnce = async (
          allowedIngredients
       })
       if (!validation.valid) {
-         return { ok: false, reason: `validation:${validation.reason}` }
+         /* Sprint 11.18: incluir el detail del Chef para que el retry LO VEA
+          * concretamente ("yogurt + pan gomoso") en vez del genérico
+          * "forbidden_words". Esto ayuda al LLM a corregirse. */
+         const detail = validation.detail ? ` — ${validation.detail}` : ''
+         return { ok: false, reason: `validation:${validation.reason}${detail}` }
       }
       return { ok: true, option: validation.option }
    } catch (e) {

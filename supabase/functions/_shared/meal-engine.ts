@@ -327,6 +327,38 @@ const sumMacros = (servings: IngredientServing[]): MacroTarget =>
       { kcal: 0, proteinG: 0, carbsG: 0, fatsG: 0 }
    )
 
+/* Sprint 11.18: reglas de emparejamiento — mirror del cliente pairing-rules.ts */
+const areIncompatibleDeno = (protein: Ingredient, carb: Ingredient): boolean => {
+   const p = protein.name.toLowerCase()
+   const c = carb.name.toLowerCase()
+   if (/yogur[t]?/i.test(p)) {
+      if (!/granola|avena|cereal|müesli|muesli|semilla/i.test(c)) return true
+   }
+   if (/polvo|whey|caseina|caseína/i.test(p)) {
+      if (!/granola|avena|cereal|müesli|muesli|semilla|banana|plátano|fruta/i.test(c)) return true
+   }
+   if (/jam[óo]n|chorizo|salchicha|salami|pavo\s+cocido|mortadela/i.test(p)) {
+      if (/granola|muesli|müesli|cereal(?:es)?\s+(?:dulce|de\s+desayuno)/i.test(c)) return true
+   }
+   if (/huevos?/i.test(p) && p.length < 15) {
+      if (/granola\b|muesli|müesli/i.test(c)) return true
+   }
+   if (/lentejas|garbanzos|frijoles|porotos|habas/i.test(p)) {
+      if (/granola|muesli|müesli|avena/i.test(c)) return true
+   }
+   if (/pescado|salm[óo]n|tilapia|at[úu]n|merluza|sardina|filete de/i.test(p)) {
+      if (/granola|muesli|müesli|avena|cereal\b/i.test(c)) return true
+   }
+   if (/queso\s+(?:cottage|ricotta|fresco|panela|blanco)/i.test(p)) {
+      if (/muesli|müesli|cereal(?:es)?\s+(?:dulce|de\s+desayuno)/i.test(c)) return true
+   }
+   return false
+}
+const filterCarbsForProteinDeno = (protein: Ingredient, carbs: Ingredient[]): Ingredient[] => {
+   const compatible = carbs.filter((c) => !areIncompatibleDeno(protein, c))
+   return compatible.length ? compatible : carbs
+}
+
 const buildCombination = (
    pool: Ingredient[],
    target: MacroTarget,
@@ -342,7 +374,10 @@ const buildCombination = (
    if (!proteins.length || !carbs.length || !fats.length) return null
 
    const protein = pickByIndex(proteins, seed)
-   const carb = pickByIndex(carbs, seed + 1)
+   /* Sprint 11.18: filtrar carbs incompatibles ANTES de elegir carb.
+    * Previene yogurt+pan, jamón+granola, huevos+muesli, etc. */
+   const compatibleCarbs = filterCarbsForProteinDeno(protein, carbs)
+   const carb = pickByIndex(compatibleCarbs, seed + 1)
    const fat = pickByIndex(fats, seed + 2)
    const vegetable = veg.length ? pickByIndex(veg, seed + 3) : null
 
@@ -503,6 +538,37 @@ REGLAS DE PASOS:
 - 3-7 pasos, cada uno de 20-200 caracteres.
 - Empieza con verbo en infinitivo o imperativo (cocina, calienta, sazona).
 - Sin usar palabras "saludable", "fit", "limpio" — solo describir técnica.
+
+EJEMPLOS ENTRENADORES (Sprint 11.18):
+
+❌ PLATO MALO — proteína inventada:
+Ingredientes reales: pechuga de pollo + yuca + palta + tomate.
+Nombre: "Tofu al ajillo criollo".
+Pasos: "Cocina el tofu con aceite..."
+POR QUÉ ESTÁ MAL: el nombre y los pasos mencionan tofu, pero NO hay tofu en la lista. El LLM alucinó. El plato SIEMPRE debe llamarse por lo que HAY en la lista.
+
+✅ VERSIÓN CORRECTA:
+Nombre: "Pechuga al ajillo con yuca y palta".
+Pasos: "Sazona la pechuga con ajo y pimienta." / "Cocina el pollo hasta dorar." / "Sirve con yuca tibia y palta en cubos."
+
+❌ PLATO MALO — combo incompatible:
+Ingredientes: yogurt griego + pan integral + palta.
+Nombre: "Bowl frío de yogurt con pan integral".
+POR QUÉ ESTÁ MAL: el pan en yogurt queda GOMOSO. Yogurt solo combina con granola/avena/cereal seco. Si te dan yogurt + pan, sepáralos: yogurt en un bowl y pan tostado con palta al costado, NO mezclados.
+
+✅ VERSIÓN CORRECTA:
+Nombre: "Yogurt fresco con tostada de palta".
+Pasos: "Sirve el yogurt en bowl frío." / "Tuesta el pan y unta la palta." / "Come el yogurt aparte y la tostada con la mano."
+
+❌ PLATO MALO — salado + dulce seco:
+Ingredientes: jamón cocido + granola sin azúcar + semillas.
+POR QUÉ ESTÁ MAL: jamón (salado) + granola (cereal dulce) no es comida real. Nadie mezcla eso.
+✅ VERSIÓN CORRECTA: no armes ese plato. Cuando notás incompatibilidad, hacé "dos elementos separados".
+
+REGLAS DERIVADAS:
+- El NOMBRE del plato DEBE contener solo ingredientes que están en la lista real.
+- Los PASOS DEBEN referirse a los ingredientes exactos de la lista, nunca a proteínas/carbs ausentes.
+- Cuando dos ingredientes son culinariamente incompatibles (yogurt+pan, jamón+granola), armá "dos elementos separados", NO los mezcles.
 
 Tu única tarea es COMBINAR creativamente los ingredientes dados en 3 platos diferentes con nombre cálido (en español, sin emojis) y pasos claros.`
 
@@ -1475,6 +1541,9 @@ export const buildSinglePlatePrompt = (input: {
    return `Genera UN plato para ${mealLabel} usando SOLO estos ingredientes:
 
 ${lines}
+
+⚠️ CONTROL DE INGREDIENTES (Sprint 11.18):
+El nombre del plato y CADA paso deben referirse ÚNICAMENTE a los ingredientes de la lista de arriba. Si la proteína es "pechuga de pollo", NUNCA menciones "tofu", "atún", "res" ni ninguna otra proteína inventada. Los pasos usan los nombres exactos de esa lista.
 
 Restricciones:
 - Tiempo de preparación: ENTRE 5 y ${maxPrep} minutos (estricto)
