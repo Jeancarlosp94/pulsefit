@@ -318,46 +318,98 @@ const buildSnackFallback = (components: ItfMealComponents): ItfPlateOption[] => 
       ]
    }
 
-   /* Snacks con yogurt → parfait. */
+   /* Snacks con yogurt → parfait/bowl/smoothie SI el carb es compatible.
+    * Sprint 11.17b: el carb debe ser "cereal-like". Con pan/tostada/arepa
+    * el yogurt queda gomoso — usamos un template alternativo tipo "yogurt aparte
+    * + tostada aparte" (dos elementos del snack, no mezcla). */
    if (isYogurt(proteinName)) {
+      const carbIsCerealLike = /granola|avena|cereal|müesli|muesli|semilla/i.test(carbName)
+
+      if (carbIsCerealLike) {
+         return [
+            {
+               name: `Parfait de yogurt con ${carbName}`,
+               description: 'Snack en capas, fresco y reconfortante.',
+               prep_time_min: 5,
+               difficulty: 'easy',
+               steps: [
+                  `En un vaso, alterna capas de ${ingredientName(protein)}.`,
+                  `Suma ${ingredientName(carb)} entre capa y capa.`,
+                  `Agrega ${ingredientName(fat)} como topping crocante.`,
+                  `Decora con fruta fresca.`,
+                  `Sirve frío inmediatamente.`
+               ]
+            },
+            {
+               name: `Bowl frío de yogurt con ${carbName}`,
+               description: 'Snack saludable y rápido.',
+               prep_time_min: 4,
+               difficulty: 'easy',
+               steps: [
+                  `En un bowl coloca ${ingredientName(protein)}.`,
+                  `Mezcla con ${ingredientName(carb)}.`,
+                  `Suma ${ingredientName(fat)} por encima.`,
+                  `Endulza con miel o canela si quieres.`,
+                  `Sirve frío.`
+               ]
+            },
+            {
+               name: `Smoothie cremoso`,
+               description: 'Versión líquida para llevar.',
+               prep_time_min: 4,
+               difficulty: 'easy',
+               steps: [
+                  `Licúa ${ingredientName(protein)} con ${ingredientName(carb)}.`,
+                  `Suma fruta fresca o congelada.`,
+                  `Agrega ${ingredientName(fat)} y un toque de canela.`,
+                  `Bate hasta cremoso.`,
+                  `Sirve frío.`
+               ]
+            }
+         ]
+      }
+
+      /* Carb incompatible con yogurt (pan, tostada, arepa, papa, arroz).
+       * Template "dos elementos por separado" — el yogurt va en un bowl aparte
+       * como bebida/complemento, y el carb va con la grasa como acompañamiento. */
       return [
          {
-            name: `Parfait de yogurt con ${carbName}`,
-            description: 'Snack en capas, fresco y reconfortante.',
+            name: `Yogurt fresco con ${carbName} tostado`,
+            description: 'Dos elementos por separado que se disfrutan a la par.',
             prep_time_min: 5,
             difficulty: 'easy',
             steps: [
-               `En un vaso, alterna capas de ${ingredientName(protein)}.`,
-               `Suma ${ingredientName(carb)} (granola, avena).`,
-               `Agrega ${ingredientName(fat)} (almendras, nueces, semillas).`,
-               `Decora con fruta fresca.`,
-               `Sirve frío inmediatamente.`
+               `Sirve ${ingredientName(protein)} en un bowl pequeño, bien frío.`,
+               `Tuesta o calienta ligeramente ${ingredientName(carb)} en sartén o tostadora.`,
+               `Unta ${ingredientName(fat)} sobre el carbohidrato caliente.`,
+               `Disfruta el yogurt aparte con cuchara y el pan/carbohidrato en la mano.`,
+               `Un toque de canela sobre el yogurt le da calidez sin combinarlos.`
             ]
          },
          {
-            name: `Bowl frío de yogurt con ${carbName}`,
-            description: 'Snack saludable y rápido.',
+            name: `Snack en dos partes con ${carbName}`,
+            description: 'Yogurt cremoso + carbohidrato tibio. Sin mezclar.',
             prep_time_min: 4,
             difficulty: 'easy',
             steps: [
-               `En un bowl coloca ${ingredientName(protein)}.`,
-               `Mezcla con ${ingredientName(carb)}.`,
-               `Suma ${ingredientName(fat)} por encima.`,
-               `Endulza con miel o canela si quieres.`,
-               `Sirve frío.`
+               `Coloca ${ingredientName(protein)} en un vaso o taza fría, bien frío.`,
+               `Prepara ${ingredientName(carb)} tostado a fuego bajo por dos minutos.`,
+               `Termina el pan/carbohidrato con ${ingredientName(fat)} para sabor y saciedad.`,
+               `Sirve el yogurt y el carbohidrato lado a lado, sin mezclarlos.`,
+               `Alterna cucharadas de yogurt con bocados del carbohidrato tibio.`
             ]
          },
          {
-            name: `Smoothie cremoso`,
-            description: 'Versión líquida para llevar.',
-            prep_time_min: 4,
+            name: `Yogurt con fruta y ${carbName} aparte`,
+            description: 'El clásico snack de media mañana LATAM.',
+            prep_time_min: 5,
             difficulty: 'easy',
             steps: [
-               `Licúa ${ingredientName(protein)} con ${ingredientName(carb)}.`,
-               `Suma fruta fresca o congelada.`,
-               `Agrega ${ingredientName(fat)} y un toque de canela.`,
-               `Bate hasta cremoso.`,
-               `Sirve frío.`
+               `Mezcla ${ingredientName(protein)} con canela o miel al gusto.`,
+               `Suma fruta fresca cortada dentro del yogurt (banana, fresa, mango).`,
+               `Aparte, sirve ${ingredientName(carb)} con ${ingredientName(fat)}.`,
+               `Consume ambas partes en paralelo, cada una en su textura.`,
+               `Cierra con un vaso de agua fresca para hidratar.`
             ]
          }
       ]

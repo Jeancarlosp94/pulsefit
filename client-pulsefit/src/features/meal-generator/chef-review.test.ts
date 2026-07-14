@@ -223,4 +223,60 @@ describe('Chef Diego — Sprint 11.15', () => {
       expect(r.approved).toBe(false)
       expect(r.ruleName).toBe('dulce_cocido_con_sal')
    })
+
+   /* ============================================================
+    *  Sprint 11.17b: yogurt + carb incompatible
+    * ============================================================ */
+
+   it('RECHAZA el bug reportado: "Bowl frío de yogurt con pan integral"', () => {
+      const bug = plate({
+         name: 'Bowl frío de yogurt con pan integral',
+         description: 'Snack saludable y rápido.',
+         steps: [
+            'Coloca el yogurt griego natural en un bowl grande y frío.',
+            'Mezcla el yogurt con el pan integral cortado en cubos pequeños.',
+            'Suma las nueces picadas por encima para darle textura crocante.',
+            'Endulza con miel o canela al gusto de cada persona.',
+            'Sirve frío inmediatamente para conservar la textura fresca.'
+         ]
+      })
+      const r = reviewByChef(bug)
+      expect(r.approved).toBe(false)
+      expect(r.ruleName).toBe('yogurt_con_carb_incompatible')
+   })
+
+   it('RECHAZA yogurt con tostada / arepa / arroz / pasta', () => {
+      const carbs = ['tostada', 'arepa', 'arroz blanco', 'pasta cocida']
+      for (const c of carbs) {
+         const r = reviewByChef(
+            plate({
+               name: `Bowl de yogurt con ${c}`,
+               steps: [
+                  `Coloca el yogurt fresco en un bowl grande y transparente.`,
+                  `Combina el yogurt con el ${c} en pedazos pequeños dentro del bowl.`,
+                  `Añade las semillas por encima y sirve inmediatamente frío.`
+               ]
+            })
+         )
+         expect(r.approved).toBe(false)
+         expect(r.ruleName).toBe('yogurt_con_carb_incompatible')
+      }
+   })
+
+   it('APRUEBA yogurt con granola / avena / cereal / muesli', () => {
+      const goodCarbs = ['granola', 'avena', 'cereal', 'muesli']
+      for (const c of goodCarbs) {
+         const r = reviewByChef(
+            plate({
+               name: `Parfait de yogurt con ${c}`,
+               steps: [
+                  `Coloca el yogurt fresco en un vaso alto y transparente.`,
+                  `Alterna capas de yogurt con la ${c} crocante por encima.`,
+                  `Decora con nueces picadas y una pizca de canela dulce.`
+               ]
+            })
+         )
+         expect(r.approved).toBe(true)
+      }
+   })
 })

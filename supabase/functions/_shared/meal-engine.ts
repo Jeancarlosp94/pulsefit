@@ -1358,6 +1358,20 @@ const DENO_CHEF_RULES: DenoChefRule[] = [
          if (bad.test(text)) return 'plátano maduro/banana no se cocina con sal'
          return null
       }
+   },
+   {
+      name: 'yogurt_con_carb_incompatible',
+      check: (opt) => {
+         const text = [opt.name, ...opt.steps].join(' ').toLowerCase()
+         const yogurt = /\b(?:yogur[t]?)\b/i
+         if (!yogurt.test(text)) return null
+         const badCarb =
+            /\b(?:pan(?:\s+integral)?|tostada|arepa|tortilla(?:\s+de\s+ma[íi]z)?|papa\b|arroz\b|pasta\b)\b/i
+         if (badCarb.test(text)) {
+            return 'yogurt + pan/tostada/arepa incompatible (queda gomoso)'
+         }
+         return null
+      }
    }
 ]
 

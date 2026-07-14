@@ -252,6 +252,27 @@ const CHEF_RULES: ChefRule[] = [
          }
          return null
       }
+   },
+
+   /* ============================================================
+    *  12. YOGURT + CARB SÓLIDO INCOMPATIBLE (pan, tostada, arepa)
+    *  Yogurt griego SOLO combina con carbs "cereal-like" (granola,
+    *  avena, cereales secos). Con pan/tostada/arepa/tortilla queda
+    *  gomoso e incomestible.
+    * ============================================================ */
+   {
+      name: 'yogurt_con_carb_incompatible',
+      check: (opt) => {
+         const text = [opt.name, ...opt.steps].join(' ').toLowerCase()
+         const yogurt = /\b(?:yogur[t]?)\b/i
+         if (!yogurt.test(text)) return null
+         const badCarb =
+            /\b(?:pan(?:\s+integral)?|tostada|arepa|tortilla(?:\s+de\s+ma[íi]z)?|papa\b|arroz\b|pasta\b)\b/i
+         if (badCarb.test(text)) {
+            return 'yogurt no combina con pan/tostada/arepa (queda gomoso). Compatible con granola, avena o cereales'
+         }
+         return null
+      }
    }
 ]
 

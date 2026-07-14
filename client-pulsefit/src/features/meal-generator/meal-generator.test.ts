@@ -595,7 +595,11 @@ describe('validateMealResponse', () => {
 })
 
 describe('buildMealFallback', () => {
-   const pool = filterIngredientPool(SEED_INGREDIENTS, baseCtx)
+   /* Sprint 11.17b: el pool DEBE filtrarse por mealType para respetar
+    * appropriateMealTypes (ej: yogurt solo va en breakfast/snack). Sin este
+    * filtro el motor podía asignar yogurt como proteína principal de un
+    * almuerzo y el Chef Diego luego rechazaba el plato. */
+   const pool = filterIngredientPool(SEED_INGREDIENTS, baseCtx, { mealType: 'lunch' })
    const components = selectComponents({
       pool,
       target: { kcal: 700, proteinG: 49, carbsG: 70, fatsG: 21 }
