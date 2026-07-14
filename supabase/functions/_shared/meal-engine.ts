@@ -464,6 +464,7 @@ export const SYSTEM_PROMPT = `Eres un asistente culinario LATAM que compone plat
 REGLAS INVIOLABLES:
 - NUNCA agregas ingredientes nuevos.
 - NUNCA modificas cantidades.
+- NUNCA repitas gramos en los pasos de preparación (los pasos usan "el tofu", "la banana", NUNCA "220g de tofu" — el usuario ya tiene la lista con gramos exactos).
 - NUNCA calculas calorías ni macros (vienen impuestos).
 - NUNCA das consejos médicos ni nutricionales.
 - NUNCA usas tono punitivo ("debes", "tienes que", "fallaste").
@@ -1325,6 +1326,38 @@ const DENO_CHEF_RULES: DenoChefRule[] = [
          }
          return null
       }
+   },
+   /* Sprint 11.16b: gramos en steps → el LLM los MODIFICA (bug reportado). */
+   {
+      name: 'gramos_en_steps',
+      check: (opt) => {
+         const gramsPattern = /\b\d+\s?(?:g\b|gr\b|gramos?\b)/i
+         for (const step of opt.steps) {
+            if (gramsPattern.test(step)) {
+               return 'los pasos no deben mencionar gramos'
+            }
+         }
+         return null
+      }
+   },
+   {
+      name: 'tomate_tierno_crocante',
+      check: (opt) => {
+         const text = opt.steps.join(' ').toLowerCase()
+         const bad = /\btomate\b[^.]{0,40}\btierno[- ]crocante\b/i
+         if (bad.test(text)) return 'tomate salteado no queda tierno-crocante'
+         return null
+      }
+   },
+   {
+      name: 'dulce_cocido_con_sal',
+      check: (opt) => {
+         const text = opt.steps.join(' ').toLowerCase()
+         const bad =
+            /\b(?:plátano\s+maduro|banana)\b[^.]{0,60}\b(?:sal\b|con sal|hasta su punto)\b/i
+         if (bad.test(text)) return 'plátano maduro/banana no se cocina con sal'
+         return null
+      }
    }
 ]
 
@@ -1401,7 +1434,9 @@ REGLAS CRÍTICAS DE STEPS (sigue al pie de la letra):
 - Cada step entre 30 y 180 caracteres (NO más de 180, NO menos de 30).
 - Imperativo amable en español ("Cocina…", "Mezcla…", "Sirve…").
 - NO uses listas dentro del step. NO uses bullets ni guiones.
-- NO repitas la palabra "ingrediente" ni "paso" dentro del texto.`
+- NO repitas la palabra "ingrediente" ni "paso" dentro del texto.
+- **PROHIBIDO mencionar gramos, "g", "gr" o "gramos" en los pasos.** El usuario ya ve la lista arriba con las cantidades exactas. Los pasos usan sustantivos con artículo ("el tofu", "la banana", "el aceite"), NO números con unidad.
+- Si mencionas cantidades, usa referencias culinarias sin gramos: "un chorrito de aceite", "una pizca de sal", "unos cubos de tomate".`
 }
 
 // ============================================================

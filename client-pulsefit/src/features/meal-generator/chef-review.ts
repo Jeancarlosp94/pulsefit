@@ -199,6 +199,59 @@ const CHEF_RULES: ChefRule[] = [
          }
          return null
       }
+   },
+
+   /* ============================================================
+    *  9. GRAMOS EN STEPS — Sprint 11.16b
+    *  El LLM tiende a repetir gramos en los pasos pero los MODIFICA
+    *  (ej: ingrediente=247g pero paso dice "220g"). Los gramos ya
+    *  están en la lista de ingredientes — repetirlos solo introduce
+    *  bugs. Regla: los pasos NO deben mencionar cantidades en gramos.
+    * ============================================================ */
+   {
+      name: 'gramos_en_steps',
+      check: (opt) => {
+         /* Match "247g", "247 g", "247 gramos", "247gr". */
+         const gramsPattern = /\b\d+\s?(?:g\b|gr\b|gramos?\b)/i
+         for (const step of opt.steps) {
+            if (gramsPattern.test(step)) {
+               return 'los pasos no deben mencionar gramos (los tiene la lista de ingredientes; el LLM tiende a cambiarlos)'
+            }
+         }
+         return null
+      }
+   },
+
+   /* ============================================================
+    *  10. TÉCNICA: "tierno-crocante" es contradictorio para tomate
+    * ============================================================ */
+   {
+      name: 'tomate_tierno_crocante',
+      check: (opt) => {
+         const text = opt.steps.join(' ').toLowerCase()
+         const bad = /\btomate\b[^.]{0,40}\btierno[- ]crocante\b/i
+         if (bad.test(text)) {
+            return 'tomate salteado no queda "tierno-crocante" (contradictorio: cocido se ablanda)'
+         }
+         return null
+      }
+   },
+
+   /* ============================================================
+    *  11. INGREDIENTE DULCE COCIDO CON SAL (plátano maduro, banana)
+    * ============================================================ */
+   {
+      name: 'dulce_cocido_con_sal',
+      check: (opt) => {
+         const text = opt.steps.join(' ').toLowerCase()
+         /* Plátano MADURO cocinado con sal es incoherente. Verde sí (patacón). */
+         const bad =
+            /\b(?:plátano\s+maduro|banana)\b[^.]{0,60}\b(?:sal\b|con sal|hasta su punto)\b/i
+         if (bad.test(text)) {
+            return 'plátano maduro/banana no se cocina con sal (mezcla dulce+salado incoherente)'
+         }
+         return null
+      }
    }
 ]
 

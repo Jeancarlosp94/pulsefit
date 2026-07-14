@@ -30,8 +30,26 @@ const MEAL_LABEL: Record<ItfMealType, string> = {
 
 const cap = (s: string): string => s.charAt(0).toUpperCase() + s.slice(1)
 
-const ingredientName = (s: { ingredient: { name: string }; grams: number }) =>
-   `${s.grams}g de ${s.ingredient.name}`
+/**
+ * Sprint 11.16b: retorna nombre del ingrediente sin gramos.
+ * Los gramos ya viven en la lista visible al usuario; repetirlos en los
+ * pasos es redundante y el Chef Diego los rechaza.
+ *
+ * Heurística de artículo (bastante buena para LATAM):
+ *   - Nombres que empiezan con "pechuga", "avena", "arepa", "papa", "carne",
+ *     "leche", "banana", "quinoa", "tortilla", "sardina" → "la"
+ *   - Nombres que empiezan con vocal "a"/"o" y son femeninos comunes.
+ *   - El resto → "el" (default). Errores menores tipo "el pasta" son
+ *     tolerables vs. exponer gramos inconsistentes.
+ */
+const FEMININE_STARTS =
+   /^(pechuga|avena|arepa|papa|carne|leche|banana|quinoa|tortilla|sardina|espinaca|zanahoria|calabaza|cebolla|lechuga|proteína|manzana|naranja|salsa|pasta|granola|mantequilla|piña|palta|palma|harina)\b/i
+
+const ingredientName = (s: { ingredient: { name: string }; grams: number }) => {
+   const name = s.ingredient.name
+   const article = FEMININE_STARTS.test(name) ? 'la' : 'el'
+   return `${article} ${name}`
+}
 
 /* Detección de ingredientes especiales que requieren templates diferentes. */
 const isPowderProtein = (name: string): boolean =>

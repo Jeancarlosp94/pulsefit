@@ -139,4 +139,88 @@ describe('Chef Diego — Sprint 11.15', () => {
       expect(set.size).toBe(CHEF_RULE_NAMES.length)
       expect(CHEF_RULE_NAMES.length).toBeGreaterThan(5)
    })
+
+   /* ============================================================
+    *  Sprint 11.16b: nuevas reglas anti-bug reportado por usuario
+    * ============================================================ */
+
+   it('RECHAZA el caso reportado: gramos en steps ("Sazona 220g de tofu")', () => {
+      const bug = plate({
+         name: 'Bowl casero de tofu con plátano maduro',
+         steps: [
+            'Cocina 105g de plátano maduro con sal hasta su punto.',
+            'Sazona 220g de tofu con sal, pimienta, ajo y comino.',
+            'Calienta 10g de aceite de girasol y cocina la proteína cinco minutos.',
+            'Saltea 120g de tomate hasta tierno.'
+         ]
+      })
+      const r = reviewByChef(bug)
+      expect(r.approved).toBe(false)
+      expect(r.ruleName).toBe('gramos_en_steps')
+   })
+
+   it('RECHAZA gramos con distintas notaciones (g, gr, gramos)', () => {
+      const variants = [
+         'Cocina 100g de arroz suave.',
+         'Sazona 250 gramos de pollo con sal.',
+         'Agrega 15gr de aceite y mezcla bien.'
+      ]
+      for (const step of variants) {
+         const r = reviewByChef(
+            plate({
+               steps: [
+                  step,
+                  'Prepara los demás ingredientes con cuidado en la cocina.',
+                  'Sirve el plato caliente inmediatamente al terminar la preparación.'
+               ]
+            })
+         )
+         expect(r.approved).toBe(false)
+         expect(r.ruleName).toBe('gramos_en_steps')
+      }
+   })
+
+   it('APRUEBA steps sin gramos (formato correcto)', () => {
+      const r = reviewByChef(
+         plate({
+            name: 'Bowl casero de tofu con plátano maduro',
+            steps: [
+               'Corta el plátano maduro en rodajas y reserva sobre un plato.',
+               'Sazona el tofu con pimienta, ajo y comino recién molido.',
+               'Calienta el aceite y cocina el tofu unos cinco minutos por lado.',
+               'Sirve todo en un bowl con limón fresco y hierbas.'
+            ]
+         })
+      )
+      expect(r.approved).toBe(true)
+   })
+
+   it('RECHAZA tomate "tierno-crocante" (contradictorio)', () => {
+      const r = reviewByChef(
+         plate({
+            steps: [
+               'Corta el tomate en cubos grandes y reserva sobre un plato limpio.',
+               'Calienta el aceite en sartén a fuego medio hasta que esté caliente.',
+               'Saltea el tomate hasta tierno-crocante durante cuatro minutos removiendo.',
+               'Sirve inmediatamente en un plato con hierbas frescas encima.'
+            ]
+         })
+      )
+      expect(r.approved).toBe(false)
+      expect(r.ruleName).toBe('tomate_tierno_crocante')
+   })
+
+   it('RECHAZA plátano maduro cocinado con sal', () => {
+      const r = reviewByChef(
+         plate({
+            steps: [
+               'Cocina el plátano maduro con sal hasta que esté en su punto.',
+               'Calienta el aceite en sartén y agrega la proteína elegida.',
+               'Combina todo en un plato hondo con hierbas frescas al final.'
+            ]
+         })
+      )
+      expect(r.approved).toBe(false)
+      expect(r.ruleName).toBe('dulce_cocido_con_sal')
+   })
 })
