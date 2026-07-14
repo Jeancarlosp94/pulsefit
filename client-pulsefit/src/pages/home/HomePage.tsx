@@ -32,7 +32,8 @@ import {
    WaterTrackerCard,
    MoodCheckCard,
    AdherenceAlertCard,
-   KcalBurnedCard
+   KcalBurnedCard,
+   ModalityNutritionCard
 } from '@/components/home'
 import { useAdherenceAlert } from '@/hooks/useAdherenceAlert'
 import { useAuth } from '@/hooks/useAuth'
@@ -170,6 +171,13 @@ const HomePage = () => {
                   </Card>
                ) : null}
             </motion.div>
+
+            {/* Sprint 11.14: tip nutricional por modalidad de la fase activa. */}
+            {activeProgram.data && activePhase ? (
+               <motion.div {...fadeIn(next())}>
+                  <ModalityNutritionCard modality={activePhase.phase.modality} />
+               </motion.div>
+            ) : null}
 
             {/* Alerta de adherencia crítica (< 20% en 14 días). Sin juicio. */}
             {adherenceAlert.data?.critical && !adherenceDismissed ? (

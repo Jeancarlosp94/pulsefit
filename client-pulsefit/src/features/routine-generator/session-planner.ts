@@ -1,5 +1,5 @@
 import type { ItfFitnessLevel } from '@/features/nutrition-engine'
-import type { ItfSessionFocus, ItfUserContextForWorkout } from './types'
+import type { ItfExerciseModality, ItfSessionFocus, ItfUserContextForWorkout } from './types'
 
 /**
  * Planificador de sesión. Decide:
@@ -14,7 +14,97 @@ import type { ItfSessionFocus, ItfUserContextForWorkout } from './types'
  *   - Advanced: PPL clásico, 5-6 días.
  *
  * Semana 5 de cada bloque → descarga forzada (RPE objetivo cae a 5).
+ *
+ * Sprint 11.14: modality ajusta duración, descanso base, estructura y reps.
+ *   - yoga → flow largo, descansos casi nulos, "5 respiraciones" en vez de reps.
+ *   - hiit → circuito corto (20-25 min), 20s descanso, "30s" en vez de reps.
+ *   - crossfit → metcon 25-30 min, 30s descanso, WOD-style.
+ *   - gym/calistenia → traditional 45-60 min.
  */
+
+export type ItfSessionStructure = 'traditional' | 'circuit' | 'flow' | 'metcon'
+
+export interface ItfModalityConfig {
+   /** Duración ideal en min. Sujeta a Math.min(availableMinutes, idealMinutes). */
+   idealMinutes: number
+   /** Descanso base entre sets/movimientos (segundos). */
+   restBaseSec: number
+   /** Reps default para compounds/movimientos principales. */
+   compoundReps: string
+   /** Reps default para accessories/movimientos accesorios. */
+   accessoryReps: string
+   /** Estructura sugerida — informa al LLM y a la UI. */
+   structure: ItfSessionStructure
+}
+
+/**
+ * Configuraciones por modalidad. Firmadas por Carlos + Lucía.
+ * Todos los descansos son valores base que set-rep-calculator puede ajustar por reps.
+ */
+const MODALITY_CONFIGS: Record<ItfExerciseModality, ItfModalityConfig> = {
+   gym: {
+      idealMinutes: 60,
+      restBaseSec: 90,
+      compoundReps: '8',
+      accessoryReps: '12',
+      structure: 'traditional'
+   },
+   hiit: {
+      idealMinutes: 25,
+      restBaseSec: 20,
+      compoundReps: '30 segundos',
+      accessoryReps: '20 segundos',
+      structure: 'circuit'
+   },
+   calistenia: {
+      idealMinutes: 45,
+      restBaseSec: 60,
+      compoundReps: '10',
+      accessoryReps: '15',
+      structure: 'traditional'
+   },
+   yoga: {
+      idealMinutes: 60,
+      restBaseSec: 5,
+      compoundReps: '5 respiraciones',
+      accessoryReps: '5 respiraciones',
+      structure: 'flow'
+   },
+   barre: {
+      idealMinutes: 45,
+      restBaseSec: 15,
+      compoundReps: '15',
+      accessoryReps: '20',
+      structure: 'circuit'
+   },
+   pilates: {
+      idealMinutes: 45,
+      restBaseSec: 15,
+      compoundReps: '10',
+      accessoryReps: '12',
+      structure: 'flow'
+   },
+   crossfit: {
+      idealMinutes: 30,
+      restBaseSec: 30,
+      compoundReps: '10',
+      accessoryReps: '15',
+      structure: 'metcon'
+   },
+   hybrid: {
+      idealMinutes: 45,
+      restBaseSec: 60,
+      compoundReps: '8',
+      accessoryReps: '12',
+      structure: 'traditional'
+   }
+}
+
+/** Config por defecto (sin modality declarada). Comportamiento histórico. */
+const DEFAULT_CONFIG: ItfModalityConfig = MODALITY_CONFIGS.gym
+
+export const getModalityConfig = (modality?: ItfExerciseModality): ItfModalityConfig =>
+   modality ? MODALITY_CONFIGS[modality] : DEFAULT_CONFIG
 
 interface PlanInput {
    ctx: ItfUserContextForWorkout
@@ -31,6 +121,8 @@ interface PlanOutput {
    sessionMinutes: number
    prescribedRpe: number
    isDeloadWeek: boolean
+   /** Sprint 11.14: config aplicada según modalidad (o defaults si no hay). */
+   modalityConfig: ItfModalityConfig
 }
 
 const DELOAD_RPE = 5
@@ -83,11 +175,17 @@ export const planSession = ({
 
    const isDeloadWeek = ctx.weekInBlock === 5
    const baseRpe = RPE_BY_LEVEL[ctx.fitnessLevel]
+   const modalityConfig = getModalityConfig(ctx.modality)
+
+   /* Sprint 11.14: sessionMinutes respeta el ideal de la modalidad,
+    * capado por lo que el usuario declaró disponible. */
+   const sessionMinutes = Math.min(ctx.availableMinutes, modalityConfig.idealMinutes)
 
    return {
       focus: overrideFocus ?? inferFocus(ctx.fitnessLevel, positionIndex, totalDays),
-      sessionMinutes: ctx.availableMinutes,
+      sessionMinutes,
       prescribedRpe: isDeloadWeek ? DELOAD_RPE : baseRpe,
-      isDeloadWeek
+      isDeloadWeek,
+      modalityConfig
    }
 }

@@ -161,7 +161,9 @@ serve(async (req) => {
          selected,
          ctx,
          isDeloadWeek: plan.isDeloadWeek,
-         prescribedRpe: plan.prescribedRpe
+         prescribedRpe: plan.prescribedRpe,
+         /* Sprint 11.14: config de modalidad → reps/rest por yoga/HIIT/etc. */
+         modalityConfig: plan.modalityConfig
       })
 
       // 6. Cascada IA

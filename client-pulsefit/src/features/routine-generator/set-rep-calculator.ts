@@ -1,4 +1,5 @@
 import type { ItfExercise, ItfPrescribedExercise, ItfUserContextForWorkout } from './types'
+import type { ItfModalityConfig } from './session-planner'
 
 /**
  * Plantillas por tiempo (regla de Carlos en files/reglas-fitness.md):
@@ -59,25 +60,42 @@ interface CalcInput {
    ctx: ItfUserContextForWorkout
    isDeloadWeek: boolean
    prescribedRpe: number
+   /** Sprint 11.14: config de modalidad (yoga → "5 respiraciones", HIIT → "30s"). */
+   modalityConfig?: ItfModalityConfig
 }
 
 /**
  * Convierte la lista de ejercicios seleccionados en prescripciones formales
  * (sets, reps, rest, RPE). Aplica descarga si la semana toca.
+ *
+ * Sprint 11.14: si viene modalityConfig, sus valores dominan sobre los defaults
+ * de nivel. Ejemplo yoga → reps='5 respiraciones', rest=5s.
  */
 export const prescribePrograma = ({
    selected,
    ctx,
    isDeloadWeek,
-   prescribedRpe
+   prescribedRpe,
+   modalityConfig
 }: CalcInput): ItfPrescribedExercise[] => {
    const isAbsoluteBeginner = ctx.fitnessLevel === 'absolute_beginner'
 
    return selected.map((ex) => {
-      const repsStr = repsForLevel(isAbsoluteBeginner, ex.isCompound)
-      const repsNum = Number.parseInt(repsStr, 10) || 10
+      /* Sprint 11.14: si hay modalityConfig, sus reps ganan. */
+      const repsStr = modalityConfig
+         ? ex.isCompound
+            ? modalityConfig.compoundReps
+            : modalityConfig.accessoryReps
+         : repsForLevel(isAbsoluteBeginner, ex.isCompound)
+
+      /* Parseo defensivo: "30 segundos", "5 respiraciones" o "10" → número. */
+      const parsed = Number.parseInt(repsStr, 10)
+      const repsNum = Number.isFinite(parsed) && parsed > 0 ? parsed : 10
+
       let sets = setsForLevel(isAbsoluteBeginner, ex.isCompound)
-      let rest = restForReps(repsNum, isAbsoluteBeginner)
+      let rest = modalityConfig
+         ? modalityConfig.restBaseSec
+         : restForReps(repsNum, isAbsoluteBeginner)
 
       if (isDeloadWeek) {
          /* Descarga: -30% volumen aproximado = una serie menos, descanso un poco más largo. */

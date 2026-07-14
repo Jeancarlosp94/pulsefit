@@ -20,7 +20,8 @@ export type {
 } from './types'
 export { FOCUS_PATTERNS } from './types'
 
-export { planSession } from './session-planner'
+export { planSession, getModalityConfig } from './session-planner'
+export type { ItfModalityConfig, ItfSessionStructure } from './session-planner'
 export { filterExercisePool, partitionByCompoundType } from './exercise-pool'
 export { selectExercises } from './exercise-selector'
 export { prescribePrograma, PROGRAM_TEMPLATES, pickProgramTemplate } from './set-rep-calculator'

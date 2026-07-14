@@ -137,6 +137,28 @@ const inferFocus = (
    return (['push', 'pull', 'legs'] as SessionFocus[])[dayPos % 3]
 }
 
+/** Sprint 11.14: config por modalidad. Mirror del cliente. */
+export type SessionStructure = 'traditional' | 'circuit' | 'flow' | 'metcon'
+export interface ModalityConfig {
+   idealMinutes: number
+   restBaseSec: number
+   compoundReps: string
+   accessoryReps: string
+   structure: SessionStructure
+}
+const MODALITY_CONFIGS: Record<ExerciseModality, ModalityConfig> = {
+   gym:        { idealMinutes: 60, restBaseSec: 90, compoundReps: '8', accessoryReps: '12', structure: 'traditional' },
+   hiit:       { idealMinutes: 25, restBaseSec: 20, compoundReps: '30 segundos', accessoryReps: '20 segundos', structure: 'circuit' },
+   calistenia: { idealMinutes: 45, restBaseSec: 60, compoundReps: '10', accessoryReps: '15', structure: 'traditional' },
+   yoga:       { idealMinutes: 60, restBaseSec: 5,  compoundReps: '5 respiraciones', accessoryReps: '5 respiraciones', structure: 'flow' },
+   barre:      { idealMinutes: 45, restBaseSec: 15, compoundReps: '15', accessoryReps: '20', structure: 'circuit' },
+   pilates:    { idealMinutes: 45, restBaseSec: 15, compoundReps: '10', accessoryReps: '12', structure: 'flow' },
+   crossfit:   { idealMinutes: 30, restBaseSec: 30, compoundReps: '10', accessoryReps: '15', structure: 'metcon' },
+   hybrid:     { idealMinutes: 45, restBaseSec: 60, compoundReps: '8',  accessoryReps: '12', structure: 'traditional' }
+}
+export const getModalityConfig = (modality?: ExerciseModality): ModalityConfig =>
+   modality ? MODALITY_CONFIGS[modality] : MODALITY_CONFIGS.gym
+
 export const planSession = (input: {
    ctx: UserContextForWorkout
    dayOfWeek: number
@@ -148,13 +170,17 @@ export const planSession = (input: {
    const positionIndex = Math.max(0, sorted.indexOf(input.dayOfWeek))
    const isDeloadWeek = input.ctx.weekInBlock === 5
    const baseRpe = RPE_BY_LEVEL[input.ctx.fitnessLevel]
+   const modalityConfig = getModalityConfig(input.ctx.modality)
+   /* Sprint 11.14: sessionMinutes cap por lo ideal de la modalidad. */
+   const sessionMinutes = Math.min(input.ctx.availableMinutes, modalityConfig.idealMinutes)
    return {
       focus:
          input.overrideFocus ??
          inferFocus(input.ctx.fitnessLevel, positionIndex, totalDays),
-      sessionMinutes: input.ctx.availableMinutes,
+      sessionMinutes,
       prescribedRpe: isDeloadWeek ? 5 : baseRpe,
-      isDeloadWeek
+      isDeloadWeek,
+      modalityConfig
    }
 }
 
@@ -263,13 +289,21 @@ export const prescribePrograma = (input: {
    ctx: UserContextForWorkout
    isDeloadWeek: boolean
    prescribedRpe: number
+   /** Sprint 11.14: config de modalidad. Si viene, sus reps/rest ganan. */
+   modalityConfig?: ModalityConfig
 }): PrescribedExercise[] => {
    const isAB = input.ctx.fitnessLevel === 'absolute_beginner'
+   const cfg = input.modalityConfig
    return input.selected.map((ex) => {
-      const repsStr = repsForLevel(isAB, ex.isCompound)
-      const repsNum = Number.parseInt(repsStr, 10) || 10
+      const repsStr = cfg
+         ? ex.isCompound
+            ? cfg.compoundReps
+            : cfg.accessoryReps
+         : repsForLevel(isAB, ex.isCompound)
+      const parsed = Number.parseInt(repsStr, 10)
+      const repsNum = Number.isFinite(parsed) && parsed > 0 ? parsed : 10
       let sets = setsForLevel(isAB, ex.isCompound)
-      let rest = restForReps(repsNum, isAB)
+      let rest = cfg ? cfg.restBaseSec : restForReps(repsNum, isAB)
       if (input.isDeloadWeek) {
          sets = Math.max(2, sets - 1)
          rest = Math.round(rest * 1.2)
