@@ -469,6 +469,19 @@ REGLAS INVIOLABLES:
 - NUNCA usas tono punitivo ("debes", "tienes que", "fallaste").
 - Devuelves SOLO JSON válido, sin texto adicional, sin markdown.
 
+REGLAS QUÍMICO-CULINARIAS OBLIGATORIAS (Sprint 11.15 — Chef Diego):
+- PROTEÍNA EN POLVO (whey/caseína):
+  · NUNCA la cocines en caliente (se coagula/quema).
+  · NUNCA la mezcles con limón, jugo, vinagre o cítricos (coagula la whey).
+  · NUNCA la sazones con sal, ajo, cebolla, pimienta ni hierbas frescas.
+  · NUNCA la sirvas seca "sobre" arepa, pan, tortilla, papa, arroz.
+  · SIEMPRE va en líquido: batido, smoothie, avena overnight, o en avena YA cocida y templada.
+  · Combínala con dulces: canela, cacao, banana, mantequilla de maní, miel pequeña.
+- HUEVOS: SIEMPRE cocidos (revueltos, tortilla, frittata, hervidos). NUNCA crudos.
+- PESCADO: cocción rápida (5-15 min). >30 min queda seco.
+- LECHUGA / PEPINO: SIEMPRE crudos. NUNCA horneados ni salteados.
+- Si el ingrediente principal es proteína en polvo, IGNORA cualquier "estilo" sugerido y hazlo batido/smoothie/overnight.
+
 REGLAS DE NOMBRES (Sprint 11.9.1 — apetencia):
 - USA nombres apetitosos con adjetivos cálidos LATAM: "casero", "criollo", "al horno", "a la plancha", "sazonado", "tropical", "estilo abuela", "rápido".
 - ADAPTA el nombre al ingrediente principal:
@@ -1222,6 +1235,113 @@ export const STYLE_HINTS = [
    'salteado al wok / rápido'
 ] as const
 
+/* ============================================================
+ *  CHEF DIEGO — Sprint 11.15 (mirror del cliente)
+ *  Reviewer determinístico de platos antes de mostrarlos al usuario.
+ * ============================================================ */
+
+interface DenoChefRule {
+   name: string
+   check: (opt: PlateOption) => string | null
+}
+
+const DENO_CHEF_RULES: DenoChefRule[] = [
+   {
+      name: 'polvo_en_caliente',
+      check: (opt) => {
+         const text = [opt.name, ...opt.steps].join(' ').toLowerCase()
+         const HOT =
+            '\\b(?:cocina|cocinar|saltea|saltear|dora|dorar|hornea|hornear|calienta|calentar|fríe|fríen|freír|frita|fritas|frito|fritos|tuesta|tostar|asa|asar|guisa|guisar)\\b'
+         const powder = /\b(?:polvo|whey|caseina|caseína)\b/i
+         if (!powder.test(text) || !new RegExp(HOT, 'i').test(text)) return null
+         const near = new RegExp(`\\b(?:polvo|whey|caseina|caseína)\\b[^.]{0,80}${HOT}`, 'i')
+         const inverse = new RegExp(`${HOT}[^.]{0,80}\\b(?:polvo|whey|caseina|caseína)\\b`, 'i')
+         if (near.test(text) || inverse.test(text)) {
+            return 'proteína en polvo no se cocina en caliente (se coagula/quema)'
+         }
+         return null
+      }
+   },
+   {
+      name: 'polvo_con_acido',
+      check: (opt) => {
+         const powder = /(polvo|whey|caseina|caseína)/i
+         const acid = /(limón|limon|jugo de|vinagre|cítric|ácido cítrico)/i
+         for (const step of opt.steps) {
+            const s = step.toLowerCase()
+            if (powder.test(s) && acid.test(s)) {
+               return 'proteína en polvo + limón/ácido coagula la whey'
+            }
+         }
+         return null
+      }
+   },
+   {
+      name: 'polvo_sazonado_salado',
+      check: (opt) => {
+         const powder = /(polvo|whey|caseina|caseína)/i
+         const salty =
+            /(hierbas frescas|perejil|cilantro|orégano|albahaca|ajo|sal\s|pimienta|cebolla)/i
+         for (const step of opt.steps) {
+            const s = step.toLowerCase()
+            if (powder.test(s) && salty.test(s)) {
+               return 'la proteína en polvo se combina con dulces/canela, no con salados'
+            }
+         }
+         return null
+      }
+   },
+   {
+      name: 'polvo_sobre_plato',
+      check: (opt) => {
+         const text = [opt.name, ...opt.steps].join(' ').toLowerCase()
+         const bad =
+            /\b(?:polvo|whey|caseina|caseína)\b[^.]{0,40}\b(?:sobre|encima de|con)\b[^.]{0,15}\b(?:arepa|pan|tortilla|papa|arroz|pasta|filete)\b/i
+         if (bad.test(text)) return 'proteína en polvo no se sirve seca sobre un plato'
+         return null
+      }
+   },
+   {
+      name: 'nombre_robotico',
+      check: (opt) => {
+         const full = `${opt.name} ${opt.description}`.toLowerCase()
+         if (/(plato unificado|combinaci[óo]n de|receta de)/i.test(full)) {
+            return 'nombre/descripción robótico ("plato unificado", "combinación de")'
+         }
+         return null
+      }
+   },
+   {
+      name: 'verdura_cruda_cocida',
+      check: (opt) => {
+         const text = opt.steps.join(' ').toLowerCase()
+         const VEG = '\\b(?:lechuga|pepino)\\b'
+         const HOT =
+            '\\b(?:hornea|hornear|saltea|saltear|cocina|cocinar|dora|dorar|fríe|fríen|freír|tuesta|tostar|asa|asar)\\b'
+         const forward = new RegExp(`${VEG}[^.]{0,60}${HOT}`, 'i')
+         const reverse = new RegExp(`${HOT}[^.]{0,60}${VEG}`, 'i')
+         if (forward.test(text) || reverse.test(text)) {
+            return 'lechuga/pepino no se cocinan en caliente'
+         }
+         return null
+      }
+   }
+]
+
+export interface DenoChefReviewResult {
+   approved: boolean
+   reason?: string
+   ruleName?: string
+}
+
+export const reviewByChef = (option: PlateOption): DenoChefReviewResult => {
+   for (const rule of DENO_CHEF_RULES) {
+      const violation = rule.check(option)
+      if (violation) return { approved: false, reason: violation, ruleName: rule.name }
+   }
+   return { approved: true }
+}
+
 export const buildSinglePlatePrompt = (input: {
    components: MealComponents
    mealType: MealType
@@ -1231,6 +1351,15 @@ export const buildSinglePlatePrompt = (input: {
 }): string => {
    const mealLabel = MEAL_TYPE_LABEL_FB[input.mealType]
    const cuisine = REGION_CUISINE_FB[input.ctx.region] ?? 'mixta'
+
+   /* Sprint 11.15: si la proteína es polvo, IGNORAR styleHint y forzar
+    * batido/smoothie/overnight. Bug root cause del "Bowl Criollo con arepa+polvo+limón". */
+   const proteinNameLower = input.components.protein.ingredient.name.toLowerCase()
+   const isPowderProtein = /polvo|whey|caseina|caseína|proteína en/.test(proteinNameLower)
+   const effectiveStyleHint = isPowderProtein
+      ? 'batido / smoothie / avena overnight (proteína en polvo NO se cocina, NO va con limón, NO va con sal)'
+      : input.styleHint
+
    const lines = [
       `- ${input.components.protein.ingredient.name}: ${input.components.protein.grams}g`,
       `- ${input.components.carb.ingredient.name}: ${input.components.carb.grams}g`,
@@ -1238,12 +1367,14 @@ export const buildSinglePlatePrompt = (input: {
       input.components.vegetable.grams > 0
          ? `- ${input.components.vegetable.ingredient.name}: ${input.components.vegetable.grams}g`
          : null,
-      '- ajo, sal, pimienta, limón, hierbas frescas (libre uso)'
+      isPowderProtein
+         ? '- agua, leche, canela, cacao, vainilla, miel pequeña (libre uso para el batido)'
+         : '- ajo, sal, pimienta, limón, hierbas frescas (libre uso)'
    ]
       .filter(Boolean)
       .join('\n')
-   const stylePhrase = input.styleHint
-      ? `\n- Estilo de cocción sugerido: ${input.styleHint}.`
+   const stylePhrase = effectiveStyleHint
+      ? `\n- Estilo de cocción sugerido: ${effectiveStyleHint}.`
       : ''
    const maxPrep = Math.min(input.maxPrepTime, 55)
    return `Genera UN plato para ${mealLabel} usando SOLO estos ingredientes:
@@ -1351,20 +1482,29 @@ export const validateSinglePlate = (input: {
    if (forbidden) return { valid: false, reason: 'forbidden_words', detail: forbidden }
    const processed = FORBIDDEN_PROCESSED_FOODS.find((p) => fullText.includes(p))
    if (processed) return { valid: false, reason: 'forbidden_words', detail: processed }
+
+   /* Sprint 11.15: Chef Diego revisa el plato. */
+   const candidate: PlateOption = {
+      name: parsed.name,
+      description: parsed.description,
+      prep_time_min: parsed.prep_time_min,
+      difficulty: parsed.difficulty as PlateOption['difficulty'],
+      steps: parsed.steps as string[]
+   }
+   const chefReview = reviewByChef(candidate)
+   if (!chefReview.approved) {
+      return {
+         valid: false,
+         reason: 'forbidden_words',
+         detail: `Chef Diego rechazó — ${chefReview.reason}`
+      }
+   }
+
    /* Quitamos el check de tokens (bloqueaba ingredientes LATAM válidos). */
    void input.allowedIngredients
    void FREE_USE_SP
 
-   return {
-      valid: true,
-      option: {
-         name: parsed.name,
-         description: parsed.description,
-         prep_time_min: parsed.prep_time_min,
-         difficulty: parsed.difficulty as PlateOption['difficulty'],
-         steps: parsed.steps as string[]
-      }
-   }
+   return { valid: true, option: candidate }
 }
 
 // ============================================================

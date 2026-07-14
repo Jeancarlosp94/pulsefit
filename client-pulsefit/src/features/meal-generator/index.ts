@@ -30,6 +30,8 @@ export {
 } from './compose-prompt'
 export { validateMealResponse, validateSinglePlate } from './plate-validator'
 export type { ItfSinglePlateValidation } from './plate-validator'
+export { reviewByChef, CHEF_RULE_NAMES } from './chef-review'
+export type { ItfChefReviewResult } from './chef-review'
 export { validateDietaryConsistency } from './dietary-validator'
 export type { DietaryValidationResult } from './dietary-validator'
 export { buildMealFallback } from './fallback-templates'

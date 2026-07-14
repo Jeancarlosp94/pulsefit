@@ -26,28 +26,41 @@ REGLAS INVIOLABLES:
 - NUNCA usas tono punitivo ("debes", "tienes que", "fallaste").
 - Devuelves SOLO JSON válido, sin texto adicional, sin markdown.
 
+REGLAS QUÍMICO-CULINARIAS OBLIGATORIAS (Sprint 11.15 — Chef Diego):
+- PROTEÍNA EN POLVO (whey/caseína):
+  · NUNCA la cocines en caliente (se coagula/quema).
+  · NUNCA la mezcles con limón, jugo, vinagre o cítricos (coagula la whey).
+  · NUNCA la sazones con sal, ajo, cebolla, pimienta ni hierbas frescas.
+  · NUNCA la sirvas seca "sobre" un plato cocido (arepa, pan, tortilla, papa, arroz).
+  · SIEMPRE va en líquido: batido, smoothie, avena overnight, o mezclada en avena YA cocida y templada.
+  · Combínala con dulces: canela, cacao, banana, mantequilla de maní, miel pequeña, frutos rojos.
+- HUEVOS: SIEMPRE se cocinan (revueltos, tortilla, frittata, hervidos, escalfados). NUNCA crudos.
+- PESCADO: cocción rápida (5-15 min según técnica). >30 min queda seco.
+- LECHUGA / PEPINO: SIEMPRE crudos. NUNCA se hornean ni se saltean.
+- Si el ingrediente principal es proteína en polvo, IGNORA cualquier "estilo de cocción" sugerido y hazlo batido/smoothie/overnight.
+
 REGLAS DE NOMBRES (Sprint 11.9.1 — apetencia):
 - USA nombres apetitosos con adjetivos cálidos LATAM: "casero", "criollo", "al horno", "a la plancha", "sazonado", "tropical", "estilo abuela", "rápido".
 - ADAPTA el nombre al ingrediente principal:
   · Pescado → "a la plancha", "al horno con hierbas", "marinado al limón"
   · Pollo → "al sartén", "a la plancha", "estofado casero"
   · Huevos → "tortilla casera", "revueltos al sartén", "frittata"
-  · Proteína en polvo → "batido casero", "smoothie", "avena overnight" (NUNCA "salteado")
+  · Proteína en polvo → "batido casero", "smoothie", "avena overnight" (NUNCA "salteado", NUNCA "bowl criollo con polvo")
   · Yogurt → "parfait", "bowl frío", "smoothie cremoso"
 - ADAPTA al meal_type:
   · Desayuno → bowl matutino, tazón cremoso, tortilla, pancakes, sándwich casero
   · Almuerzo/Cena → plato principal con técnica explícita (al horno, a la plancha, guisado, criollo)
   · Snack → mini, shake, bowl pequeño, parfait
 - EVITA "Salteado de X" como default robótico. Solo úsalo si el plato realmente es un wok/sartén.
-- EVITA nombres genéricos tipo "Plato de X" o "Receta con X".
-- INSPÍRATE en cocinas LATAM: ceviche, lomo, encebollado, chilaquiles, frittata, arepa, bowl criollo, pasta casera.
+- EVITA nombres genéricos tipo "Plato de X", "Receta con X", "Plato unificado con X", "Combinación de X".
+- INSPÍRATE en cocinas LATAM: ceviche, lomo, encebollado, chilaquiles, frittata, arepa, bowl criollo (SOLO con ingredientes reales, NO con polvo), pasta casera.
 
 REGLAS DE PASOS:
 - 3-7 pasos, cada uno de 20-200 caracteres.
 - Empieza con verbo en infinitivo o imperativo (cocina, calienta, sazona).
 - Sin usar palabras "saludable", "fit", "limpio" — solo describir técnica.
 
-Tu única tarea es COMBINAR creativamente los ingredientes dados en UN plato con nombre cálido (en español, sin emojis) y pasos claros.`
+Tu única tarea es COMBINAR creativamente los ingredientes dados en UN plato con nombre cálido (en español, sin emojis) y pasos claros. Un Chef revisará tu propuesta y rechazará platos absurdos.`
 
 interface BuildUserPromptInput {
    components: ItfMealComponents
@@ -138,6 +151,15 @@ export const buildSinglePlatePrompt = ({
    const mealLabel = MEAL_TYPE_LABEL[mealType]
    const cuisine = REGION_CUISINE[ctx.region] ?? 'mixta'
 
+   /* Sprint 11.15: si la proteína es polvo/whey, IGNORAR el styleHint del
+    * orquestador y forzar "batido/smoothie/overnight". Fue la causa raíz del
+    * bug "Bowl Criollo con arepa + polvo + limón". */
+   const proteinNameLower = components.protein.ingredient.name.toLowerCase()
+   const isPowderProtein = /polvo|whey|caseina|caseína|proteína en/.test(proteinNameLower)
+   const effectiveStyleHint = isPowderProtein
+      ? 'batido / smoothie / avena overnight (proteína en polvo NO se cocina, NO va con limón, NO va con sal)'
+      : styleHint
+
    const ingredientLines = [
       formatIngredient(components.protein.ingredient.name, components.protein.grams),
       formatIngredient(components.carb.ingredient.name, components.carb.grams),
@@ -145,12 +167,16 @@ export const buildSinglePlatePrompt = ({
       components.vegetable.grams > 0
          ? formatIngredient(components.vegetable.ingredient.name, components.vegetable.grams)
          : null,
-      '- ajo, sal, pimienta, limón, hierbas frescas (libre uso)'
+      isPowderProtein
+         ? '- agua, leche, canela, cacao, vainilla, miel pequeña (libre uso para el batido)'
+         : '- ajo, sal, pimienta, limón, hierbas frescas (libre uso)'
    ]
       .filter(Boolean)
       .join('\n')
 
-   const stylePhrase = styleHint ? `\n- Estilo de cocción sugerido: ${styleHint}.` : ''
+   const stylePhrase = effectiveStyleHint
+      ? `\n- Estilo de cocción sugerido: ${effectiveStyleHint}.`
+      : ''
 
    return `Genera UN plato para ${mealLabel} usando SOLO estos ingredientes:
 

@@ -1,4 +1,5 @@
 import type { ItfPlateOption, ItfValidationResult, ItfValidationFail } from './types'
+import { reviewByChef } from './chef-review'
 
 export type ItfSinglePlateValidation =
    | { valid: true; option: ItfPlateOption }
@@ -141,6 +142,12 @@ export const validateMealResponse = ({
       const processed = FORBIDDEN_PROCESSED_FOODS.find((p) => fullText.includes(p))
       if (processed) return fail('forbidden_words', `option ${i}: "${processed}"`)
 
+      // 10 — Sprint 11.15: Chef Diego revisa el plato.
+      const chefReview = reviewByChef(opt)
+      if (!chefReview.approved) {
+         return fail('forbidden_words', `option ${i}: Chef Diego rechazó — ${chefReview.reason}`)
+      }
+
       /* Antes había un check de "tokens desconocidos" que bloqueaba palabras
        * de cocina como "sartén", "minutos", "fuego" o ingredientes regionales
        * (cebolla colorada, ají amarillo). Era contraproducente y la lista negra
@@ -201,6 +208,23 @@ export const validateSinglePlate = ({
    if (forbidden) return { valid: false, reason: 'forbidden_words', detail: forbidden }
    const processed = FORBIDDEN_PROCESSED_FOODS.find((p) => fullText.includes(p))
    if (processed) return { valid: false, reason: 'forbidden_words', detail: processed }
+
+   /* Sprint 11.15: Chef Diego revisa el plato. */
+   const chefReview = reviewByChef({
+      name: parsed.name,
+      description: parsed.description,
+      prep_time_min: parsed.prep_time_min,
+      difficulty: parsed.difficulty as ItfPlateOption['difficulty'],
+      steps: parsed.steps as string[]
+   })
+   if (!chefReview.approved) {
+      return {
+         valid: false,
+         reason: 'forbidden_words',
+         detail: `Chef Diego rechazó — ${chefReview.reason}`
+      }
+   }
+
    void allowedIngredients /* legacy: ya no filtramos por allowed (era contraproducente). */
 
    return {
