@@ -30,7 +30,9 @@ ALTER TABLE workout_logs ALTER COLUMN reps_completed DROP NOT NULL;
 ALTER TABLE workout_logs ALTER COLUMN weight_kg DROP NOT NULL;
 
 /* Constraint coherencia: activity_type='strength' requiere exercise_id.
- * Tipos no-strength requieren activity_name + duration_min. */
+ * Tipos no-strength requieren activity_name + duration_min.
+ * DROP + ADD para idempotencia (ADD CONSTRAINT no soporta IF NOT EXISTS). */
+ALTER TABLE workout_logs DROP CONSTRAINT IF EXISTS workout_logs_activity_coherence;
 ALTER TABLE workout_logs
    ADD CONSTRAINT workout_logs_activity_coherence CHECK (
       (activity_type = 'strength' AND exercise_id IS NOT NULL)
