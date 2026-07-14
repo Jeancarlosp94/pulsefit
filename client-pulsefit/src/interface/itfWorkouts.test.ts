@@ -53,7 +53,10 @@ describe('itfWorkouts — Sprint 11.7 activity types', () => {
          duration_min: null,
          intensity: null,
          notes: null,
-         session_id: null
+         session_id: null,
+         calories_burned: null,
+         workout_subtype: null,
+         perceived_effort: null
       }
       expect(strengthLog.activity_type).toBe('strength')
       expect(strengthLog.duration_min).toBe(null)
@@ -75,7 +78,10 @@ describe('itfWorkouts — Sprint 11.7 activity types', () => {
          duration_min: 90,
          intensity: 4,
          notes: 'Cancha 7 con amigos',
-         session_id: null
+         session_id: null,
+         calories_burned: null,
+         workout_subtype: null,
+         perceived_effort: null
       }
       expect(sportLog.activity_type).toBe('sport')
       expect(sportLog.exercise_id).toBe(null)

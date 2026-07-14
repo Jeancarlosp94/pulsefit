@@ -18,6 +18,9 @@ const makeLog = (overrides: Partial<ItfWorkoutLog> = {}): ItfWorkoutLog => ({
    intensity: null,
    notes: null,
    session_id: null,
+   calories_burned: null,
+   workout_subtype: null,
+   perceived_effort: null,
    ...overrides
 })
 
