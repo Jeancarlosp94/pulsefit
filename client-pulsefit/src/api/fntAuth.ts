@@ -68,6 +68,28 @@ export const fntGetProfile = async (userId: string): Promise<ItfProfile | null> 
    return (data as ItfProfile | null) ?? null
 }
 
+/**
+ * Sprint 11.14b: detecta error PGRST204 (columna faltante) y devuelve
+ * mensaje explícito al usuario. Este error ocurre cuando el cliente
+ * escribe columnas que no existen en producción (migrations pendientes).
+ */
+const decorateSchemaError = (err: unknown, patch: Partial<ItfProfile>): Error => {
+   const e = err as { code?: string; message?: string } | null
+   if (e?.code === 'PGRST204') {
+      /* Detectar cuál columna falta para log específico. */
+      const missing = e.message?.match(/'([^']+)' column/)?.[1] ?? 'desconocida'
+      console.error(
+         `[fntUpdateProfile] columna faltante en producción: '${missing}'.`,
+         'Patch intentado:',
+         Object.keys(patch)
+      )
+      return new Error(
+         `Estamos actualizando tu perfil. Falta aplicar una migración en producción (columna '${missing}'). Recarga en unos minutos 🌱`
+      )
+   }
+   return err instanceof Error ? err : new Error(e?.message ?? 'Error desconocido al guardar 🌿')
+}
+
 export const fntUpdateProfile = async (
    userId: string,
    patch: Partial<ItfProfile>
@@ -87,7 +109,7 @@ export const fntUpdateProfile = async (
       .select('*')
       .maybeSingle()
 
-   if (updateRes.error) throw updateRes.error
+   if (updateRes.error) throw decorateSchemaError(updateRes.error, patch)
    if (updateRes.data) return updateRes.data as ItfProfile
 
    /* No existe la fila → upsert defensivo. */
@@ -101,7 +123,7 @@ export const fntUpdateProfile = async (
       .select('*')
       .maybeSingle()
 
-   if (upsertRes.error) throw upsertRes.error
+   if (upsertRes.error) throw decorateSchemaError(upsertRes.error, patch)
    if (!upsertRes.data) {
       throw new Error('No pudimos guardar tu perfil. Vuelve a intentarlo 🌱')
    }

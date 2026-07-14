@@ -83,48 +83,72 @@ const Step7Review = () => {
       if (!summary || blocked) return
       const now = new Date().toISOString()
       setSubmitting(true)
+
+      /* Sprint 11.14b: toast inmediato con "Guardando…" para que el usuario
+       * SEPA que la app está trabajando. Si el await tarda >2s, sonner igual
+       * muestra el loading. */
+      const loadingToastId = toast.loading('Guardando tu plan…')
+
+      /* Timeout defensivo de 20s. Si updateProfile se cuelga (red flaky,
+       * DNS lento, edge network), NO dejamos al usuario con spinner infinito. */
+      const timeoutMs = 20_000
+      const timeoutPromise = new Promise<never>((_, reject) =>
+         setTimeout(
+            () =>
+               reject(
+                  new Error('La conexión está lenta. Verifica tu internet y vuelve a intentar 📡')
+               ),
+            timeoutMs
+         )
+      )
+
       try {
-         await updateProfile({
-            age: data.age,
-            date_of_birth: data.dateOfBirth,
-            eating_disorder_history: data.eatingDisorderHistory,
-            lifestyle: data.lifestyle,
-            monotonous_meals_preferred: data.monotonousMealsPreferred,
-            sex: data.sex,
-            height_cm: data.heightCm,
-            current_weight_kg: data.currentWeightKg,
-            initial_weight_kg: data.currentWeightKg,
-            target_weight_kg: data.targetWeightKg,
-            target_date: data.targetDate,
-            goal: data.goal,
-            activity_level: data.activityLevel,
-            fitness_level: data.fitnessLevel,
-            available_days: data.availableDays,
-            available_minutes: data.availableMinutes,
-            equipment: data.equipment,
-            cooks_at_home: data.cooksAtHome,
-            dietary_restrictions: data.dietaryRestrictions,
-            allergies: data.allergies || null,
-            disliked_foods: data.dislikedFoods,
-            budget_level: data.budgetLevel,
-            meals_per_day: data.mealsPerDay,
-            favorite_cuisines: data.favoriteCuisines,
-            favorite_ingredient_ids: data.favoriteIngredientIds,
-            medical_conditions: data.medicalConditions,
-            tmb: summary.tmb,
-            get_kcal: summary.getKcal,
-            target_kcal: summary.targetKcal,
-            target_protein_g: summary.proteinG,
-            target_carbs_g: summary.carbsG,
-            target_fats_g: summary.fatsG,
-            onboarding_completed: true,
-            accepted_terms_at: data.acceptedTerms ? now : null,
-            accepted_privacy_at: data.acceptedPrivacy ? now : null
-         })
+         await Promise.race([
+            updateProfile({
+               age: data.age,
+               date_of_birth: data.dateOfBirth,
+               eating_disorder_history: data.eatingDisorderHistory,
+               lifestyle: data.lifestyle,
+               monotonous_meals_preferred: data.monotonousMealsPreferred,
+               sex: data.sex,
+               height_cm: data.heightCm,
+               current_weight_kg: data.currentWeightKg,
+               initial_weight_kg: data.currentWeightKg,
+               target_weight_kg: data.targetWeightKg,
+               target_date: data.targetDate,
+               goal: data.goal,
+               activity_level: data.activityLevel,
+               fitness_level: data.fitnessLevel,
+               available_days: data.availableDays,
+               available_minutes: data.availableMinutes,
+               equipment: data.equipment,
+               cooks_at_home: data.cooksAtHome,
+               dietary_restrictions: data.dietaryRestrictions,
+               allergies: data.allergies || null,
+               disliked_foods: data.dislikedFoods,
+               budget_level: data.budgetLevel,
+               meals_per_day: data.mealsPerDay,
+               favorite_cuisines: data.favoriteCuisines,
+               favorite_ingredient_ids: data.favoriteIngredientIds,
+               medical_conditions: data.medicalConditions,
+               tmb: summary.tmb,
+               get_kcal: summary.getKcal,
+               target_kcal: summary.targetKcal,
+               target_protein_g: summary.proteinG,
+               target_carbs_g: summary.carbsG,
+               target_fats_g: summary.fatsG,
+               onboarding_completed: true,
+               accepted_terms_at: data.acceptedTerms ? now : null,
+               accepted_privacy_at: data.acceptedPrivacy ? now : null
+            }),
+            timeoutPromise
+         ])
+         toast.dismiss(loadingToastId)
          toast.success('¡Listo! Tu PulseFit te espera 🌱')
          reset()
          navigate('/home', { replace: true })
       } catch (e) {
+         toast.dismiss(loadingToastId)
          handleApiError(e)
       } finally {
          setSubmitting(false)
