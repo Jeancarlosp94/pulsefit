@@ -54,19 +54,30 @@ export const fntSwapIngredient = async (input: SwapInput): Promise<ItfMealPlan> 
    })
 
    /* Cast a never para esquivar el typing estricto de supabase-js v2 cuando
-    * la columna jsonb no está modelada. RLS protege que solo el dueño actualice. */
+    * la columna jsonb no está modelada. RLS protege que solo el dueño actualice.
+    *
+    * Sprint 11.17: usamos .maybeSingle() en lugar de .single() para detectar
+    * el caso RLS-bloquea (0 filas retornadas, sin error). Sin este chequeo el
+    * usuario veía toast de éxito pero el cambio no persistía. */
    const { data, error } = await supabase
       .from('meal_plans')
       .update({ daily_schedule: updatedSchedule } as never)
       .eq('id', plan.id)
       .select('*')
-      .single()
+      .maybeSingle()
 
    if (error) {
       const wrapped = new Error(
          `No pudimos cambiar el ingrediente: ${error.message.slice(0, 100)} 🌿`
       )
       ;(wrapped as { status?: number }).status = 500
+      throw wrapped
+   }
+   if (!data) {
+      const wrapped = new Error(
+         'Falta permiso de escritura en tu plan. Aplica la migración 20260714000000 y vuelve a intentar 🌿'
+      )
+      ;(wrapped as { status?: number }).status = 403
       throw wrapped
    }
    return data as ItfMealPlan
