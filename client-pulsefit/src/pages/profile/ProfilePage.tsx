@@ -10,8 +10,11 @@ import {
    RotateCcw,
    Lightbulb,
    ChevronRight,
-   FileText
+   FileText,
+   Target
 } from 'lucide-react'
+import { useActiveProgram, useActivePhase } from '@/hooks/usePrograms'
+import { MODALITY_EMOJI, MODALITY_LABEL } from '@/features/program-engine'
 import { toast } from 'sonner'
 import { MealsPerDayDialog } from '@/components'
 import { InfoTooltip } from '@/components/InfoTooltip'
@@ -51,6 +54,8 @@ const themeOptions: ThemeOption[] = [
 const ProfilePage = () => {
    const navigate = useNavigate()
    const { profile, user, signOut, updateProfile } = useAuth()
+   const activeProgram = useActiveProgram()
+   const activePhase = useActivePhase()
    const { theme, setTheme } = useTheme()
    const { handleApiError } = useErrorHandling()
 
@@ -221,6 +226,33 @@ const ProfilePage = () => {
             ) : null}
 
             <FavoritesEditor />
+
+            {/* Sprint 11.16: acceso directo al programa activo o CTA para crear.
+             * Antes el /programa solo se llegaba desde el card de HomePage,
+             * y si el usuario quería cambiar de modalidad no encontraba la ruta. */}
+            <Card
+               className='cursor-pointer transition-colors hover:bg-muted/40'
+               onClick={() => navigate(activeProgram.data ? '/programa' : '/programa/crear')}
+            >
+               <CardContent className='flex items-center justify-between gap-3 pt-6'>
+                  <div className='flex items-start gap-3'>
+                     <Target className='mt-0.5 h-5 w-5 shrink-0 text-primary' />
+                     <div className='space-y-0.5'>
+                        <p className='text-sm font-medium'>
+                           {activeProgram.data
+                              ? 'Mi programa (Crear mi PulseFit)'
+                              : 'Crear mi PulseFit ⚡'}
+                        </p>
+                        <p className='text-xs text-muted-foreground'>
+                           {activeProgram.data && activePhase
+                              ? `${MODALITY_EMOJI[activePhase.phase.modality]} ${MODALITY_LABEL[activePhase.phase.modality]} · Semana ${activePhase.week_in_program}/${activeProgram.data.total_weeks}. Tap para ver o cancelar.`
+                              : 'Definí meta, duración y modalidad por fase (yoga, HIIT, CrossFit, gym, running…).'}
+                        </p>
+                     </div>
+                  </div>
+                  <ChevronRight className='h-4 w-4 text-muted-foreground' />
+               </CardContent>
+            </Card>
 
             {/* Lo que sabemos sobre ti — Fase 11 */}
             <Card

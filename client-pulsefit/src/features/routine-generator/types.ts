@@ -45,6 +45,26 @@ export type ItfExerciseModality =
    | 'crossfit'
    | 'hybrid'
 
+/**
+ * Sprint 11.16: deporte al que el usuario quiere transferir su entrenamiento.
+ * Ortogonal a modalidad — coexisten. Ejemplo: modalidad=gym + deporte=futbol
+ * prioriza ejercicios como sentadilla búlgara, RDL, nordic curl.
+ *
+ * Referencias: NSCA Essentials of Strength & Conditioning, capítulo por deporte.
+ */
+export type ItfSportFocus =
+   | 'futbol'
+   | 'basketball'
+   | 'volley'
+   | 'padel'
+   | 'tenis'
+   | 'boxeo'
+   | 'running'
+   | 'ciclismo'
+   | 'natacion'
+   | 'crossfit'
+   | 'ninguno'
+
 export interface ItfExercise {
    id: string
    name: string
@@ -64,6 +84,10 @@ export interface ItfExercise {
    /** Sprint 11.11: modalidades para las que este ejercicio es apropiado.
     * Si no se especifica, default ['gym', 'calistenia', 'hybrid']. */
    modalities?: ItfExerciseModality[]
+   /** Sprint 11.16: deportes para los que este ejercicio TRANSFIERE bien.
+    * NO limita quién lo puede hacer — solo se usa para PRIORIZAR en el pool.
+    * Si vacío/undefined, es un ejercicio "general" sin sesgo deportivo. */
+   sportTransfer?: ItfSportFocus[]
 }
 
 export interface ItfPrescribedExercise {
@@ -143,6 +167,9 @@ export interface ItfUserContextForWorkout {
     *  Si presente, filtra el pool por modalidad antes de seleccionar.
     *  Si null/undefined, usa pool completo (comportamiento histórico). */
    modality?: ItfExerciseModality
+   /** Sprint 11.16: deporte objetivo del usuario. Si presente, el selector
+    *  PRIORIZA (no excluye) ejercicios con transferencia a ese deporte. */
+   sportFocus?: ItfSportFocus
 }
 
 /**

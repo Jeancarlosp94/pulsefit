@@ -8,6 +8,7 @@ export type {
    ItfExerciseDifficulty,
    ItfExercise,
    ItfExerciseModality,
+   ItfSportFocus,
    ItfPrescribedExercise,
    ItfWarmup,
    ItfCooldown,
@@ -19,6 +20,14 @@ export type {
    ItfUserContextForWorkout
 } from './types'
 export { FOCUS_PATTERNS } from './types'
+export {
+   SPORT_TRANSFER_MAP,
+   getSportTransfer,
+   SPORT_FOCUS_LABEL,
+   SPORT_FOCUS_EMOJI
+} from './sport-transfer-map'
+export { EQUIPMENT_PRESETS, getEquipmentPresetById, inferLocationPreset } from './equipment-presets'
+export type { ItfEquipmentLocation, ItfEquipmentPreset } from './equipment-presets'
 
 export { planSession, getModalityConfig } from './session-planner'
 export type { ItfModalityConfig, ItfSessionStructure } from './session-planner'

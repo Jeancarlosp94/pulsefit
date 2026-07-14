@@ -1,5 +1,6 @@
 import type { ItfExercise, ItfExerciseModality, ItfUserContextForWorkout } from './types'
 import { FOCUS_PATTERNS, type ItfSessionFocus } from './types'
+import { getSportTransfer } from './sport-transfer-map'
 
 /* Sprint 11.11: modalidad default para ejercicios sin tag.
  * Los ejercicios "neutros" de gym/calistenia funcionan también en hybrid. */
@@ -38,7 +39,7 @@ export const filterExercisePool = ({ catalog, ctx, focus }: PoolInput): ItfExerc
    ])
    const injured = new Set(ctx.injuredZones.map((z) => z.toLowerCase().trim()))
 
-   return catalog.filter((ex) => {
+   const filtered = catalog.filter((ex) => {
       /* Sprint 11.11: filtro por modalidad (si la fase activa la define).
        * Si ctx.modality NO se especifica → comportamiento histórico (sin filtro).
        * Si se especifica → solo ejercicios compatibles con esa modalidad. */
@@ -79,6 +80,20 @@ export const filterExercisePool = ({ catalog, ctx, focus }: PoolInput): ItfExerc
 
       return true
    })
+
+   /* Sprint 11.16: si el usuario tiene sportFocus, ordenamos el pool
+    * poniendo primero los que transfieren a su deporte, luego los generales.
+    * NO se excluyen los que no transfieren — se conservan para variedad. */
+   if (ctx.sportFocus && ctx.sportFocus !== 'ninguno') {
+      const sport = ctx.sportFocus
+      return filtered.slice().sort((a, b) => {
+         const aTransfers = getSportTransfer(a.id).includes(sport) ? 1 : 0
+         const bTransfers = getSportTransfer(b.id).includes(sport) ? 1 : 0
+         return bTransfers - aTransfers /* transfer=1 va primero */
+      })
+   }
+
+   return filtered
 }
 
 /**
