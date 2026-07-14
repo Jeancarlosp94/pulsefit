@@ -531,6 +531,17 @@ describe('validateMealResponse', () => {
    })
 
    it('queso fresco (versión sana LATAM) NO falla', () => {
+      /* Sprint 11.17c: para que este test refleje el flujo real, el queso fresco
+       * DEBE estar en la lista de ingredientes (el LLM no puede inventarlo). Ese
+       * era el motivo original del test: asegurar que "queso fresco" no dispare
+       * la lista negra FORBIDDEN_PROCESSED_FOODS (donde sí están "queso cheddar",
+       * "queso amarillo", etc.). */
+      const withCheese = [
+         'pechuga de pollo',
+         'arroz blanco cocido',
+         'queso fresco',
+         'aceite de oliva'
+      ]
       const validStep = 'Cocina el pollo a la plancha con aceite de oliva por seis minutos.'
       const ok = JSON.stringify({
          options: [
@@ -542,14 +553,14 @@ describe('validateMealResponse', () => {
                steps: [validStep, 'Sirve sobre arroz blanco con queso fresco rallado.']
             },
             {
-               name: 'X',
+               name: 'Bowl casero de pollo con arroz',
                description: 'Plato simple de pollo y arroz blanco bien sazonado.',
                prep_time_min: 20,
                difficulty: 'easy',
                steps: [validStep, validStep]
             },
             {
-               name: 'X',
+               name: 'Pollo criollo con arroz blanco',
                description: 'Plato simple de pollo y arroz blanco bien sazonado.',
                prep_time_min: 20,
                difficulty: 'easy',
@@ -557,7 +568,7 @@ describe('validateMealResponse', () => {
             }
          ]
       })
-      const r = validateMealResponse({ raw: ok, allowedIngredients: allowed })
+      const r = validateMealResponse({ raw: ok, allowedIngredients: withCheese })
       expect(r.valid).toBe(true)
    })
 

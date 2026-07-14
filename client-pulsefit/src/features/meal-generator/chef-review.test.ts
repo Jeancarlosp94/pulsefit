@@ -279,4 +279,90 @@ describe('Chef Diego — Sprint 11.15', () => {
          expect(r.approved).toBe(true)
       }
    })
+
+   /* ============================================================
+    *  Sprint 11.17c: nombre alucinado + carne procesada con dulce
+    * ============================================================ */
+
+   it('RECHAZA el bug reportado: título "Tofu sazonado" pero ingredientes traen pechuga de pollo', () => {
+      const bug = plate({
+         name: 'Tofu sazonado con arepa de maíz y espinaca',
+         description: 'Plato rápido para días ocupados con tofu.',
+         steps: [
+            'Cocina la arepa de maíz aparte y reserva bien tapada al costado.',
+            'Corta el tofu en cubos o tiras finas para dorarlo mejor.',
+            'Calienta el aceite de girasol bien caliente en sartén amplia.',
+            'Dora el tofu con sal y especias frescas hasta que se vea crocante.',
+            'Suma la espinaca y saltea dos minutos con un toque de sal.'
+         ]
+      })
+      const r = reviewByChef(bug, {
+         allowedIngredientNames: [
+            'pechuga de pollo',
+            'arepa de maíz',
+            'aceite de girasol',
+            'espinaca'
+         ]
+      })
+      expect(r.approved).toBe(false)
+      expect(r.ruleName).toBe('nombre_no_coincide_ingredientes')
+   })
+
+   it('RECHAZA el bug reportado: jamón cocido + granola sin azúcar', () => {
+      const bug = plate({
+         name: 'Mezcla casera de jamón cocido bajo en sodio y granola sin azúcar',
+         description: 'Snack rápido y saciante casero.',
+         steps: [
+            'Combina el jamón cocido bajo en sodio con la granola sin azúcar en un bowl.',
+            'Agrega las semillas de chía por encima para dar textura extra.',
+            'Sazona suave con una pizca de pimienta fresca al gusto.',
+            'Mezcla todo suavemente hasta integrar bien los sabores del snack.'
+         ]
+      })
+      const r = reviewByChef(bug, {
+         allowedIngredientNames: [
+            'jamón cocido bajo en sodio',
+            'granola sin azúcar',
+            'semillas de chía'
+         ]
+      })
+      expect(r.approved).toBe(false)
+      expect(r.ruleName).toBe('salado_con_dulce_seco')
+   })
+
+   it('APRUEBA plato cuyo nombre SÍ coincide con ingredientes reales', () => {
+      const r = reviewByChef(
+         plate({
+            name: 'Pechuga de pollo con arroz criollo',
+            steps: [
+               'Sazona la pechuga con pimienta y ajo antes de cocinar.',
+               'Cocina el arroz hasta su punto en olla con agua ligeramente salada.',
+               'Sirve el pollo dorado sobre el arroz con hierbas frescas encima.'
+            ]
+         }),
+         {
+            allowedIngredientNames: [
+               'pechuga de pollo',
+               'arroz blanco',
+               'aceite de oliva',
+               'espinaca'
+            ]
+         }
+      )
+      expect(r.approved).toBe(true)
+   })
+
+   it('sin ctx.allowedIngredientNames, la regla nombre_no_coincide NO se aplica', () => {
+      const r = reviewByChef(
+         plate({
+            name: 'Tofu al ajillo con arroz',
+            steps: [
+               'Corta el tofu en cubos y sazona con sal, ajo y pimienta al gusto.',
+               'Calienta el aceite y dora el tofu unos cinco minutos por lado.',
+               'Sirve con el arroz caliente y unas hierbas frescas encima del bowl.'
+            ]
+         })
+      )
+      expect(r.approved).toBe(true)
+   })
 })

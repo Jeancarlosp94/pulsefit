@@ -1241,9 +1241,22 @@ export const STYLE_HINTS = [
  *  Reviewer determinístico de platos antes de mostrarlos al usuario.
  * ============================================================ */
 
+/** Sprint 11.17c: proteínas conocidas para detectar alucinaciones del LLM. */
+const DENO_KNOWN_PROTEINS = [
+   'pollo', 'pechuga', 'muslo', 'pavo', 'ternera', 'res', 'carne de res',
+   'cerdo', 'lomo', 'pescado', 'salmón', 'tilapia', 'atún', 'merluza',
+   'sardina', 'huevos', 'huevo', 'tofu', 'tempeh', 'seitán', 'yogurt',
+   'yogur', 'queso', 'cottage', 'requesón', 'ricotta', 'lentejas',
+   'garbanzos', 'frijoles', 'porotos', 'jamón', 'whey', 'proteína en polvo'
+]
+
+export interface DenoChefContext {
+   allowedIngredientNames?: string[]
+}
+
 interface DenoChefRule {
    name: string
-   check: (opt: PlateOption) => string | null
+   check: (opt: PlateOption, ctx?: DenoChefContext) => string | null
 }
 
 const DENO_CHEF_RULES: DenoChefRule[] = [
@@ -1372,6 +1385,38 @@ const DENO_CHEF_RULES: DenoChefRule[] = [
          }
          return null
       }
+   },
+
+   /* Sprint 11.17c: nombre menciona proteína que NO está en ingredientes reales. */
+   {
+      name: 'nombre_no_coincide_ingredientes',
+      check: (opt, ctx) => {
+         const allowed = ctx?.allowedIngredientNames
+         if (!allowed || allowed.length === 0) return null
+         const allowedLower = allowed.map((n) => n.toLowerCase()).join(' ')
+         const fullText = `${opt.name} ${opt.description} ${opt.steps.join(' ')}`.toLowerCase()
+         for (const p of DENO_KNOWN_PROTEINS) {
+            const rx = new RegExp(`\\b${p}\\b`, 'i')
+            if (rx.test(fullText) && !rx.test(allowedLower)) {
+               return `menciona "${p}" pero no está en los ingredientes reales (LLM alucinó)`
+            }
+         }
+         return null
+      }
+   },
+
+   /* Sprint 11.17c: carne procesada + carb dulce seco (jamón + granola). */
+   {
+      name: 'salado_con_dulce_seco',
+      check: (opt) => {
+         const text = [opt.name, opt.description, ...opt.steps].join(' ').toLowerCase()
+         const savory = /\b(?:jam[óo]n|pavo|salchicha|chorizo|salami|tocino|panceta|atún|sardina)\b/i
+         const sweetDry = /\b(?:granola|muesli|müesli|cereal(?:es)?\s+(?:dulce|de\s+desayuno))\b/i
+         if (savory.test(text) && sweetDry.test(text)) {
+            return 'carne procesada + granola/muesli no combinan (salado + dulce seco)'
+         }
+         return null
+      }
    }
 ]
 
@@ -1381,9 +1426,12 @@ export interface DenoChefReviewResult {
    ruleName?: string
 }
 
-export const reviewByChef = (option: PlateOption): DenoChefReviewResult => {
+export const reviewByChef = (
+   option: PlateOption,
+   ctx?: DenoChefContext
+): DenoChefReviewResult => {
    for (const rule of DENO_CHEF_RULES) {
-      const violation = rule.check(option)
+      const violation = rule.check(option, ctx)
       if (violation) return { approved: false, reason: violation, ruleName: rule.name }
    }
    return { approved: true }
@@ -1540,7 +1588,9 @@ export const validateSinglePlate = (input: {
       difficulty: parsed.difficulty as PlateOption['difficulty'],
       steps: parsed.steps as string[]
    }
-   const chefReview = reviewByChef(candidate)
+   const chefReview = reviewByChef(candidate, {
+      allowedIngredientNames: input.allowedIngredients
+   })
    if (!chefReview.approved) {
       return {
          valid: false,

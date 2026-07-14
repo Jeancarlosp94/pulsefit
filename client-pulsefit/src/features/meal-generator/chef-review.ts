@@ -30,10 +30,57 @@ export interface ItfChefReviewResult {
    ruleName?: string
 }
 
+/** Sprint 11.17c: contexto opcional con ingredientes reales del plato para
+ *  detectar alucinaciones del LLM (título con "tofu" pero sin tofu en la lista). */
+export interface ItfChefContext {
+   allowedIngredientNames?: string[]
+}
+
 interface ChefRule {
    name: string
-   check: (option: ItfPlateOption) => string | null
+   check: (option: ItfPlateOption, ctx?: ItfChefContext) => string | null
 }
+
+/**
+ * Sprint 11.17c: proteínas conocidas — usadas para detectar mismatches
+ * entre el nombre del plato y los ingredientes reales. Si el nombre dice
+ * "Tofu al X" pero la lista de ingredientes NO tiene tofu, el LLM alucinó.
+ */
+const KNOWN_PROTEINS = [
+   'pollo',
+   'pechuga',
+   'muslo',
+   'pavo',
+   'ternera',
+   'res',
+   'carne de res',
+   'cerdo',
+   'lomo',
+   'pescado',
+   'salmón',
+   'tilapia',
+   'atún',
+   'merluza',
+   'sardina',
+   'huevos',
+   'huevo',
+   'tofu',
+   'tempeh',
+   'seitán',
+   'yogurt',
+   'yogur',
+   'queso',
+   'cottage',
+   'requesón',
+   'ricotta',
+   'lentejas',
+   'garbanzos',
+   'frijoles',
+   'porotos',
+   'jamón',
+   'whey',
+   'proteína en polvo'
+] as const
 
 /**
  * Reglas del chef. Cada una recibe el plato completo y devuelve:
@@ -273,6 +320,53 @@ const CHEF_RULES: ChefRule[] = [
          }
          return null
       }
+   },
+
+   /* ============================================================
+    *  13. NOMBRE MENCIONA PROTEÍNA QUE NO ESTÁ EN INGREDIENTES
+    *  Bug reportado: título dice "Tofu sazonado" pero los ingredientes
+    *  reales son "pechuga de pollo". El LLM alucinó. Se rechaza para
+    *  que el usuario nunca vea un plato con ingredientes falsos.
+    * ============================================================ */
+   {
+      name: 'nombre_no_coincide_ingredientes',
+      check: (opt, ctx) => {
+         const allowed = ctx?.allowedIngredientNames
+         if (!allowed || allowed.length === 0) return null
+         const allowedLower = allowed.map((n) => n.toLowerCase()).join(' ')
+         const stepsText = opt.steps.join(' ').toLowerCase()
+         const nameLower = opt.name.toLowerCase()
+         const descLower = opt.description.toLowerCase()
+         const fullText = `${nameLower} ${descLower} ${stepsText}`
+
+         /* Buscamos si el LLM menciona proteínas que NO están en la lista real. */
+         for (const p of KNOWN_PROTEINS) {
+            const proteinRegex = new RegExp(`\\b${p}\\b`, 'i')
+            if (proteinRegex.test(fullText) && !proteinRegex.test(allowedLower)) {
+               return `el plato menciona "${p}" pero no está en los ingredientes reales — el LLM alucinó`
+            }
+         }
+         return null
+      }
+   },
+
+   /* ============================================================
+    *  14. CARNE PROCESADA + CARB DULCE SECO (granola, muesli)
+    *  Bug reportado: "jamón cocido + granola sin azúcar". Salado + dulce
+    *  seco no combinan como snack casero.
+    * ============================================================ */
+   {
+      name: 'salado_con_dulce_seco',
+      check: (opt) => {
+         const text = [opt.name, opt.description, ...opt.steps].join(' ').toLowerCase()
+         const savory =
+            /\b(?:jam[óo]n|pavo|salchicha|chorizo|salami|tocino|panceta|atún|sardina)\b/i
+         const sweetDry = /\b(?:granola|muesli|müesli|cereal(?:es)?\s+(?:dulce|de\s+desayuno))\b/i
+         if (savory.test(text) && sweetDry.test(text)) {
+            return 'jamón/atún/carne procesada + granola/muesli/cereal dulce no combinan (salado + dulce seco)'
+         }
+         return null
+      }
    }
 ]
 
@@ -286,9 +380,9 @@ const CHEF_RULES: ChefRule[] = [
  *      return useFallbackTemplate()
  *   }
  */
-export const reviewByChef = (option: ItfPlateOption): ItfChefReviewResult => {
+export const reviewByChef = (option: ItfPlateOption, ctx?: ItfChefContext): ItfChefReviewResult => {
    for (const rule of CHEF_RULES) {
-      const violation = rule.check(option)
+      const violation = rule.check(option, ctx)
       if (violation) {
          return {
             approved: false,

@@ -97,8 +97,8 @@ export const validateMealResponse = ({
       return fail('wrong_option_count', `recibí ${opts?.length ?? 0}`)
    }
 
-   void allowedIngredients /* legacy: ya no filtramos por allowed (era contraproducente). */
-
+   /* Sprint 11.17c: allowedIngredients ahora se pasa al Chef para detectar
+    * cuando el LLM alucina proteínas que no están en la lista real. */
    for (let i = 0; i < opts.length; i++) {
       const opt = opts[i]
 
@@ -143,7 +143,7 @@ export const validateMealResponse = ({
       if (processed) return fail('forbidden_words', `option ${i}: "${processed}"`)
 
       // 10 — Sprint 11.15: Chef Diego revisa el plato.
-      const chefReview = reviewByChef(opt)
+      const chefReview = reviewByChef(opt, { allowedIngredientNames: allowedIngredients })
       if (!chefReview.approved) {
          return fail('forbidden_words', `option ${i}: Chef Diego rechazó — ${chefReview.reason}`)
       }
@@ -210,13 +210,16 @@ export const validateSinglePlate = ({
    if (processed) return { valid: false, reason: 'forbidden_words', detail: processed }
 
    /* Sprint 11.15: Chef Diego revisa el plato. */
-   const chefReview = reviewByChef({
-      name: parsed.name,
-      description: parsed.description,
-      prep_time_min: parsed.prep_time_min,
-      difficulty: parsed.difficulty as ItfPlateOption['difficulty'],
-      steps: parsed.steps as string[]
-   })
+   const chefReview = reviewByChef(
+      {
+         name: parsed.name,
+         description: parsed.description,
+         prep_time_min: parsed.prep_time_min,
+         difficulty: parsed.difficulty as ItfPlateOption['difficulty'],
+         steps: parsed.steps as string[]
+      },
+      { allowedIngredientNames: allowedIngredients }
+   )
    if (!chefReview.approved) {
       return {
          valid: false,
